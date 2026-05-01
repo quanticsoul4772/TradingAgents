@@ -7,6 +7,7 @@ Personal copy of [TauricResearch/TradingAgents](https://github.com/TauricResearc
 - **`main.py`** — Anthropic provider, Sonnet 4.6 deep / Haiku 4.5 quick, 1/1 debate rounds, checkpoint enabled.
 - **`scripts/backtest.py`** — typer CLI that loops `propagate(ticker, date)` over a grid and appends to CSV. Resumable.
 - **`scripts/analyze_backtest.py`** — alpha-vs-SPY analyzer for backtest output.
+- **`tickers.txt`** — personal ticker universe (10 names, one per major sector). Picked up by `backtest.py` when `--tickers` is not given.
 - **`claudedocs/SETUP.md`** — personal setup notes (state paths, provider switching, cost ranges, what not to touch).
 - **`CLAUDE.md`** — Claude Code project context.
 
@@ -31,9 +32,9 @@ Detailed setup, troubleshooting, and "what not to touch" list: [`claudedocs/SETU
 ## Backtest
 
 ```bash
+# Uses tickers.txt by default; pass --tickers or --tickers-file to override.
 python scripts/backtest.py \
-    --tickers NVDA,AAPL,MSFT,JPM,JNJ \
-    --start 2026-01-01 --end 2026-04-25 \
+    --start 2026-01-02 --end 2026-04-25 \
     --frequency W \
     --out backtest_results.csv
 

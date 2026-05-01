@@ -1,0 +1,14 @@
+# Personal ticker universe — 10 names, one per major sector.
+# Used as default by scripts/backtest.py when --tickers is not given.
+# Override on the CLI: python scripts/backtest.py --tickers NVDA,AAPL
+
+NVDA       # tech mega-cap
+AAPL       # tech mega-cap
+MSFT       # tech mega-cap
+GOOGL      # tech mega-cap
+JPM        # financials
+BRK.B      # quality conglomerate
+UNH        # healthcare
+WMT        # consumer staples
+XOM        # energy
+CAT        # industrials

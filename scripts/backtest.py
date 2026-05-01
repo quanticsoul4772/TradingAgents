@@ -60,6 +60,33 @@ def _parse_csv_list(value: str) -> list[str]:
     return [s.strip() for s in value.split(",") if s.strip()]
 
 
+def _load_tickers_file(path: Path) -> list[str]:
+    """Read one-ticker-per-line from path; strip `#` comments and blanks."""
+    tickers: list[str] = []
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if line:
+            tickers.append(line)
+    return tickers
+
+
+def _resolve_tickers(tickers_arg: Optional[str], tickers_file: Optional[Path]) -> list[str]:
+    """Resolve the ticker list with the following priority:
+    1. --tickers (explicit comma list)
+    2. --tickers-file (explicit file path)
+    3. ./tickers.txt next to the cwd, if it exists
+    4. Hardcoded fallback (NVDA,AAPL,MSFT,JPM,JNJ).
+    """
+    if tickers_arg:
+        return _parse_csv_list(tickers_arg)
+    if tickers_file:
+        return _load_tickers_file(tickers_file)
+    default_path = Path("tickers.txt")
+    if default_path.exists():
+        return _load_tickers_file(default_path)
+    return _parse_csv_list("NVDA,AAPL,MSFT,JPM,JNJ")
+
+
 def _build_grid(
     tickers: list[str],
     start: str,
@@ -109,10 +136,16 @@ def _append_row(out_path: Path, row: dict) -> None:
 
 @app.command()
 def main(
-    tickers: str = typer.Option(
-        "NVDA,AAPL,MSFT,JPM,JNJ",
+    tickers: Optional[str] = typer.Option(
+        None,
         "--tickers",
-        help="Comma-separated ticker symbols.",
+        help="Comma-separated ticker symbols. Overrides --tickers-file and ./tickers.txt.",
+    ),
+    tickers_file: Optional[Path] = typer.Option(
+        None,
+        "--tickers-file",
+        help="Path to a one-ticker-per-line file (`#` comments allowed). "
+        "Defaults to ./tickers.txt if present, else a built-in 5-ticker fallback.",
     ),
     start: Optional[str] = typer.Option(
         None,
@@ -160,7 +193,7 @@ def main(
     end_dt = datetime.strptime(end, "%Y-%m-%d").date() if end else today
     start_dt = datetime.strptime(start, "%Y-%m-%d").date() if start else end_dt - timedelta(days=90)
 
-    ticker_list = _parse_csv_list(tickers)
+    ticker_list = _resolve_tickers(tickers, tickers_file)
     analyst_list = _parse_csv_list(analysts)
 
     grid = _build_grid(ticker_list, start_dt.isoformat(), end_dt.isoformat(), frequency)
