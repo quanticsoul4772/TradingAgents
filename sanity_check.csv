@@ -1,0 +1,3 @@
+ticker,analysis_date,rating,error,run_seconds,deep_model,quick_model,debate_rounds,analysts
+AAPL,2026-04-03,Hold,,392.72,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals"
+AAPL,2026-04-10,Underweight,,458.78,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals"

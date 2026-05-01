@@ -46,6 +46,45 @@ from .reflection import Reflector
 from .signal_processing import SignalProcessor
 
 
+def fetch_returns(
+    ticker: str, trade_date: str, holding_days: int = 5
+) -> Tuple[Optional[float], Optional[float], Optional[int]]:
+    """Fetch raw and alpha return for ticker over holding_days from trade_date.
+
+    Returns (raw_return, alpha_return, actual_holding_days) or
+    (None, None, None) if price data is unavailable (too recent, delisted,
+    or network error).
+    """
+    try:
+        start = datetime.strptime(trade_date, "%Y-%m-%d")
+        end = start + timedelta(days=holding_days + 7)  # buffer for weekends/holidays
+        end_str = end.strftime("%Y-%m-%d")
+
+        stock = yf.Ticker(ticker).history(start=trade_date, end=end_str)
+        spy = yf.Ticker("SPY").history(start=trade_date, end=end_str)
+
+        if len(stock) < 2 or len(spy) < 2:
+            return None, None, None
+
+        actual_days = min(holding_days, len(stock) - 1, len(spy) - 1)
+        raw = float(
+            (stock["Close"].iloc[actual_days] - stock["Close"].iloc[0])
+            / stock["Close"].iloc[0]
+        )
+        spy_ret = float(
+            (spy["Close"].iloc[actual_days] - spy["Close"].iloc[0])
+            / spy["Close"].iloc[0]
+        )
+        alpha = raw - spy_ret
+        return raw, alpha, actual_days
+    except Exception as e:
+        logger.warning(
+            "Could not resolve outcome for %s on %s (will retry next run): %s",
+            ticker, trade_date, e,
+        )
+        return None, None, None
+
+
 class TradingAgentsGraph:
     """Main class that orchestrates the trading agents framework."""
 
@@ -190,40 +229,7 @@ class TradingAgentsGraph:
     def _fetch_returns(
         self, ticker: str, trade_date: str, holding_days: int = 5
     ) -> Tuple[Optional[float], Optional[float], Optional[int]]:
-        """Fetch raw and alpha return for ticker over holding_days from trade_date.
-
-        Returns (raw_return, alpha_return, actual_holding_days) or
-        (None, None, None) if price data is unavailable (too recent, delisted,
-        or network error).
-        """
-        try:
-            start = datetime.strptime(trade_date, "%Y-%m-%d")
-            end = start + timedelta(days=holding_days + 7)  # buffer for weekends/holidays
-            end_str = end.strftime("%Y-%m-%d")
-
-            stock = yf.Ticker(ticker).history(start=trade_date, end=end_str)
-            spy = yf.Ticker("SPY").history(start=trade_date, end=end_str)
-
-            if len(stock) < 2 or len(spy) < 2:
-                return None, None, None
-
-            actual_days = min(holding_days, len(stock) - 1, len(spy) - 1)
-            raw = float(
-                (stock["Close"].iloc[actual_days] - stock["Close"].iloc[0])
-                / stock["Close"].iloc[0]
-            )
-            spy_ret = float(
-                (spy["Close"].iloc[actual_days] - spy["Close"].iloc[0])
-                / spy["Close"].iloc[0]
-            )
-            alpha = raw - spy_ret
-            return raw, alpha, actual_days
-        except Exception as e:
-            logger.warning(
-                "Could not resolve outcome for %s on %s (will retry next run): %s",
-                ticker, trade_date, e,
-            )
-            return None, None, None
+        return fetch_returns(ticker, trade_date, holding_days)
 
     def _resolve_pending_entries(self, ticker: str) -> None:
         """Resolve pending log entries for ticker at the start of a new run.

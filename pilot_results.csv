@@ -1,0 +1,6 @@
+ticker,analysis_date,rating,error,run_seconds,deep_model,quick_model,debate_rounds,analysts
+NVDA,2026-01-30,Overweight,,345.73,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals"
+NVDA,2026-02-06,Overweight,,362.67,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals"
+NVDA,2026-02-13,Overweight,,358.84,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals"
+NVDA,2026-02-20,Overweight,,469.25,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals"
+NVDA,2026-02-27,Overweight,,426.92,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals"
