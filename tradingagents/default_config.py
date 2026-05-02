@@ -48,6 +48,11 @@ DEFAULT_CONFIG = {
     # is the dilution step in the framework's mode collapse to moderate
     # ratings. Default True = current behavior; flip via --config-override.
     "pm_sees_synthesis": True,
+    # MR-3: Research Manager synthesis prompt + schema variant. "default"
+    # / "v1" = original; "v2" = MR-3 fix that decouples "two-sided debate"
+    # from "Hold-leaning rating" per docs/EXPERIMENT.md MR-2 finding.
+    # Drives experiments/2026-05-02-004-mr3-synthesis-v2/.
+    "research_manager_prompt_variant": "default",
     # Data vendor configuration
     # Category-level configuration (default for all tools in category)
     "data_vendors": {

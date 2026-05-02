@@ -19,10 +19,8 @@ so that:
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
-
 
 # ---------------------------------------------------------------------------
 # Shared rating types
@@ -92,13 +90,66 @@ class ResearchPlan(BaseModel):
 
 def render_research_plan(plan: ResearchPlan) -> str:
     """Render a ResearchPlan to markdown for storage and the trader's prompt context."""
-    return "\n".join([
-        f"**Recommendation**: {plan.recommendation.value}",
-        "",
-        f"**Rationale**: {plan.rationale}",
-        "",
-        f"**Strategic Actions**: {plan.strategic_actions}",
-    ])
+    return "\n".join(
+        [
+            f"**Recommendation**: {plan.recommendation.value}",
+            "",
+            f"**Rationale**: {plan.rationale}",
+            "",
+            f"**Strategic Actions**: {plan.strategic_actions}",
+        ]
+    )
+
+
+class ResearchPlanV2(BaseModel):
+    """MR-3 variant: rewords the field descriptions to stop framing two-sided
+    evidence as Hold-leaning. Same render path. Selected by the Research
+    Manager when config.research_manager_prompt_variant == 'v2'.
+
+    Hand-off to the Trader: identical structure to ResearchPlan; only the
+    field descriptions (which the LLM sees as instructions when generating
+    structured output) differ.
+    """
+
+    recommendation: PortfolioRating = Field(
+        description=(
+            "The investment recommendation. Exactly one of Buy / Overweight / "
+            "Hold / Underweight / Sell. Two-sided evidence is the NORM in "
+            "stock debates and does NOT by itself warrant Hold. Reserve Hold "
+            "ONLY for cases where the bull and bear arguments are quantitatively "
+            "near-equal in conviction, evidence quality, and timeframe relevance. "
+            "Otherwise commit to Buy / Overweight / Underweight / Sell based on "
+            "which side's strongest arguments more directly bear on the next 5 "
+            "trading days."
+        ),
+    )
+    rationale: str = Field(
+        description=(
+            "Conversational summary that names which side's arguments more "
+            "directly bear on the holding window. Acknowledge the other side's "
+            "valid points, but do not let their existence pull the recommendation "
+            "toward Hold. Speak naturally, as if to a teammate."
+        ),
+    )
+    strategic_actions: str = Field(
+        description=(
+            "Concrete steps for the trader to implement the recommendation, "
+            "including position sizing guidance consistent with the rating."
+        ),
+    )
+
+
+def render_research_plan_v2(plan: ResearchPlanV2) -> str:
+    """Render ResearchPlanV2 to the same markdown shape as the v1 variant."""
+    return "\n".join(
+        [
+            f"**Recommendation**: {plan.recommendation.value}",
+            "",
+            f"**Rationale**: {plan.rationale}",
+            "",
+            f"**Strategic Actions**: {plan.strategic_actions}",
+        ]
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -124,15 +175,15 @@ class TraderProposal(BaseModel):
             "the research plan. Two to four sentences."
         ),
     )
-    entry_price: Optional[float] = Field(
+    entry_price: float | None = Field(
         default=None,
         description="Optional entry price target in the instrument's quote currency.",
     )
-    stop_loss: Optional[float] = Field(
+    stop_loss: float | None = Field(
         default=None,
         description="Optional stop-loss price in the instrument's quote currency.",
     )
-    position_sizing: Optional[str] = Field(
+    position_sizing: str | None = Field(
         default=None,
         description="Optional sizing guidance, e.g. '5% of portfolio'.",
     )
@@ -156,10 +207,12 @@ def render_trader_proposal(proposal: TraderProposal) -> str:
         parts.extend(["", f"**Stop Loss**: {proposal.stop_loss}"])
     if proposal.position_sizing:
         parts.extend(["", f"**Position Sizing**: {proposal.position_sizing}"])
-    parts.extend([
-        "",
-        f"FINAL TRANSACTION PROPOSAL: **{proposal.action.value.upper()}**",
-    ])
+    parts.extend(
+        [
+            "",
+            f"FINAL TRANSACTION PROPOSAL: **{proposal.action.value.upper()}**",
+        ]
+    )
     return "\n".join(parts)
 
 
@@ -196,11 +249,11 @@ class PortfolioDecision(BaseModel):
             "incorporate them; otherwise rely solely on the current analysis."
         ),
     )
-    price_target: Optional[float] = Field(
+    price_target: float | None = Field(
         default=None,
         description="Optional target price in the instrument's quote currency.",
     )
-    time_horizon: Optional[str] = Field(
+    time_horizon: str | None = Field(
         default=None,
         description="Optional recommended holding period, e.g. '3-6 months'.",
     )
