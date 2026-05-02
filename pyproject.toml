@@ -45,6 +45,16 @@ dependencies = [
     "yfinance>=0.2.63",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=6.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pre-commit>=4.0.0",
+]
+
 [project.urls]
 "Upstream" = "https://github.com/TauricResearch/TradingAgents"
 "Personal fork" = "https://github.com/quanticsoul4772/TradingAgents"
@@ -69,3 +79,54 @@ markers = [
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [".venv", "tradingagents_lab.egg-info", "experiments"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+]
+ignore = [
+    "E501",   # line length (handled by formatter)
+    "B008",   # function calls in default args (typer pattern)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+"scripts/*" = ["E402"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_return_any = false
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = [
+    "yfinance",
+    "yfinance.*",
+    "stockstats",
+    "stockstats.*",
+    "parsel",
+    "parsel.*",
+    "questionary",
+    "questionary.*",
+    "langgraph.*",
+    "langchain.*",
+    "langchain_core.*",
+    "langchain_openai.*",
+    "langchain_anthropic.*",
+    "langchain_google_genai.*",
+    "redis.*",
+    "stockstats.*",
+]
+ignore_missing_imports = true

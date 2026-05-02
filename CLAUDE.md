@@ -2,6 +2,53 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## What this project is
+
+`tradingagents-lab` is a personal experimental fork of [TauricResearch/TradingAgents](https://github.com/TauricResearch/TradingAgents) v0.2.4, repurposed as a research playground for studying multi-agent LLM debate dynamics. Equity-decision-making is the *substrate* (cheap objective ground truth), not the goal.
+
+**Primary research question**: what structural conditions cause role-based multi-agent LLM debate to collapse to moderate ratings, and what enforcement mechanisms (or alternative architectures) would prevent that collapse?
+
+## Read the constitution first
+
+The design is governed by `.specify/memory/constitution.md`. Before non-trivial changes, read:
+
+1. `.specify/memory/constitution.md` — six core principles (Save Everything, One Experiment Per Change, Stay Cheap, No Production Claims, Steal Liberally, Spec Before Structural Change). The principles are constraints, not aspirations.
+2. `docs/EXPERIMENT.md` — living brainstorm of ~50 ideas tagged by source project (agent-harness-v2 / ladybird / battlecode2026 / bruno-swarm / mcp-reasoning), with Tier 1/2/3 cost filter. The active backlog.
+3. `docs/MULTI_AGENT_DEBATE_RESEARCH.md` — strategic-context doc evaluating three integration paths against the user's portfolio. Recorded for reference; superseded by EXPERIMENT.md's "stay separate, iterate freely" framing.
+4. `docs/SCAFFOLDING_PLAN.md` — install plan for spec-kit + ruff + mypy + pre-commit. Reflects what's currently scaffolded.
+5. `claudedocs/SETUP.md` — operator setup guide (state paths, provider switching, cost ranges, "what not to touch").
+
+The principles in the constitution govern day-to-day code changes:
+- **Save Everything (Principle I)** — every experiment writes to `experiments/<date>-<id>-<name>/` with `HYPOTHESIS.md`, `PARAMS.json`, `results.csv`, `ANALYSIS.md`, `run.sh`. Corpus is the research output.
+- **One Experiment Per Change (Principle II)** — vary one parameter at a time so the corpus is interpretable as ablation data.
+- **Stay Cheap (Principle III)** — runs default to ≤ $30 LLM spend; crossing requires explicit deliberation in `HYPOTHESIS.md`.
+- **Spec Before Structural Change (Principle VI)** — changes to the (future) event log, gates, worker structures, or `experiments/` convention itself start with `/speckit.specify`.
+
+## Spec-kit workflow
+
+Spec-kit (GitHub spec-kit v0.4.4 templates) is installed at `.specify/`. Slash commands available in this Claude Code session:
+
+- `/speckit.constitution` — amend constitution
+- `/speckit.specify <feature>` — generate `.specify/specs/<id>-<name>/spec.md`
+- `/speckit.clarify` — resolve open questions interactively
+- `/speckit.plan` — generate implementation plan
+- `/speckit.tasks` — generate task list
+- `/speckit.implement` — execute (or do by hand)
+- `/speckit.analyze` — post-mortem
+- `/speckit.checklist`, `/speckit.taskstoissues` — auxiliary
+
+Templates live at `.specify/templates/`. Helper scripts (PowerShell) at `.specify/scripts/powershell/`.
+
+## Quality gates (run by pre-commit)
+
+- **ruff** (`v0.15.12`) — formatter + linter, target Python 3.10, line-length 100. Configured in `pyproject.toml` `[tool.ruff]`.
+- **pytest unit tests** — runs on every commit via the `pytest-fast` local hook (`pytest -m unit -q`).
+- **Standard hygiene**: trailing whitespace, EOF newlines, large files (>500KB), merge conflicts, private keys.
+
+mypy (`v1.20`) is installed but **not** in pre-commit (too slow). Run manually: `mypy tradingagents`.
+
+**Baseline** (recorded at scaffolding install): ruff = 305 errors, mypy = 167 errors. New code adds zero new violations; the existing baseline is grandfathered for now (we'll be replacing much of it as part of `EXPERIMENT.md` plans).
+
 ## Commands
 
 Install (editable, with dev deps via uv-managed lockfile):
