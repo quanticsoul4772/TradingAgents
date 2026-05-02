@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (experiments scaffolding — spec 001)
+- `tradingagents/experiments/` module — ID generation/validation (`ids.py`), config-override parsing (`overrides.py`), template renderers (`templates.py`).
+- `scripts/new_experiment.py` — scaffold a new `experiments/<id>/` directory with templated `HYPOTHESIS.md`, `PARAMS.json`, `run.sh`, `run.ps1`. `--source-idea` and `--cost` pre-fills supported.
+- `scripts/backtest.py` extensions — `--experiment-id <id>` flag stamps every CSV row; `--config-override KEY=VALUE` (repeatable) overlays runtime config with type coercion (int → float → bool → null → str); `experiment_id` column appended to CSV at end (backward-compatible); PARAMS.json auto-sync of override values (refuses to overwrite manual annotations).
+- `scripts/findings_aggregate.py` — walk `experiments/*/ANALYSIS.md`, write `findings.md` at repo root with newest-first ordering and atomic write.
+- `experiments/.gitkeep` placeholder; `findings.md` initialized with empty placeholder.
+- 53 new tests across 6 files. All pass.
+- Spec artifacts at `specs/001-experiments-scaffolding/`: spec.md, plan.md, research.md, data-model.md, quickstart.md, tasks.md, 4 contracts, 1 checklist.
+- CLAUDE.md updated with new commands section.
+
 ### Added
 - `docs/EXPERIMENT.md` — living brainstorm doc defining the project as a personal research playground for multi-agent LLM debate dynamics (~50 ideas tagged by source project, Tier 1/2/3 cost filter).
 - `docs/MULTI_AGENT_DEBATE_RESEARCH.md` — strategic-decision doc evaluating three integration paths (standalone harness / merge into agent-harness-v2 / build new). Recorded for reference; superseded by EXPERIMENT.md's "stay separate, iterate freely" framing.

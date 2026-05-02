@@ -22,7 +22,11 @@ repos:
     hooks:
       - id: pytest-fast
         name: pytest (unit tests only)
-        entry: pytest -m unit -q
+        # `uv run` finds the project's .venv and uses its pytest. Bare
+        # `pytest` (or even `python -m pytest`) under language:system may
+        # resolve to the system Python on PATH and miss the editable
+        # install — pre-commit doesn't preserve venv activation.
+        entry: uv run --no-sync pytest -m unit -q
         language: system
         types: [python]
         pass_filenames: false
