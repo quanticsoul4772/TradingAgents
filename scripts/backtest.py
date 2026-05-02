@@ -29,7 +29,13 @@ from tradingagents.experiments.ids import validate_id
 from tradingagents.experiments.overrides import apply_overrides, parse_override
 from tradingagents.graph.trading_graph import TradingAgentsGraph
 
-load_dotenv()
+# override=True: the project's .env is the source of truth for API keys.
+# Without override, shell-injected env vars (e.g., from Claude Code's MCP
+# server configs) silently shadow the .env values. We hit this with
+# BRAVE_API_KEY: the MCP-config-injected key was broken; the .env had a
+# working one; load_dotenv() default kept the broken one. Catches every
+# experiment runner since they all import this script.
+load_dotenv(override=True)
 load_dotenv(".env.enterprise", override=False)
 
 logger = logging.getLogger(__name__)
