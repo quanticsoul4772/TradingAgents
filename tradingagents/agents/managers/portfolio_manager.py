@@ -25,6 +25,9 @@ def create_portfolio_manager(llm):
     structured_llm = bind_structured(llm, PortfolioDecision, "Portfolio Manager")
 
     def portfolio_manager_node(state) -> dict:
+        # Lazy import to avoid circular reference at module load.
+        from tradingagents.dataflows.config import get_config
+
         instrument_context = build_instrument_context(state["company_of_interest"])
 
         history = state["risk_debate_state"]["history"]
@@ -38,6 +41,19 @@ def create_portfolio_manager(llm):
             if past_context
             else ""
         )
+
+        # WC-12 (synthesis-blind variant): when False, withhold the Research
+        # Manager's investment_plan from the PM. Default True = current behavior.
+        # Drives experiments/2026-05-02-002-wc12-pm-blind/.
+        pm_sees_synthesis = get_config().get("pm_sees_synthesis", True)
+        if pm_sees_synthesis:
+            research_plan_line = f"- Research Manager's investment plan: **{research_plan}**\n"
+        else:
+            research_plan_line = (
+                "- Research Manager's investment plan: "
+                "*[withheld by experimental config; build your decision from the "
+                "trader plan and risk debate alone]*\n"
+            )
 
         prompt = f"""As the Portfolio Manager, synthesize the risk analysts' debate and deliver the final trading decision.
 
@@ -53,8 +69,7 @@ def create_portfolio_manager(llm):
 - **Sell**: Exit position or avoid entry
 
 **Context:**
-- Research Manager's investment plan: **{research_plan}**
-- Trader's transaction proposal: **{trader_plan}**
+{research_plan_line}- Trader's transaction proposal: **{trader_plan}**
 {lessons_line}
 **Risk Analysts Debate History:**
 {history}

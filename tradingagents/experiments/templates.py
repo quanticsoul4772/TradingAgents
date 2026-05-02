@@ -51,8 +51,10 @@ _RUN_SH_TEMPLATE = """\
 # Repro command for experiment {id}
 # EDIT THIS FILE to point at the actual runner for your experiment.
 # Default stub uses the standard backtest harness.
+# `uv run` resolves to the project's .venv; bare `python` may resolve to
+# the system interpreter, which doesn't have typer/anthropic/etc. installed.
 set -euo pipefail
-python scripts/backtest.py \\
+uv run --no-sync python scripts/backtest.py \\
     --experiment-id "{id}" \\
     --out "experiments/{id}/results.csv" \\
     --yes
@@ -63,8 +65,10 @@ _RUN_PS1_TEMPLATE = """\
 # Repro command for experiment {id}
 # EDIT THIS FILE to point at the actual runner for your experiment.
 # Default stub uses the standard backtest harness.
+# `uv run` resolves to the project's .venv; bare `python` may resolve to
+# the system interpreter, which doesn't have typer/anthropic/etc. installed.
 $ErrorActionPreference = 'Stop'
-python scripts/backtest.py `
+uv run --no-sync python scripts/backtest.py `
     --experiment-id "{id}" `
     --out "experiments/{id}/results.csv" `
     --yes

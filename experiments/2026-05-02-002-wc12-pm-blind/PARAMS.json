@@ -1,0 +1,14 @@
+{
+  "config_overrides": {
+    "pm_sees_synthesis": false
+  },
+  "explicit_flags": {
+    "--debate-rounds": 1,
+    "--analysts": "market,news,fundamentals",
+    "--provider": "anthropic",
+    "--deep-model": "claude-sonnet-4-6",
+    "--quick-model": "claude-haiku-4-5"
+  },
+  "baseline": "",
+  "notes": ""
+}
