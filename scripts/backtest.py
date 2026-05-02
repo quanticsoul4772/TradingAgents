@@ -276,6 +276,13 @@ def main(
         help="Override a runtime config key as KEY=VALUE. Repeatable. Type-coerced "
         '(int → float → bool → null → str). Quoted strings (KEY="42") skip coercion.',
     ),
+    news_vendor: str = typer.Option(
+        "yfinance",
+        "--news-vendor",
+        help="Vendor for news_data category: 'yfinance' (default), 'alpha_vantage', or 'brave'. "
+        "Convenience flag — equivalent to setting data_vendors[news_data] in code, "
+        "since --config-override can't reach nested dict keys.",
+    ),
 ):
     """Run propagate() over a grid and append results to CSV."""
     # Validate experiment_id early so bad input fails fast.
@@ -331,6 +338,7 @@ def main(
         f"  Models:         deep={deep_model} quick={quick_model} effort={anthropic_effort}"
     )
     console.print(f"  Debate rounds:  {debate_rounds}/{debate_rounds}")
+    console.print(f"  News vendor:    {news_vendor}")
     console.print(f"  Output:         {out}")
     if experiment_id:
         console.print(f"  Experiment ID:  {experiment_id}")
@@ -364,7 +372,7 @@ def main(
         "core_stock_apis": "yfinance",
         "technical_indicators": "yfinance",
         "fundamental_data": "yfinance",
-        "news_data": "yfinance",
+        "news_data": news_vendor,
     }
 
     # Track which keys were set by named flags so we can warn on override conflicts.
