@@ -69,6 +69,25 @@ Run a Python-API analysis directly:
 python main.py
 ```
 
+Experiments scaffolding (per `.specify/memory/constitution.md` Principle I):
+```bash
+python scripts/new_experiment.py mr1-contradiction --source-idea MR-1
+# → creates experiments/<YYYY-MM-DD>-NNN-mr1-contradiction/ with HYPOTHESIS.md,
+#   PARAMS.json, run.sh, run.ps1 stubs.
+
+python scripts/backtest.py \
+    --experiment-id 2026-05-02-001-pm-blind \
+    --config-override pm_sees_debate=false \
+    --out experiments/2026-05-02-001-pm-blind/results.csv \
+    --yes
+# → tags every CSV row with the experiment ID; auto-syncs the override
+#   into experiments/<id>/PARAMS.json.
+
+python scripts/findings_aggregate.py
+# → walks experiments/*/ANALYSIS.md, writes findings.md at repo root
+#   (newest first). Lab-notebook view of the project.
+```
+
 Tests (pytest is configured in `pyproject.toml`, markers: `unit`, `integration`, `smoke`):
 ```bash
 pytest                                      # full suite — conftest injects placeholder API keys

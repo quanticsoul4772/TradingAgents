@@ -32,8 +32,8 @@ Single project (per plan.md):
 
 **Purpose**: Project initialization for the new module.
 
-- [ ] T001 Create directory `tradingagents/experiments/` with empty `__init__.py`
-- [ ] T002 Create directory `experiments/` and add `experiments/.gitkeep` so the directory exists in fresh clones (per R-006)
+- [X] T001 Create directory `tradingagents/experiments/` with empty `__init__.py`
+- [X] T002 Create directory `experiments/` and add `experiments/.gitkeep` so the directory exists in fresh clones (per R-006)
 
 ---
 
@@ -45,15 +45,15 @@ The three files in `tradingagents/experiments/` can be developed in parallel —
 
 ### Implementation
 
-- [ ] T003 [P] Implement experiment ID generation + validation in `tradingagents/experiments/ids.py`. Functions: `next_experiment_id(experiments_dir, slug, date=None)`, `validate_id(id_str) -> bool`, `parse_id(id_str) -> tuple[date, int, str]`. Use the regex `^\d{4}-\d{2}-\d{2}-\d{3}-[a-z0-9][a-z0-9-]{0,38}[a-z0-9]$` per `data-model.md`. Sequence number scans `experiments/` for `<date>-NNN-*` dirs, takes max + 1, zero-pads to 3 digits.
-- [ ] T004 [P] Implement config-override parsing + application in `tradingagents/experiments/overrides.py`. Functions: `parse_override(s: str) -> tuple[str, Any]`, `apply_overrides(config: dict, overrides: list[str], allow_unknown: bool = True) -> dict`. Coercion order per R-003: int → float → bool ("true"/"false" case-insensitive) → null ("none"/"null") → str. Quoted values (`KEY="42"`) skip coercion. Emits a warning via `logging` for unknown keys.
-- [ ] T005 [P] Implement template loaders in `tradingagents/experiments/templates.py`. Functions: `render_hypothesis(id_str, source_idea=None, cost=None) -> str`, `render_run_sh(id_str) -> str`, `render_run_ps1(id_str) -> str`, `render_params_json() -> str`. Templates baked as module-level multi-line strings (no external template files; keeps it self-contained).
+- [X] T003 [P] Implement experiment ID generation + validation in `tradingagents/experiments/ids.py`. Functions: `next_experiment_id(experiments_dir, slug, date=None)`, `validate_id(id_str) -> bool`, `parse_id(id_str) -> tuple[date, int, str]`. Use the regex `^\d{4}-\d{2}-\d{2}-\d{3}-[a-z0-9][a-z0-9-]{0,38}[a-z0-9]$` per `data-model.md`. Sequence number scans `experiments/` for `<date>-NNN-*` dirs, takes max + 1, zero-pads to 3 digits.
+- [X] T004 [P] Implement config-override parsing + application in `tradingagents/experiments/overrides.py`. Functions: `parse_override(s: str) -> tuple[str, Any]`, `apply_overrides(config: dict, overrides: list[str], allow_unknown: bool = True) -> dict`. Coercion order per R-003: int → float → bool ("true"/"false" case-insensitive) → null ("none"/"null") → str. Quoted values (`KEY="42"`) skip coercion. Emits a warning via `logging` for unknown keys.
+- [X] T005 [P] Implement template loaders in `tradingagents/experiments/templates.py`. Functions: `render_hypothesis(id_str, source_idea=None, cost=None) -> str`, `render_run_sh(id_str) -> str`, `render_run_ps1(id_str) -> str`, `render_params_json() -> str`. Templates baked as module-level multi-line strings (no external template files; keeps it self-contained).
 
 ### Tests
 
-- [ ] T006 [P] Write `tests/test_experiments_ids.py` covering: valid ID round-trips, invalid IDs rejected, sequence increments within day, sequence resets across days, slug regex enforced.
-- [ ] T007 [P] Write `tests/test_experiments_overrides.py` covering all R-003 coercion paths: int / float / bool / null / str / quoted string / malformed input / unknown key warning.
-- [ ] T008 [P] Write `tests/test_experiments_templates.py` covering: HYPOTHESIS template includes ID + source idea + cost when provided / omits sections when not provided; PARAMS.json is valid JSON; run.sh and run.ps1 stubs reference the experiment ID.
+- [X] T006 [P] Write `tests/test_experiments_ids.py` covering: valid ID round-trips, invalid IDs rejected, sequence increments within day, sequence resets across days, slug regex enforced.
+- [X] T007 [P] Write `tests/test_experiments_overrides.py` covering all R-003 coercion paths: int / float / bool / null / str / quoted string / malformed input / unknown key warning.
+- [X] T008 [P] Write `tests/test_experiments_templates.py` covering: HYPOTHESIS template includes ID + source idea + cost when provided / omits sections when not provided; PARAMS.json is valid JSON; run.sh and run.ps1 stubs reference the experiment ID.
 
 **Checkpoint**: Foundation ready. T009 onward can begin in parallel where indicated.
 
@@ -67,11 +67,11 @@ The three files in `tradingagents/experiments/` can be developed in parallel —
 
 ### Implementation
 
-- [ ] T009 [US1] Implement `scripts/new_experiment.py` per `contracts/new_experiment_cli.md`. Use typer for the CLI. Wire to `tradingagents.experiments.ids.next_experiment_id` and `tradingagents.experiments.templates.render_*`. Refuses to overwrite existing dirs (FR-003). Validates short-name against regex.
+- [X] T009 [US1] Implement `scripts/new_experiment.py` per `contracts/new_experiment_cli.md`. Use typer for the CLI. Wire to `tradingagents.experiments.ids.next_experiment_id` and `tradingagents.experiments.templates.render_*`. Refuses to overwrite existing dirs (FR-003). Validates short-name against regex.
 
 ### Tests
 
-- [ ] T010 [US1] Write `tests/test_new_experiment.py` covering the 5 tests listed in `contracts/new_experiment_cli.md`: creates dir + files (happy path), refuses duplicate, rejects invalid short-name, increments sequence within day, --source-idea pre-fills hypothesis.
+- [X] T010 [US1] Write `tests/test_new_experiment.py` covering the 5 tests listed in `contracts/new_experiment_cli.md`: creates dir + files (happy path), refuses duplicate, rejects invalid short-name, increments sequence within day, --source-idea pre-fills hypothesis.
 
 **Checkpoint**: US1 (MVP) shippable. The new-experiment workflow works end-to-end.
 
@@ -85,19 +85,19 @@ The three files in `tradingagents/experiments/` can be developed in parallel —
 
 ### Implementation (sequential — same file)
 
-- [ ] T012 [US2] Modify `scripts/backtest.py`: add `--experiment-id` typer flag (string, optional, default empty). When non-empty, validate against `tradingagents.experiments.ids.validate_id`; refuse with clear error if invalid.
-- [ ] T013 [US2] Modify `scripts/backtest.py`: add `experiment_id` field to `CSV_FIELDS` at the **end** (per R-004). When `--experiment-id` is set, populate the field on every row; otherwise leave empty.
-- [ ] T014 [US2] Modify `scripts/backtest.py`: add repeatable `--config-override KEY=VALUE` typer flag. Use `tradingagents.experiments.overrides.apply_overrides` to merge into the runtime config dict before `TradingAgentsGraph(config=...)` is called.
-- [ ] T015 [US2] Modify `scripts/backtest.py`: implement override-vs-named-flag precedence per FR-010. When `--config-override max_debate_rounds=N` AND `--debate-rounds M` both provided: override wins; warning is logged. Mirror for `--analysts`, `--debate-rounds`, `--anthropic-effort`.
-- [ ] T016 [US2] Modify `scripts/backtest.py`: implement `PARAMS.json` auto-sync per R-007. After successful run, when `--experiment-id` AND any `--config-override` flag present: open `experiments/<id>/PARAMS.json`, update `config_overrides` key only if currently empty (refuse-overwrite-with-warning otherwise).
+- [X] T012 [US2] Modify `scripts/backtest.py`: add `--experiment-id` typer flag (string, optional, default empty). When non-empty, validate against `tradingagents.experiments.ids.validate_id`; refuse with clear error if invalid.
+- [X] T013 [US2] Modify `scripts/backtest.py`: add `experiment_id` field to `CSV_FIELDS` at the **end** (per R-004). When `--experiment-id` is set, populate the field on every row; otherwise leave empty.
+- [X] T014 [US2] Modify `scripts/backtest.py`: add repeatable `--config-override KEY=VALUE` typer flag. Use `tradingagents.experiments.overrides.apply_overrides` to merge into the runtime config dict before `TradingAgentsGraph(config=...)` is called.
+- [X] T015 [US2] Modify `scripts/backtest.py`: implement override-vs-named-flag precedence per FR-010. When `--config-override max_debate_rounds=N` AND `--debate-rounds M` both provided: override wins; warning is logged. Mirror for `--analysts`, `--debate-rounds`, `--anthropic-effort`.
+- [X] T016 [US2] Modify `scripts/backtest.py`: implement `PARAMS.json` auto-sync per R-007. After successful run, when `--experiment-id` AND any `--config-override` flag present: open `experiments/<id>/PARAMS.json`, update `config_overrides` key only if currently empty (refuse-overwrite-with-warning otherwise).
 
 ### Tests
 
-- [ ] T017 [US2] Write `tests/test_backtest_extensions.py` covering the 10 tests listed in `contracts/backtest_extensions.md`. Use a mock for `TradingAgentsGraph.propagate` (already mocked in `tests/conftest.py` patterns) so tests don't hit the LLM API.
+- [X] T017 [US2] Write `tests/test_backtest_extensions.py` covering the 10 tests listed in `contracts/backtest_extensions.md`. Use a mock for `TradingAgentsGraph.propagate` (already mocked in `tests/conftest.py` patterns) so tests don't hit the LLM API.
 
 ### Adjacent fix (different file — parallelizable with T012-T016)
 
-- [ ] T018 [P] [US2] Update `scripts/analyze_backtest.py` to tolerate the `experiment_id` column (read with `pandas.read_csv`; if column absent, treat as empty for backward compat with pre-cleanup `pilot_results.csv`).
+- [X] T018 [P] [US2] Update `scripts/analyze_backtest.py` to tolerate the `experiment_id` column (read with `pandas.read_csv`; if column absent, treat as empty for backward compat with pre-cleanup `pilot_results.csv`).
 
 **Checkpoint**: US2 shippable on top of US1. Single-knob ablation experiments now expressible as one command line.
 
@@ -111,13 +111,13 @@ The three files in `tradingagents/experiments/` can be developed in parallel —
 
 ### Implementation (sequential — same file)
 
-- [ ] T019 [US3] Implement `scripts/findings_aggregate.py` skeleton per `contracts/findings_aggregate_cli.md`: typer CLI with `--experiments-dir` and `--out` flags; walks `experiments/` for matching dirs; collects records.
-- [ ] T020 [US3] Implement summary extraction in `scripts/findings_aggregate.py` per R-001 and `contracts/analysis_md_format.md`: first non-empty line that follows the top-level `# ` heading and appears before any other heading. Handle the 3 states (missing ANALYSIS.md / no summary / valid summary) per FR-014.
-- [ ] T021 [US3] Implement output rendering + atomic write (tmp + rename) per `contracts/findings_aggregate_cli.md`. Sort newest first per R-002. Header includes timestamp, total/completed/pending counts.
+- [X] T019 [US3] Implement `scripts/findings_aggregate.py` skeleton per `contracts/findings_aggregate_cli.md`: typer CLI with `--experiments-dir` and `--out` flags; walks `experiments/` for matching dirs; collects records.
+- [X] T020 [US3] Implement summary extraction in `scripts/findings_aggregate.py` per R-001 and `contracts/analysis_md_format.md`: first non-empty line that follows the top-level `# ` heading and appears before any other heading. Handle the 3 states (missing ANALYSIS.md / no summary / valid summary) per FR-014.
+- [X] T021 [US3] Implement output rendering + atomic write (tmp + rename) per `contracts/findings_aggregate_cli.md`. Sort newest first per R-002. Header includes timestamp, total/completed/pending counts.
 
 ### Tests
 
-- [ ] T022 [US3] Write `tests/test_findings_aggregate.py` covering the 7 tests listed in `contracts/findings_aggregate_cli.md`: emits completed summary, marks missing analysis pending, marks missing summary, orders newest first, empty dir → placeholder, skips malformed dir names, atomic write doesn't leave partial files.
+- [X] T022 [US3] Write `tests/test_findings_aggregate.py` covering the 7 tests listed in `contracts/findings_aggregate_cli.md`: emits completed summary, marks missing analysis pending, marks missing summary, orders newest first, empty dir → placeholder, skips malformed dir names, atomic write doesn't leave partial files.
 
 **Checkpoint**: US3 shippable. Lab-notebook view of the project exists.
 
@@ -127,13 +127,13 @@ The three files in `tradingagents/experiments/` can be developed in parallel —
 
 **Purpose**: Documentation updates, final integration smoke, validation.
 
-- [ ] T023 [P] Generate initial `findings.md` by running `python scripts/findings_aggregate.py` (with empty `experiments/`, produces placeholder; commit the placeholder so the file exists in git).
-- [ ] T024 [P] Update `CLAUDE.md` to add `scripts/new_experiment.py` and `scripts/findings_aggregate.py` to the Commands section + reference `experiments/` convention.
-- [ ] T025 [P] Update `docs/EXPERIMENT.md` working notes with a dated entry: "Implemented experiments-scaffolding (spec 001). The Tier 1 ideas now have a clean experiment-creation workflow."
-- [ ] T026 Update `CHANGELOG.md` Unreleased section with the implemented additions.
-- [ ] T027 Run full `pytest tests/ -q`. Expect 92 (existing) + 30+ (new from T006-T008, T010, T017, T022) tests passing. Capture exact final count.
-- [ ] T028 Manual smoke-test per `quickstart.md` — run the MR-1-style walkthrough end-to-end (without the cost — just the scaffolding, an empty `run.sh` placeholder, then verify `findings_aggregate` picks it up). Record outcome in a working note.
-- [ ] T029 `/speckit.analyze` — post-hoc retrospective on whether the spec-kit workflow added value for this feature. Inputs: total time spent / docs written / bugs the spec caught vs missed. Output goes in `docs/EXPERIMENT.md` working notes.
+- [X] T023 [P] Generate initial `findings.md` by running `python scripts/findings_aggregate.py` (with empty `experiments/`, produces placeholder; commit the placeholder so the file exists in git).
+- [X] T024 [P] Update `CLAUDE.md` to add `scripts/new_experiment.py` and `scripts/findings_aggregate.py` to the Commands section + reference `experiments/` convention.
+- [X] T025 [P] Update `docs/EXPERIMENT.md` working notes with a dated entry: "Implemented experiments-scaffolding (spec 001). The Tier 1 ideas now have a clean experiment-creation workflow."
+- [X] T026 Update `CHANGELOG.md` Unreleased section with the implemented additions.
+- [X] T027 Run full `pytest tests/ -q`. Expect 92 (existing) + 30+ (new from T006-T008, T010, T017, T022) tests passing. Capture exact final count.
+- [X] T028 Manual smoke-test per `quickstart.md` — run the MR-1-style walkthrough end-to-end (without the cost — just the scaffolding, an empty `run.sh` placeholder, then verify `findings_aggregate` picks it up). Record outcome in a working note.
+- [X] T029 `/speckit.analyze` — post-hoc retrospective on whether the spec-kit workflow added value for this feature. Inputs: total time spent / docs written / bugs the spec caught vs missed. Output goes in `docs/EXPERIMENT.md` working notes.
 
 ---
 
