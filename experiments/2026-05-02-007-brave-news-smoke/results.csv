@@ -1,0 +1,17 @@
+ticker,analysis_date,rating,error,run_seconds,deep_model,quick_model,debate_rounds,analysts,experiment_id
+NVDA,2026-02-27,,HTTPError: 429 Client Error: Too Many Requests for url: https://api.search.brave.com/res/v1/news/search?q=NVDA+stock&count=20&freshness=2026-02-20to2026-02-27&search_lang=en&country=us&spellcheck=0,46.28,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-03-06,,HTTPError: 429 Client Error: Too Many Requests for url: https://api.search.brave.com/res/v1/news/search?q=NVDA+stock&count=20&freshness=2026-02-27to2026-03-06&search_lang=en&country=us&spellcheck=0,36.95,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-03-13,,HTTPError: 429 Client Error: Too Many Requests for url: https://api.search.brave.com/res/v1/news/search?q=NVDA+stock&count=20&freshness=2026-03-06to2026-03-13&search_lang=en&country=us&spellcheck=0,35.72,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-03-20,,HTTPError: 429 Client Error: Too Many Requests for url: https://api.search.brave.com/res/v1/news/search?q=NVDA+stock&count=20&freshness=2026-03-13to2026-03-20&search_lang=en&country=us&spellcheck=0,35.08,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-03-27,,HTTPError: 429 Client Error: Too Many Requests for url: https://api.search.brave.com/res/v1/news/search?q=NVDA+stock&count=20&freshness=2026-03-20to2026-03-27&search_lang=en&country=us&spellcheck=0,49.09,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-04-03,,HTTPError: 429 Client Error: Too Many Requests for url: https://api.search.brave.com/res/v1/news/search?q=stock+market+financial+news&count=10&freshness=2026-03-27to2026-04-03&search_lang=en&country=us&spellcheck=0,41.87,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-01-30,Overweight,,435.43,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-02-06,Overweight,,418.12,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-02-13,Overweight,,431.59,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-02-20,Buy,,455.08,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-02-27,Overweight,,522.91,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-03-06,Overweight,,493.27,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-03-13,Buy,,449.52,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-03-20,Overweight,,475.06,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-03-27,Overweight,,466.27,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
+NVDA,2026-04-03,Overweight,,497.24,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-007-brave-news-smoke
