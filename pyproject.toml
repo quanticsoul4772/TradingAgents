@@ -3,14 +3,27 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tradingagents"
-version = "0.2.4"
-description = "TradingAgents: Multi-Agents LLM Financial Trading Framework"
+name = "tradingagents-lab"
+version = "0.3.0-dev"
+description = "Personal experimental fork of TradingAgents — research playground for multi-agent LLM debate dynamics"
 readme = "README.md"
 requires-python = ">=3.10"
+authors = [
+    {name = "Russ Smith", email = "rbsmith4@gmail.com"},
+]
+keywords = ["llm", "multi-agent", "debate-dynamics", "agent-research", "structured-output"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
 dependencies = [
     "langchain-core>=0.3.81",
-    "backtrader>=1.9.78.123",
     "langchain-anthropic>=0.3.15",
     "langchain-experimental>=0.3.4",
     "langchain-google-genai>=4.0.0",
@@ -31,6 +44,10 @@ dependencies = [
     "typing-extensions>=4.14.0",
     "yfinance>=0.2.63",
 ]
+
+[project.urls]
+"Upstream" = "https://github.com/TauricResearch/TradingAgents"
+"Personal fork" = "https://github.com/quanticsoul4772/TradingAgents"
 
 [project.scripts]
 tradingagents = "cli.main:app"

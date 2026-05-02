@@ -220,3 +220,12 @@ __marimo__/
 
 # Cache
 **/data_cache/
+
+# Personal experiment artifacts (kept on disk, not tracked)
+backtest_memory.md
+pilot_results.csv
+sanity_check.csv
+backtest_results.csv
+*.backtest.csv
+experiments/*/results.csv
+experiments/*/events.db
