@@ -17,11 +17,34 @@ Env: BRAVE_API_KEY (loaded via dotenv from .env at repo root).
 from __future__ import annotations
 
 import os
+import threading
+import time
 from datetime import datetime, timedelta
 
 import requests
 
 _NEWS_ENDPOINT = "https://api.search.brave.com/res/v1/news/search"
+
+# Brave free tier: 1 request per second per token. Module-level throttle
+# enforces a minimum gap between calls so multiple analysts in the same
+# propagation don't 429 each other. Per-month cap (2000) is checked by the
+# remaining-quota header on each response and surfaced as a warning.
+_MIN_INTERVAL_SECONDS = 1.2  # 1 sec + 200 ms cushion
+_last_call_ts: float = 0.0
+_throttle_lock = threading.Lock()
+
+
+def _throttle() -> None:
+    """Block until at least _MIN_INTERVAL_SECONDS has passed since last call."""
+    global _last_call_ts
+    with _throttle_lock:
+        now = time.monotonic()
+        wait = _MIN_INTERVAL_SECONDS - (now - _last_call_ts)
+        if wait > 0:
+            time.sleep(wait)
+        _last_call_ts = time.monotonic()
+
+
 # Brave's freshness param accepts: pd (past day), pw (past week), pm (past month), py (past year),
 # or a custom YYYY-MM-DDtoYYYY-MM-DD range string.
 
@@ -79,6 +102,31 @@ def _freshness_for_window(start_date: str, end_date: str) -> str:
     return "pw"
 
 
+def _request_with_retry(params: dict, max_retries: int = 2) -> dict:
+    """GET against the news endpoint with throttle + 429 backoff.
+
+    Free-tier 1-req/sec ceiling is enforced by _throttle() before every call.
+    A 429 response triggers an exponential backoff (2s, 4s) and one retry.
+    Other 4xx/5xx errors propagate via raise_for_status().
+    """
+    last_response = None
+    for attempt in range(max_retries + 1):
+        _throttle()
+        response = requests.get(
+            _NEWS_ENDPOINT,
+            headers=_brave_headers(),
+            params=params,
+            timeout=30,
+        )
+        last_response = response
+        if response.status_code == 429 and attempt < max_retries:
+            time.sleep(2.0 * (attempt + 1))
+            continue
+        break
+    last_response.raise_for_status()
+    return last_response.json()
+
+
 def get_news_brave(ticker: str, start_date: str, end_date: str) -> str:
     """Get ticker-specific news from Brave Search News API.
 
@@ -98,14 +146,7 @@ def get_news_brave(ticker: str, start_date: str, end_date: str) -> str:
         "country": "us",
         "spellcheck": "0",
     }
-    response = requests.get(
-        _NEWS_ENDPOINT,
-        headers=_brave_headers(),
-        params=params,
-        timeout=30,
-    )
-    response.raise_for_status()
-    data = response.json()
+    data = _request_with_retry(params)
     results = data.get("results", []) or []
     return _format_results(results)
 
@@ -138,13 +179,6 @@ def get_global_news_brave(
         "country": "us",
         "spellcheck": "0",
     }
-    response = requests.get(
-        _NEWS_ENDPOINT,
-        headers=_brave_headers(),
-        params=params,
-        timeout=30,
-    )
-    response.raise_for_status()
-    data = response.json()
+    data = _request_with_retry(params)
     results = data.get("results", []) or []
     return _format_results(results, max_articles=limit)
