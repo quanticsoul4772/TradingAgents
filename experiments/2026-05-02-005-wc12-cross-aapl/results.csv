@@ -1,0 +1,11 @@
+ticker,analysis_date,rating,error,run_seconds,deep_model,quick_model,debate_rounds,analysts,experiment_id
+AAPL,2026-01-30,Underweight,,370.42,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-005-wc12-cross-aapl
+AAPL,2026-02-06,Hold,,461.03,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-005-wc12-cross-aapl
+AAPL,2026-02-13,Hold,,421.96,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-005-wc12-cross-aapl
+AAPL,2026-02-20,Underweight,,420.22,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-005-wc12-cross-aapl
+AAPL,2026-02-27,Hold,,438.54,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-005-wc12-cross-aapl
+AAPL,2026-03-06,Hold,,426.02,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-005-wc12-cross-aapl
+AAPL,2026-03-13,Sell,,378.8,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-005-wc12-cross-aapl
+AAPL,2026-03-20,Hold,,361.71,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-005-wc12-cross-aapl
+AAPL,2026-03-27,Hold,,485.99,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-005-wc12-cross-aapl
+AAPL,2026-04-03,Hold,,433.68,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-005-wc12-cross-aapl
