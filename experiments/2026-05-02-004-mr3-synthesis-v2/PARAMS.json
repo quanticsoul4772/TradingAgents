@@ -1,0 +1,14 @@
+{
+  "config_overrides": {
+    "research_manager_prompt_variant": "v2"
+  },
+  "explicit_flags": {
+    "--debate-rounds": 1,
+    "--analysts": "market,news,fundamentals",
+    "--provider": "anthropic",
+    "--deep-model": "claude-sonnet-4-6",
+    "--quick-model": "claude-haiku-4-5"
+  },
+  "baseline": "",
+  "notes": ""
+}

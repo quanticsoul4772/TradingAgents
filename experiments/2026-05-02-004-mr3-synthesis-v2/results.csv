@@ -1,0 +1,11 @@
+ticker,analysis_date,rating,error,run_seconds,deep_model,quick_model,debate_rounds,analysts,experiment_id
+NVDA,2026-01-30,Overweight,,420.34,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-004-mr3-synthesis-v2
+NVDA,2026-02-06,Overweight,,366.79,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-004-mr3-synthesis-v2
+NVDA,2026-02-13,Overweight,,408.8,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-004-mr3-synthesis-v2
+NVDA,2026-02-20,Overweight,,384.37,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-004-mr3-synthesis-v2
+NVDA,2026-02-27,Hold,,418.97,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-004-mr3-synthesis-v2
+NVDA,2026-03-06,Hold,,488.91,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-004-mr3-synthesis-v2
+NVDA,2026-03-13,Hold,,365.36,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-004-mr3-synthesis-v2
+NVDA,2026-03-20,Overweight,,362.73,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-004-mr3-synthesis-v2
+NVDA,2026-03-27,Overweight,,456.54,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-004-mr3-synthesis-v2
+NVDA,2026-04-03,Underweight,,369.37,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-02-004-mr3-synthesis-v2
