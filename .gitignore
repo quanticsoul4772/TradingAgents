@@ -233,3 +233,4 @@ backtest_results.csv
 *.backtest.csv
 experiments/*/results.csv
 experiments/*/events.db
+experiments/*/debates.jsonl
