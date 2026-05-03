@@ -7,9 +7,12 @@ Your local config, distilled. This reflects what's actually on disk, not generic
 - **Repo:** `C:/Development/Projects/TradingAgents` (branch `main`, v0.2.4)
 - **venv:** `.venv/` (Python 3.12.8, created with `uv venv`)
 - **Provider:** Anthropic (key in `.env`, gitignored)
-- **Models:** `claude-sonnet-4-6` (deep) + `claude-haiku-4-5` (quick)
-- **Data:** yfinance for everything (no Alpha Vantage / Finnhub key needed)
+- **Models:** `claude-sonnet-4-6` (deep) + `claude-haiku-4-5` (quick) for default runs; `claude-opus-4-7` for the strongest deep model
+- **Data:**
+  - News: **Exa** (`EXA_API_KEY` required; in `.env`) — yfinance/brave news vendors were removed 2026-05-03
+  - Stock prices / technicals / fundamentals: yfinance (no key needed)
 - **Checkpoint resume:** enabled in `main.py` (opt-in for the CLI)
+- **A3 momentum filter:** opt-in via `config["uw_momentum_filter_threshold"] = -5.0` — suppresses UW/Sell commits on tickers in -5%+ trailing-30d drawdown (mean-reversion zone). Default off.
 
 Persistent state lives under `~/.tradingagents/`:
 ```
@@ -174,6 +177,12 @@ Internal Bull/Bear/risk debates stay in English on purpose (reasoning quality).
 ```bash
 python -c "import os; from dotenv import load_dotenv; load_dotenv(); print(bool(os.environ.get('ANTHROPIC_API_KEY')))"
 ```
+
+**Exa `EXA_API_KEY not set` RuntimeError** — news vendor needs the key:
+```bash
+python -c "import os; from dotenv import load_dotenv; load_dotenv(); print(bool(os.environ.get('EXA_API_KEY')))"
+```
+Get a key from https://dashboard.exa.ai/api-keys. Free tier is ~1000 calls/month, generous for normal experiment cadence.
 
 **Anthropic 429 (rate limit)** — drop `max_debate_rounds` to 1, switch `quick_think_llm` to Haiku if you weren't already, or just retry (checkpoint will resume mid-run if enabled).
 

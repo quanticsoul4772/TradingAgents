@@ -10,21 +10,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Read the headline finding first
 
-After 11 experiments + cross-experiment horizon sweep, the architectural conclusion is captured in **`RESEARCH_FINDINGS.md`**. One paragraph:
+After 13 experiments + cross-experiment horizon sweep + per-ticker breakdown + Opus 4.7 model swap (NVDA + AAPL), the architectural conclusion is captured in **`RESEARCH_FINDINGS.md`**. Forward roadmap in **`ROADMAP.md`**.
 
-> At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls (Buy/OW/UW/Sell) are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) become directionally correct and produce ~+1.6% mean alpha across n=37 across-experiment commits. Bearish commits remain anti-calibrated at every horizon. Hold ≈ 0% at every horizon. The framework is a calibrated-abstention engine with asymmetric directional skill at 21-day. Single-call baseline does NOT show the 21-day lift — the signal is framework-specific.
+> At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls (Buy/OW/UW/Sell) are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) become directionally correct and produce ~+1.79% mean alpha across n=41 across-experiment commits (63% hit rate). Bearish commits remain anti-calibrated at every horizon, with the failure mode concentrated on tickers in -10%+ drawdowns (mean-reversion plays the framework misidentifies). Hold ≈ 0% at every horizon. **Mode-collapse direction is a function of (model × ticker × regime × prompt)**: Sonnet over-abstains on bull tickers AND over-commits-bearish on bear tickers; Opus discriminates per-ticker (10/10 OW on NVDA bull regime, 8/10 Hold on AAPL mixed regime).
 
-This is encoded in **Constitution Principle VII (Calibrated Abstention is a Valid Output)** added 2026-05-03. Any new structural change that reduces Hold rate must justify in HYPOTHESIS.md why the additional commits would be calibrated rather than noise, and at what horizon.
+This is encoded in **Constitution Principle VII (Calibrated Abstention is a Valid Output)** added 2026-05-03 then re-amended after 006. Any new structural change that reduces Hold rate must justify in HYPOTHESIS.md why the additional commits would be calibrated rather than noise, at what horizon, and with what directional asymmetry expectation.
 
 ## Read the constitution first
 
 The design is governed by `.specify/memory/constitution.md`. Before non-trivial changes, read:
 
-1. `.specify/memory/constitution.md` — six core principles (Save Everything, One Experiment Per Change, Stay Cheap, No Production Claims, Steal Liberally, Spec Before Structural Change). The principles are constraints, not aspirations.
-2. `docs/EXPERIMENT.md` — living brainstorm of ~50 ideas tagged by source project (agent-harness-v2 / ladybird / battlecode2026 / bruno-swarm / mcp-reasoning), with Tier 1/2/3 cost filter. The active backlog.
-3. `docs/MULTI_AGENT_DEBATE_RESEARCH.md` — strategic-context doc evaluating three integration paths against the user's portfolio. Recorded for reference; superseded by EXPERIMENT.md's "stay separate, iterate freely" framing.
-4. `docs/SCAFFOLDING_PLAN.md` — install plan for spec-kit + ruff + mypy + pre-commit. Reflects what's currently scaffolded.
-5. `claudedocs/SETUP.md` — operator setup guide (state paths, provider switching, cost ranges, "what not to touch").
+1. `.specify/memory/constitution.md` — **seven** core principles (Save Everything, One Experiment Per Change, Stay Cheap, No Production Claims, Steal Liberally, Spec Before Structural Change, **Calibrated Abstention is a Valid Output**). The principles are constraints, not aspirations.
+2. `RESEARCH_FINDINGS.md` — project-level synthesis across all 13 experiments + the 5 open questions with their reasoning-tool-derived priors and empirical answers.
+3. `ROADMAP.md` — sequenced phases of exploration (Phase B validate / C operationalize / D substrate-extend / E architectural variants) + cross-pollination opportunities from sibling projects.
+4. `docs/EXPERIMENT.md` — original brainstorm of ~50 ideas tagged by source project (agent-harness-v2 / ladybird / battlecode2026 / bruno-swarm / mcp-reasoning). Most Tier 1 ideas now superseded by completed experiments; Tier 2/3 still untouched.
+5. `docs/MULTI_AGENT_DEBATE_RESEARCH.md` — strategic-context doc evaluating three integration paths against the user's portfolio. Recorded for reference; superseded by ROADMAP framing.
+6. `docs/SCAFFOLDING_PLAN.md` — install plan for spec-kit + ruff + mypy + pre-commit. Reflects what's currently scaffolded.
+7. `claudedocs/SETUP.md` — operator setup guide (state paths, provider switching, cost ranges, "what not to touch").
 
 The principles in the constitution govern day-to-day code changes:
 - **Save Everything (Principle I)** — every experiment writes to `experiments/<date>-<id>-<name>/` with `HYPOTHESIS.md`, `PARAMS.json`, `results.csv`, `ANALYSIS.md`, `run.sh`. Corpus is the research output.
@@ -56,6 +58,8 @@ Templates live at `.specify/templates/`. Helper scripts (PowerShell) at `.specif
 mypy (`v1.20`) is installed but **not** in pre-commit (too slow). Run manually: `mypy tradingagents`.
 
 **Baseline** (recorded at scaffolding install): ruff = 305 errors, mypy = 167 errors. New code adds zero new violations; the existing baseline is grandfathered for now (we'll be replacing much of it as part of `EXPERIMENT.md` plans).
+
+**Test coverage** (as of 2026-05-03): 466 tests passing, 81% project coverage. Anthropic + OpenAI clients ~95%, all 4 analyst factories + 5 debate-agent factories 100%, graph/setup.py 100%, conditional_logic.py 100%, trading_graph.py 88%, dataflows/interface.py 98%.
 
 ## Commands
 
@@ -111,12 +115,27 @@ python scripts/single_call_baseline.py \
 # → loads existing state logs, feeds 3 analyst reports to ONE Claude call,
 #   produces a 5-tier rating. Tests architectural premise of multi-agent
 #   structure vs single call on same inputs.
+
+python scripts/bear_side_per_ticker.py
+# → per-ticker UW α breakdown (Q4 diagnostic). Tests whether bear-side
+#   anti-calibration is uniform or regime-concentrated.
+
+python scripts/diagnose_uw_quality.py
+# → debate features (bull/bear length, hedge words, keywords) for each
+#   UW commit. Identifies the composite discriminator from A1.
+
+python scripts/uw_suppression_filter.py
+# → A3 retrospective: simulates the mean-reversion suppression filter
+#   on historical UW commits. Operates on existing CSVs; $0.
 ```
 
-**News vendors** (per `--news-vendor`):
-- `yfinance` (default, free, low quality — press releases + headlines)
-- `brave` (high quality, time-leaky — search ranking favors currently-popular articles)
-- `exa` (high quality, true historical date filter via startPublishedDate/endPublishedDate)
+**News vendor** (per `--news-vendor`):
+- `exa` (default; requires `EXA_API_KEY`) — true historical date filter via startPublishedDate/endPublishedDate
+- `alpha_vantage` — alternative for users with that subscription
+
+`yfinance` and `brave` news vendors were removed 2026-05-03; `yfinance` the package is still used for stock prices, technical indicators, and fundamental data.
+
+**A3 momentum filter** (opt-in production augmentation): set `config["uw_momentum_filter_threshold"] = -5.0` to enable mean-reversion suppression of UW/Sell commits. Wired in `tradingagents/agents/managers/portfolio_manager.py` via `tradingagents/agents/utils/momentum_filter.py`. Default disabled.
 
 Tests (pytest is configured in `pyproject.toml`, markers: `unit`, `integration`, `smoke`):
 ```bash
