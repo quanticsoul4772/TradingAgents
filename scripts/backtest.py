@@ -285,8 +285,8 @@ def main(
     news_vendor: str = typer.Option(
         "yfinance",
         "--news-vendor",
-        help="Vendor for news_data category: 'yfinance' (default), 'alpha_vantage', or 'brave'. "
-        "Convenience flag — equivalent to setting data_vendors[news_data] in code, "
+        help="Vendor for news_data category: 'yfinance' (default), 'alpha_vantage', 'brave', "
+        "or 'exa'. Convenience flag — equivalent to setting data_vendors[news_data] in code, "
         "since --config-override can't reach nested dict keys.",
     ),
 ):

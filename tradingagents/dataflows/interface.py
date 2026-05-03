@@ -31,6 +31,7 @@ from .brave_news import get_global_news_brave, get_news_brave
 
 # Configuration and routing logic
 from .config import get_config
+from .exa_news import get_global_news_exa, get_news_exa
 from .y_finance import (
     get_balance_sheet as get_yfinance_balance_sheet,
 )
@@ -77,6 +78,7 @@ VENDOR_LIST = [
     "yfinance",
     "alpha_vantage",
     "brave",  # news only
+    "exa",  # news only — true historical date filter (vs Brave's freshness time-leak)
 ]
 
 # Mapping of methods to their vendor-specific implementations
@@ -113,11 +115,13 @@ VENDOR_METHODS = {
         "alpha_vantage": get_alpha_vantage_news,
         "yfinance": get_news_yfinance,
         "brave": get_news_brave,
+        "exa": get_news_exa,
     },
     "get_global_news": {
         "yfinance": get_global_news_yfinance,
         "alpha_vantage": get_alpha_vantage_global_news,
         "brave": get_global_news_brave,
+        "exa": get_global_news_exa,
     },
     "get_insider_transactions": {
         "alpha_vantage": get_alpha_vantage_insider_transactions,
