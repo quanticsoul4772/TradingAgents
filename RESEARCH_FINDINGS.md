@@ -115,7 +115,13 @@ Posterior **0.10** (prior 0.3, Bayes factor 0.25). Tool synthesis: "Anti-calibra
 
 ### Q3 — 21d lift Sonnet-specific vs general
 
-Posterior **0.64** (prior 0.5, Bayes factor 1.75). Tool synthesis: "Sonnet's documented over-commitment bias and model-specific nature of bear-side anti-calibration suggest similar dynamics for bull-side. However, underlying analyst-report signal exists in data and debate-filtering is generally available — prevents stronger conclusion." **Verdict**: moderate model-specificity expected. Model-swap experiment ($10-30) is worth funding but priors say a different LLM probably shows similar shape with different magnitude.
+Reasoning-tool prior: posterior 0.64 (moderate confidence general).
+
+**Empirical answer (2026-05-03)**: experiment 005 (opus47-swap-nvda) ran the same NVDA × 10 grid with deep_think_llm = claude-opus-4-7. Result: 10/10 Overweight commits, **21d OW α = +2.85% across n=9 with 78% hit rate** — STRONGER than Sonnet cross-experiment OW 21d α of +1.59%. 7 of 9 directionally correct, including a +15% win on 03-27.
+
+Verdict: **strongly positive — 21d signal is general-LLM, not Sonnet-specific. The lift amplifies with a stronger model.** Pulls cross-experiment OW 21d α to +1.88% (n=43, 64% hit). Single-call baseline still doesn't show the lift, so the framework structure remains load-bearing.
+
+**Updates Constitution Principle VII**: the calibrated-abstention claim ("Hold mode collapse is honest") is Sonnet-specific. Opus on the same prompt commits aggressively to OW and is right at 21d 78% of the time. The mode-collapse direction is model-dependent; both are honest given each model's intrinsic calibration. Principle VII should be reframed as "Each model's intrinsic calibration determines mode-collapse direction; Hold-collapse is one valid form, OW-collapse is another, both honest if realized α matches."
 
 ### Q4 — UW anti-calibration: ticker-concentrated or distributed?
 

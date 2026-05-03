@@ -1,11 +1,11 @@
 # Horizon sweep — bucket alpha across 5/10/21/90-day windows
 
-_Generated 2026-05-02T22:47:24.760002_
+_Generated 2026-05-03T08:55:54.894135_
 
 Convention: Underweight/Sell directionally correct when α<0; Buy/Overweight correct when α>0; Hold neutral. Hit rate = % positive α.
 
 
-_horizons: [5, 10, 21, 90]; experiments: 9; total resolved (rating, horizon) cells: 290_
+_horizons: [5, 10, 21, 90]; experiments: 10; total resolved (rating, horizon) cells: 319_
 
 
 ## 2026-05-02-002-wc12-pm-blind
@@ -98,12 +98,22 @@ _horizons: [5, 10, 21, 90]; experiments: 9; total resolved (rating, horizon) cel
 | Underweight | +1.32% (n=7, 57%) | +0.76% (n=7, 57%) | +0.56% (n=6, 67%) | — |
 | Sell | — | — | — | — |
 
+## 2026-05-03-005-opus47-swap-nvda
+
+| Rating | 5d α (n, hit%) | 10d α (n, hit%) | 21d α (n, hit%) | 90d α (n, hit%) |
+|---|---|---|---|---|
+| Buy | — | — | — | — |
+| Overweight | +0.25% (n=10, 50%) | +1.22% (n=10, 60%) | +2.85% (n=9, 78%) | — |
+| Hold | — | — | — | — |
+| Underweight | — | — | — | — |
+| Sell | — | — | — | — |
+
 ## Cross-experiment summary (mean α across experiments per horizon × bucket)
 
 | Rating | 5d mean α (Σn) | 10d mean α (Σn) | 21d mean α (Σn) | 90d mean α (Σn) |
 |---|---|---|---|---|
 | Buy | -1.27% (n=8, 25%) | -0.55% (n=8, 38%) | +1.16% (n=7, 71%) | — |
-| Overweight | -0.59% (n=33, 42%) | +0.14% (n=33, 42%) | +1.59% (n=30, 60%) | — |
+| Overweight | -0.39% (n=43, 44%) | +0.39% (n=43, 47%) | +1.88% (n=39, 64%) | — |
 | Hold | +0.31% (n=32, 53%) | +0.01% (n=32, 44%) | -0.22% (n=30, 57%) | — |
 | Underweight | +0.62% (n=26, 62%) | +0.75% (n=26, 54%) | +1.56% (n=22, 64%) | — |
 | Sell | +1.22% (n=1, 100%) | +3.73% (n=1, 100%) | -1.38% (n=1, 0%) | — |

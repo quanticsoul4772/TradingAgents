@@ -18,21 +18,18 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 
 ---
 
-## Active branch — pending Opus result
+## Active branch — Opus result landed (2026-05-03)
 
-Opus 4.7 swap will land in ~20-30 min. Branch decision per the strategic map:
+**Result**: experiment 005 produced 10/10 Overweight on NVDA × 10. Opus OW 21d α = **+2.85% (n=9, 78% hit)** — STRONGER than Sonnet's +1.59%. Decision tree: top branch (≥ +1.0%) fired → 21d signal is general-LLM, not Sonnet-specific.
 
-```
-Opus 21d OW α (after horizon_sweep)
-├── ≥ +1.0%  → 21d signal is general-LLM (not Sonnet-specific)
-│             → Phase A1: schedule Q1 65-pair re-pilot at 21d ($30, ~14h overnight)
-├── ≈ 0%    → 21d signal was Sonnet-substrate-specific
-│             → Phase A2: triangulation (GPT-5.4 or Gemini 3.x swap, $5-10)
-└── ≪ 0%    → unexpected; Opus is anti-calibrated where Sonnet had signal
-              → Phase A3: debate-content diff between Sonnet vs Opus state logs
-```
+**Next experiment selected**: 30-pair Opus re-pilot at 21d horizon (~$30, ~3.5h, fits Principle III ceiling). The full 65-pair re-pilot at Opus would cost ~$65 — needs explicit deliberation in HYPOTHESIS to cross the ceiling, OR run at 65-pair Sonnet ($30) which keeps to ceiling but uses the weaker model.
 
-After whichever sub-branch fires, the next exploration phase opens up.
+Alternative pre-flight check before committing $30: **AAPL × 10 Opus swap (~$10)** — tests whether Opus's commit pattern + 21d-correct behavior generalizes to a bear-correct ticker. If it does, the 21d bull-side signal is multi-regime and the 30-pair re-pilot at scale is well-grounded.
+
+Recommended sequence:
+1. AAPL × 10 Opus swap ($10, 80 min) — confirms generalization
+2. If AAPL also shows OW 21d positive: 30-pair Opus re-pilot at 21d ($30, 3.5h)
+3. If AAPL doesn't: stay with Sonnet for the 30-pair, save Opus for later targeted runs
 
 ---
 
