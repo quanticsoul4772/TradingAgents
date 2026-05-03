@@ -101,6 +101,36 @@ python scripts/identify_hold_extremes.py --top-n 8 --horizon 21
 - `.specify/memory/constitution.md` — six principles governing the research approach
 - `docs/EXPERIMENT.md` — backlog of ~50 untested ideas
 
+## MCP-reasoning answers to the 5 open questions
+
+Each open question above was put through `mcp-reasoning` for an independent reasoning-architecture answer (mostly `reasoning_evidence` probabilistic for Bayesian estimates, `reasoning_decision` and `reasoning_divergent` where appropriate). Results:
+
+### Q1 — 21d bull lift at n=100+ scale
+
+Posterior **0.64** (prior 0.4, Bayes factor 2.67). Tool synthesis: "Moderately strong support that bull-side alpha would persist at scale, though scaling risks remain. Sensitivity moderate — with a more pessimistic prior (0.2) posterior would still reach ~0.5; with optimistic (0.6+) would exceed 0.75." **Verdict**: scaling is worth funding (~$30, ~14h overnight); evidence supports the hypothesis but doesn't dominate it.
+
+### Q2 — Bear-side anti-calibration at 90d
+
+Posterior **0.10** (prior 0.3, Bayes factor 0.25). Tool synthesis: "Anti-calibration worsens monotonically with horizon (5d +0.62% → 10d +0.75% → 21d +1.56%) — strongly suggests structural bullish bias rather than horizon-dependent timing issue. Bias will likely persist or worsen at 90d, not reverse. Low sensitivity to prior — even with optimistic priors (0.5-0.6), strong contradictory evidence yields posterior <0.2." **Verdict**: do NOT expect 90d to fix bear side. The bullish lean is structural. UW bucket should be treated as anti-signal, not as a flat-noise bucket.
+
+### Q3 — 21d lift Sonnet-specific vs general
+
+Posterior **0.64** (prior 0.5, Bayes factor 1.75). Tool synthesis: "Sonnet's documented over-commitment bias and model-specific nature of bear-side anti-calibration suggest similar dynamics for bull-side. However, underlying analyst-report signal exists in data and debate-filtering is generally available — prevents stronger conclusion." **Verdict**: moderate model-specificity expected. Model-swap experiment ($10-30) is worth funding but priors say a different LLM probably shows similar shape with different magnitude.
+
+### Q4 — UW anti-calibration: ticker-concentrated or distributed?
+
+`reasoning_decision` (perspectives mode) gave a portfolio-strategy framed answer (60-70% concentrated allocation + 30-40% diversification overlay) rather than a research-design answer — output was muddled by the tool reading the question as portfolio-management rather than diagnostic. **Verdict**: tool wasn't well-suited; the actual answer requires running a per-ticker breakdown of UW α at 21d. ~30 min of pandas work on existing CSVs, no LLM cost.
+
+### Q5 — Wire reasoning_evidence into PortfolioManager as 2nd opinion
+
+`reasoning_divergent` produced 3 substantive perspectives and a synthesis:
+
+- **Risk Management Advocate**: integration transforms framework from point-estimate to uncertainty-aware — high disagreement signals conservative sizing, consensus enables aggressive allocation, frames decisions as risk-adjusted recommendations with quantified bounds.
+- **Behavioral Finance Skeptic**: dangerous illusion of enhanced rationality — both systems trained on same historical patterns, will reproduce rather than correct for market biases. Disagreement creates analysis paralysis or false confidence in consensus.
+- **Systems Reliability Engineer**: introduces single points of failure, latency bottleneck, chaotic behavior risk where small evidence-interpretation changes produce wildly different uncertainty signals.
+
+**Synthesis**: build asymmetric handling — agreement boosts confidence/sizing, disagreement triggers human review (NOT algorithmic resolution). Build escape valves — system must degrade gracefully when reasoning_evidence fails. Implement time-boxed decision windows to prevent overthinking. **Verdict**: integration is worth building IF designed asymmetrically (agreement → augment, disagreement → flag for review), NOT as a calibration auto-correct.
+
 ## Project status
 
-Research milestone closed at this snapshot. The architectural reframe (calibrated abstention + asymmetric 21-day bull-side signal) is the result. Further work would either (a) test the 21-day signal at scale (Open Question 1), (b) wire reasoning-tool integrations (Open Question 5), or (c) pursue model-swap (Open Question 3). All three would exceed the Constitution Principle III ($30) per-session ceiling and need explicit cost deliberation in their own HYPOTHESIS.
+Research milestone closed at this snapshot. The architectural reframe (calibrated abstention + asymmetric 21-day bull-side signal) is the result. Further work would either (a) test the 21-day signal at scale (Open Question 1) — reasoning supports as moderately likely-positive, (b) wire reasoning_evidence integration with asymmetric handling (Open Question 5) — reasoning identifies real failure modes that need explicit guards, or (c) pursue model-swap (Open Question 3) — reasoning suggests moderate model-specificity, useful but not as load-bearing. Q2 (90d bear fix) is reasoning-confidence-rejected — do not pursue without strong contrary evidence. All three actionable directions would exceed the Constitution Principle III ($30) per-session ceiling and need explicit cost deliberation in their own HYPOTHESIS.
