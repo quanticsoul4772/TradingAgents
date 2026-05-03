@@ -405,18 +405,266 @@ def get_insider_transactions(
     try:
         ticker_obj = yf.Ticker(ticker.upper())
         data = yf_retry(lambda: ticker_obj.insider_transactions)
-        
+
         if data is None or data.empty:
             return f"No insider transactions data found for symbol '{ticker}'"
-            
+
         # Convert to CSV string for consistency with other functions
         csv_string = data.to_csv()
-        
+
         # Add header information
         header = f"# Insider Transactions data for {ticker.upper()}\n"
         header += f"# Data retrieved on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-        
+
         return header + csv_string
-        
+
     except Exception as e:
         return f"Error retrieving insider transactions for {ticker}: {str(e)}"
+
+
+# -------------------------------------------------------------------------
+# Extended yfinance signals (added 2026-05-03 per docs/SIGNALS.md)
+# -------------------------------------------------------------------------
+
+
+def get_recommendations(
+    ticker: Annotated[str, "ticker symbol of the company"],
+):
+    """Wall Street analyst rating history + recent upgrades/downgrades.
+
+    Returns up to 3 sections: current consensus (recommendations_summary),
+    rating history (recommendations), recent rating changes (upgrades_downgrades).
+    Highly predictive at the 1-3 month horizon — matches the framework's
+    21d measurement window per RESEARCH_FINDINGS Q3.
+    """
+    try:
+        ticker_obj = yf.Ticker(ticker.upper())
+        sections = []
+
+        # Current consensus + raw history
+        recs = yf_retry(lambda: ticker_obj.recommendations)
+        if recs is not None and not recs.empty:
+            sections.append("## Recommendations history\n\n" + recs.to_csv())
+
+        # Recent upgrades/downgrades (different shape)
+        try:
+            upgrades = yf_retry(lambda: ticker_obj.upgrades_downgrades)
+            if upgrades is not None and not upgrades.empty:
+                sections.append(
+                    "## Recent upgrades / downgrades\n\n" + upgrades.head(20).to_csv()
+                )
+        except Exception:
+            pass  # not all tickers expose upgrades_downgrades
+
+        if not sections:
+            return f"No analyst recommendations data found for symbol '{ticker}'"
+
+        header = f"# Analyst Recommendations for {ticker.upper()}\n"
+        header += f"# Data retrieved on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        return header + "\n\n".join(sections)
+
+    except Exception as e:
+        return f"Error retrieving recommendations for {ticker}: {str(e)}"
+
+
+def get_earnings_calendar(
+    ticker: Annotated[str, "ticker symbol of the company"],
+):
+    """Upcoming earnings dates + earnings surprise history.
+
+    Crucial for 21d-window analysis: a window that includes earnings is a
+    fundamentally different prediction problem than one that doesn't.
+    """
+    try:
+        ticker_obj = yf.Ticker(ticker.upper())
+        sections = []
+
+        # Upcoming + recent earnings dates
+        try:
+            ed = yf_retry(lambda: ticker_obj.earnings_dates)
+            if ed is not None and not ed.empty:
+                sections.append("## Earnings dates (upcoming + recent)\n\n" + ed.to_csv())
+        except Exception:
+            pass
+
+        # Calendar (next earnings + dividends)
+        try:
+            cal = yf_retry(lambda: ticker_obj.calendar)
+            if cal:
+                sections.append(f"## Calendar\n\n{cal}")
+        except Exception:
+            pass
+
+        if not sections:
+            return f"No earnings calendar data found for symbol '{ticker}'"
+
+        header = f"# Earnings Calendar for {ticker.upper()}\n"
+        header += f"# Data retrieved on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        return header + "\n\n".join(sections)
+
+    except Exception as e:
+        return f"Error retrieving earnings calendar for {ticker}: {str(e)}"
+
+
+def get_options_summary(
+    ticker: Annotated[str, "ticker symbol of the company"],
+):
+    """Options-derived signals: put/call ratio, implied vol, max pain.
+
+    Uses the nearest-expiry option chain. Heavy / volatile data — keeps
+    summary compact rather than dumping full strike-by-strike chains.
+    """
+    try:
+        ticker_obj = yf.Ticker(ticker.upper())
+        expiries = yf_retry(lambda: ticker_obj.options)
+        if not expiries:
+            return f"No options data found for symbol '{ticker}'"
+
+        nearest = expiries[0]
+        chain = yf_retry(lambda exp=nearest: ticker_obj.option_chain(exp))
+
+        calls = chain.calls
+        puts = chain.puts
+
+        call_oi = calls["openInterest"].sum() if "openInterest" in calls else 0
+        put_oi = puts["openInterest"].sum() if "openInterest" in puts else 0
+        pc_ratio = (put_oi / call_oi) if call_oi else None
+
+        call_iv = calls["impliedVolatility"].mean() if "impliedVolatility" in calls else None
+        put_iv = puts["impliedVolatility"].mean() if "impliedVolatility" in puts else None
+
+        # Max pain: strike where total open-interest pain (call+put combined) is minimized.
+        # Approximation: strike with max combined OI is a rough proxy.
+        combined_oi = (
+            calls.set_index("strike")["openInterest"].add(
+                puts.set_index("strike")["openInterest"], fill_value=0
+            )
+        )
+        max_pain = combined_oi.idxmax() if not combined_oi.empty else None
+
+        lines = [
+            f"# Options Summary for {ticker.upper()} (expiry: {nearest})",
+            f"# Data retrieved on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "",
+            f"Available expiries: {', '.join(expiries[:5])}{' …' if len(expiries) > 5 else ''}",
+            f"Total open interest — calls: {int(call_oi):,}, puts: {int(put_oi):,}",
+            f"Put/call open interest ratio: {pc_ratio:.3f}" if pc_ratio is not None else "Put/call ratio: n/a",
+            f"Mean implied vol — calls: {call_iv:.3f}" if call_iv is not None else "Call IV: n/a",
+            f"Mean implied vol — puts:  {put_iv:.3f}" if put_iv is not None else "Put IV:  n/a",
+            f"IV skew (puts - calls): {(put_iv - call_iv):.3f}" if (put_iv is not None and call_iv is not None) else "IV skew: n/a",
+            f"Max-OI strike (rough max-pain proxy): {max_pain}" if max_pain else "",
+        ]
+        return "\n".join(line for line in lines if line)
+
+    except Exception as e:
+        return f"Error retrieving options summary for {ticker}: {str(e)}"
+
+
+def get_short_interest(
+    ticker: Annotated[str, "ticker symbol of the company"],
+):
+    """Short-interest pressure + ownership concentration signals.
+
+    All sourced from yfinance Ticker.info dict. Squeeze-potential indicator
+    when high short interest + bull catalyst converge; ownership
+    concentration informs liquidity / volatility expectation.
+    """
+    try:
+        ticker_obj = yf.Ticker(ticker.upper())
+        info = yf_retry(lambda: ticker_obj.info)
+        if not info:
+            return f"No short interest / ownership data found for symbol '{ticker}'"
+
+        fields = [
+            ("Short Percent of Float", info.get("shortPercentOfFloat")),
+            ("Short Ratio (days to cover)", info.get("shortRatio")),
+            ("Shares Short", info.get("sharesShort")),
+            ("Shares Short Prior Month", info.get("sharesShortPriorMonth")),
+            ("Date Short Interest Reported", info.get("dateShortInterest")),
+            ("Held Percent Insiders", info.get("heldPercentInsiders")),
+            ("Held Percent Institutions", info.get("heldPercentInstitutions")),
+            ("Float Shares", info.get("floatShares")),
+            ("Implied Shares Outstanding", info.get("impliedSharesOutstanding")),
+        ]
+        lines = [f"{label}: {value}" for label, value in fields if value is not None]
+        if not lines:
+            return f"No short interest / ownership fields populated for '{ticker}'"
+
+        header = f"# Short Interest + Ownership for {ticker.upper()}\n"
+        header += f"# Data retrieved on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        return header + "\n".join(lines)
+
+    except Exception as e:
+        return f"Error retrieving short interest for {ticker}: {str(e)}"
+
+
+def get_institutional_holders(
+    ticker: Annotated[str, "ticker symbol of the company"],
+):
+    """Top institutional + mutual-fund holders for a ticker."""
+    try:
+        ticker_obj = yf.Ticker(ticker.upper())
+        sections = []
+
+        try:
+            inst = yf_retry(lambda: ticker_obj.institutional_holders)
+            if inst is not None and not inst.empty:
+                sections.append("## Institutional holders\n\n" + inst.to_csv())
+        except Exception:
+            pass
+
+        try:
+            mf = yf_retry(lambda: ticker_obj.mutualfund_holders)
+            if mf is not None and not mf.empty:
+                sections.append("## Mutual fund holders\n\n" + mf.to_csv())
+        except Exception:
+            pass
+
+        if not sections:
+            return f"No institutional holders data found for symbol '{ticker}'"
+
+        header = f"# Institutional + Mutual Fund Holders for {ticker.upper()}\n"
+        header += f"# Data retrieved on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        return header + "\n\n".join(sections)
+
+    except Exception as e:
+        return f"Error retrieving institutional holders for {ticker}: {str(e)}"
+
+
+def get_corporate_actions(
+    ticker: Annotated[str, "ticker symbol of the company"],
+):
+    """Dividend + split history + ESG ratings.
+
+    Corporate actions (dividends/splits) are useful context for
+    understanding price-history discontinuities. ESG ratings are included
+    because they're cheap to fetch alongside, even though their
+    predictive value at our 21d horizon is likely low.
+    """
+    try:
+        ticker_obj = yf.Ticker(ticker.upper())
+        sections = []
+
+        try:
+            actions = yf_retry(lambda: ticker_obj.actions)
+            if actions is not None and not actions.empty:
+                sections.append("## Dividends + splits history (last 20 events)\n\n" + actions.tail(20).to_csv())
+        except Exception:
+            pass
+
+        try:
+            esg = yf_retry(lambda: ticker_obj.sustainability)
+            if esg is not None and not esg.empty:
+                sections.append("## ESG sustainability ratings\n\n" + esg.to_csv())
+        except Exception:
+            pass
+
+        if not sections:
+            return f"No corporate actions / ESG data found for symbol '{ticker}'"
+
+        header = f"# Corporate Actions + ESG for {ticker.upper()}\n"
+        header += f"# Data retrieved on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        return header + "\n\n".join(sections)
+
+    except Exception as e:
+        return f"Error retrieving corporate actions for {ticker}: {str(e)}"

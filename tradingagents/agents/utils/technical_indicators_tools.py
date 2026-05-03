@@ -30,3 +30,53 @@ def get_indicators(
         except ValueError as e:
             results.append(str(e))
     return "\n\n".join(results)
+
+
+@tool
+def get_options_summary(
+    ticker: Annotated[str, "ticker symbol"],
+) -> str:
+    """
+    Options-derived signals for the nearest expiry: put/call open-interest
+    ratio, mean implied volatility (calls + puts), IV skew (puts - calls),
+    max-OI strike (rough max-pain proxy). Compact summary, not full chain.
+
+    Returns:
+        str: Formatted options summary
+    """
+    return route_to_vendor("get_options_summary", ticker)
+
+
+@tool
+def get_vix(
+    curr_date: Annotated[str, "current date in yyyy-mm-dd format"],
+    lookback_days: Annotated[int, "Trading days to compute VIX change"] = 30,
+) -> str:
+    """
+    Current VIX (CBOE Volatility Index) level + N-day change + regime
+    classification (fear / elevated / neutral / complacency). Used as the
+    macro regime context — combine with ticker-specific signals to
+    distinguish stock-specific drawdowns from broad-market panic.
+
+    Returns:
+        str: VIX summary with regime label
+    """
+    return route_to_vendor("get_vix", curr_date, lookback_days)
+
+
+@tool
+def get_sector_etf_strength(
+    ticker: Annotated[str, "ticker symbol"],
+    curr_date: Annotated[str, "current date in yyyy-mm-dd format"],
+    lookback_days: Annotated[int, "Trading days to compute relative strength"] = 30,
+) -> str:
+    """
+    Ticker performance relative to its sector's SPDR ETF (XLK / XLE /
+    XLF / etc.) over the trailing N days. Distinguishes stock-specific
+    moves from sector-wide moves — directly addresses the Q4 finding
+    that bear-side anti-calibration concentrates on bull-regime sectors.
+
+    Returns:
+        str: Relative strength summary with interpretation
+    """
+    return route_to_vendor("get_sector_etf_strength", ticker, curr_date, lookback_days)

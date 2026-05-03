@@ -1,7 +1,9 @@
 # SIGNALS — what the framework consumes + what it could
 
 _Inventory of data signals fed to the analyst layer + suggested additions._
-_Last updated 2026-05-03 (after experiments 001-007)._
+_Last updated 2026-05-03 (after experiments 001-007 + signal expansion commit)._
+
+> **2026-05-03 update**: All 10 yfinance fields-available-but-unused + the 5 P1 priority additions have been wired in. Section "Available but unused" is now historical reference; section "Most useful additions" is now historical. The "Currently consumed" section reflects the expanded signal set.
 
 This doc tracks the inputs to the framework's decision pipeline. Updated when new tools are added or when an analyst's input mix changes. For routing logic see `tradingagents/dataflows/interface.py`; for tool definitions see `tradingagents/agents/utils/*_tools.py`.
 
@@ -15,6 +17,9 @@ This doc tracks the inputs to the framework's decision pipeline. Updated when ne
 |---|---|---|---|
 | `get_stock_data` | yfinance | OHLCV daily, ranged | ✅ active |
 | `get_indicators` | yfinance via stockstats | 11 TA indicators: close_50_sma, close_200_sma, close_10_ema, macd, macds (signal), macdh (histogram), rsi, boll (middle), boll_ub (upper), boll_lb (lower), atr, vwma | ✅ active |
+| `get_vix` | yfinance (^VIX) | VIX level + N-day change + regime classifier (fear/elevated/neutral/complacency) | ✅ added 2026-05-03 |
+| `get_sector_etf_strength` | yfinance (XLK/XLE/etc.) | Ticker return vs sector ETF return over trailing N days | ✅ added 2026-05-03 |
+| `get_options_summary` | yfinance | Put/call OI ratio, mean IV (calls + puts), IV skew, max-OI strike | ✅ added 2026-05-03 |
 
 ### News Analyst
 
@@ -22,7 +27,7 @@ This doc tracks the inputs to the framework's decision pipeline. Updated when ne
 |---|---|---|---|
 | `get_news` | **exa** | ticker-specific news with `startPublishedDate` / `endPublishedDate` filter; full article text via `contents.text.maxCharacters=2000` | ✅ active (replaced yfinance news 2026-05-03) |
 | `get_global_news` | **exa** | macro/market news, date-windowed | ✅ active |
-| `get_insider_transactions` | yfinance | insider buys/sells per ticker | ⚠️ wired but unused — News analyst doesn't include in its tool list, only `get_news` + `get_global_news` |
+| `get_insider_transactions` | yfinance | insider buys/sells per ticker | ✅ wired into News Analyst tool list 2026-05-03 (was previously available but unused) |
 
 ### Fundamentals Analyst
 
@@ -32,6 +37,11 @@ This doc tracks the inputs to the framework's decision pipeline. Updated when ne
 | `get_balance_sheet` | yfinance | quarterly (default) or annual balance sheet | ✅ active |
 | `get_cashflow` | yfinance | quarterly cashflow statement | ✅ active |
 | `get_income_statement` | yfinance | quarterly income statement | ✅ active |
+| `get_recommendations` | yfinance | analyst rating history + recent upgrades/downgrades | ✅ added 2026-05-03 |
+| `get_earnings_calendar` | yfinance | upcoming earnings dates + recent events | ✅ added 2026-05-03 |
+| `get_short_interest` | yfinance (Ticker.info) | shortPercentOfFloat, shortRatio, sharesShort, heldPercentInsiders/Institutions | ✅ added 2026-05-03 |
+| `get_institutional_holders` | yfinance | institutional + mutual fund holders | ✅ added 2026-05-03 |
+| `get_corporate_actions` | yfinance | dividend + split history + ESG sustainability | ✅ added 2026-05-03 |
 
 ### Social Media Analyst
 

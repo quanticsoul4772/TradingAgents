@@ -31,11 +31,19 @@ from .alpha_vantage_common import AlphaVantageRateLimitError
 # Configuration and routing logic
 from .config import get_config
 from .exa_news import get_global_news_exa, get_news_exa
+from .macro import get_sector_etf_strength as macro_sector_etf_strength
+from .macro import get_vix as macro_vix
 from .y_finance import (
     get_balance_sheet as get_yfinance_balance_sheet,
 )
 from .y_finance import (
     get_cashflow as get_yfinance_cashflow,
+)
+from .y_finance import (
+    get_corporate_actions as get_yfinance_corporate_actions,
+)
+from .y_finance import (
+    get_earnings_calendar as get_yfinance_earnings_calendar,
 )
 from .y_finance import (
     get_fundamentals as get_yfinance_fundamentals,
@@ -45,6 +53,18 @@ from .y_finance import (
 )
 from .y_finance import (
     get_insider_transactions as get_yfinance_insider_transactions,
+)
+from .y_finance import (
+    get_institutional_holders as get_yfinance_institutional_holders,
+)
+from .y_finance import (
+    get_options_summary as get_yfinance_options_summary,
+)
+from .y_finance import (
+    get_recommendations as get_yfinance_recommendations,
+)
+from .y_finance import (
+    get_short_interest as get_yfinance_short_interest,
 )
 from .y_finance import (
     get_stock_stats_indicators_window,
@@ -60,7 +80,17 @@ TOOLS_CATEGORIES = {
     },
     "fundamental_data": {
         "description": "Company fundamentals",
-        "tools": ["get_fundamentals", "get_balance_sheet", "get_cashflow", "get_income_statement"],
+        "tools": [
+            "get_fundamentals",
+            "get_balance_sheet",
+            "get_cashflow",
+            "get_income_statement",
+            "get_recommendations",
+            "get_earnings_calendar",
+            "get_short_interest",
+            "get_institutional_holders",
+            "get_corporate_actions",
+        ],
     },
     "news_data": {
         "description": "News and insider data",
@@ -69,6 +99,14 @@ TOOLS_CATEGORIES = {
             "get_global_news",
             "get_insider_transactions",
         ],
+    },
+    "macro_data": {
+        "description": "Macro / regime signals (VIX, sector relative strength)",
+        "tools": ["get_vix", "get_sector_etf_strength"],
+    },
+    "options_data": {
+        "description": "Options-derived signals (IV, put/call, max pain)",
+        "tools": ["get_options_summary"],
     },
 }
 
@@ -121,6 +159,16 @@ VENDOR_METHODS = {
         "alpha_vantage": get_alpha_vantage_insider_transactions,
         "yfinance": get_yfinance_insider_transactions,
     },
+    # Extended yfinance signals (added 2026-05-03 per docs/SIGNALS.md)
+    "get_recommendations": {"yfinance": get_yfinance_recommendations},
+    "get_earnings_calendar": {"yfinance": get_yfinance_earnings_calendar},
+    "get_options_summary": {"yfinance": get_yfinance_options_summary},
+    "get_short_interest": {"yfinance": get_yfinance_short_interest},
+    "get_institutional_holders": {"yfinance": get_yfinance_institutional_holders},
+    "get_corporate_actions": {"yfinance": get_yfinance_corporate_actions},
+    # Macro / regime signals
+    "get_vix": {"yfinance": macro_vix},
+    "get_sector_etf_strength": {"yfinance": macro_sector_etf_strength},
 }
 
 

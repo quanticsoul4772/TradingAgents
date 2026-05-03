@@ -8,6 +8,13 @@ from tradingagents.agents.utils.agent_utils import (
     get_insider_transactions,
     get_language_instruction,
 )
+from tradingagents.agents.utils.fundamental_data_tools import (
+    get_corporate_actions,
+    get_earnings_calendar,
+    get_institutional_holders,
+    get_recommendations,
+    get_short_interest,
+)
 from tradingagents.dataflows.config import get_config
 
 
@@ -21,12 +28,27 @@ def create_fundamentals_analyst(llm):
             get_balance_sheet,
             get_cashflow,
             get_income_statement,
+            # Extended signals (added 2026-05-03 per docs/SIGNALS.md):
+            get_recommendations,         # analyst consensus + recent rating changes
+            get_earnings_calendar,       # upcoming earnings dates (changes 21d-window prediction)
+            get_short_interest,          # short interest + ownership concentration
+            get_institutional_holders,   # institutional + mutual-fund positioning
+            get_corporate_actions,       # dividend / split history + ESG
         ]
 
         system_message = (
-            "You are a researcher tasked with analyzing fundamental information over the past week about a company. Please write a comprehensive report of the company's fundamental information such as financial documents, company profile, basic company financials, and company financial history to gain a full view of the company's fundamental information to inform traders. Make sure to include as much detail as possible. Provide specific, actionable insights with supporting evidence to help traders make informed decisions."
-            + " Make sure to append a Markdown table at the end of the report to organize key points in the report, organized and easy to read."
-            + " Use the available tools: `get_fundamentals` for comprehensive company analysis, `get_balance_sheet`, `get_cashflow`, and `get_income_statement` for specific financial statements."
+            "You are a researcher tasked with analyzing fundamental information about a company. "
+            "Write a comprehensive report covering financials, company profile, analyst consensus, "
+            "earnings calendar, ownership / short interest, and corporate actions. Make sure to include "
+            "as much detail as possible. Provide specific, actionable insights with supporting evidence "
+            "to help traders make informed decisions."
+            + " Make sure to append a Markdown table at the end of the report to organize key points."
+            + " Use the available tools: `get_fundamentals` (overview), `get_balance_sheet`, `get_cashflow`, "
+            "`get_income_statement` (statements), `get_recommendations` (analyst ratings + upgrades / "
+            "downgrades — predictive at 1-3 month horizon), `get_earnings_calendar` (upcoming earnings — "
+            "critical because the framework's measurement window may include earnings), `get_short_interest` "
+            "(short pressure + ownership concentration — squeeze potential), `get_institutional_holders` "
+            "(institutional positioning), `get_corporate_actions` (dividends + splits + ESG ratings)."
             + get_language_instruction(),
         )
 

@@ -5,6 +5,11 @@ from tradingagents.agents.utils.agent_utils import (
     get_language_instruction,
     get_stock_data,
 )
+from tradingagents.agents.utils.technical_indicators_tools import (
+    get_options_summary,
+    get_sector_etf_strength,
+    get_vix,
+)
 from tradingagents.dataflows.config import get_config
 
 
@@ -17,6 +22,10 @@ def create_market_analyst(llm):
         tools = [
             get_stock_data,
             get_indicators,
+            # Extended signals (added 2026-05-03 per docs/SIGNALS.md):
+            get_vix,                      # macro regime classifier
+            get_sector_etf_strength,      # ticker vs sector ETF (XLK / XLE / etc.)
+            get_options_summary,          # IV, put/call ratio, max-pain proxy
         ]
 
         system_message = (
@@ -44,7 +53,12 @@ Volatility Indicators:
 Volume-Based Indicators:
 - vwma: VWMA: A moving average weighted by volume. Usage: Confirm trends by integrating price action with volume data. Tips: Watch for skewed results from volume spikes; use in combination with other volume analyses.
 
-- Select indicators that provide diverse and complementary information. Avoid redundancy (e.g., do not select both rsi and stochrsi). Also briefly explain why they are suitable for the given market context. When you tool call, please use the exact name of the indicators provided above as they are defined parameters, otherwise your call will fail. Please make sure to call get_stock_data first to retrieve the CSV that is needed to generate indicators. Then use get_indicators with the specific indicator names. Write a very detailed and nuanced report of the trends you observe. Provide specific, actionable insights with supporting evidence to help traders make informed decisions."""
+- Select indicators that provide diverse and complementary information. Avoid redundancy (e.g., do not select both rsi and stochrsi). Also briefly explain why they are suitable for the given market context. When you tool call, please use the exact name of the indicators provided above as they are defined parameters, otherwise your call will fail. Please make sure to call get_stock_data first to retrieve the CSV that is needed to generate indicators. Then use get_indicators with the specific indicator names. Write a very detailed and nuanced report of the trends you observe. Provide specific, actionable insights with supporting evidence to help traders make informed decisions.
+
+In addition to TA indicators, also consider:
+- `get_vix` — current VIX level + regime (fear / elevated / neutral / complacency). Use to contextualize whether market-wide volatility is consistent with the ticker's price action.
+- `get_sector_etf_strength` — ticker vs its sector ETF (XLK / XLE / XLF / etc.). Distinguishes stock-specific moves from sector-wide moves. Critical for ratings: if the sector is rallying, a UW commit on a strong-sector ticker is structurally fighting the regime.
+- `get_options_summary` — implied vol, put/call open-interest ratio, IV skew, max-pain-proxy strike. High put/call OI ratio + rising IV = market hedging; can confirm or contradict the ticker's trend signal."""
             + """ Make sure to append a Markdown table at the end of the report to organize key points in the report, organized and easy to read."""
             + get_language_instruction()
         )

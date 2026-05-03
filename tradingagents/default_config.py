@@ -66,6 +66,8 @@ DEFAULT_CONFIG = {
         "technical_indicators": "yfinance",  # Options: alpha_vantage, yfinance
         "fundamental_data": "yfinance",  # Options: alpha_vantage, yfinance
         "news_data": "exa",  # Options: exa (default), alpha_vantage. Requires EXA_API_KEY.
+        "macro_data": "yfinance",  # VIX, sector ETF strength — yfinance only
+        "options_data": "yfinance",  # IV / put-call / max pain — yfinance only
     },
     # Tool-level configuration (takes precedence over category-level)
     "tool_vendors": {
