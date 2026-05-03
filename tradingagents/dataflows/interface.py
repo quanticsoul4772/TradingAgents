@@ -111,9 +111,9 @@ TOOLS_CATEGORIES = {
 }
 
 VENDOR_LIST = [
-    "yfinance",      # stock prices, technicals, fundamentals only (NOT news)
-    "alpha_vantage", # alternative for stock/technical/fundamentals/news
-    "exa",           # ONLY supported news vendor (true historical date filter)
+    "yfinance",  # stock prices, technicals, fundamentals only (NOT news)
+    "alpha_vantage",  # alternative for stock/technical/fundamentals/news
+    "exa",  # ONLY supported news vendor (true historical date filter)
 ]
 
 # Mapping of methods to their vendor-specific implementations
@@ -156,8 +156,11 @@ VENDOR_METHODS = {
         "alpha_vantage": get_alpha_vantage_global_news,
     },
     "get_insider_transactions": {
-        "alpha_vantage": get_alpha_vantage_insider_transactions,
+        # yfinance first: news_data category default is "exa" which has no impl
+        # for this tool, so fallback chain hits the next dict key. yfinance is
+        # the no-API-key option; alpha_vantage requires ALPHA_VANTAGE_API_KEY.
         "yfinance": get_yfinance_insider_transactions,
+        "alpha_vantage": get_alpha_vantage_insider_transactions,
     },
     # Extended yfinance signals (added 2026-05-03 per docs/SIGNALS.md)
     "get_recommendations": {"yfinance": get_yfinance_recommendations},
