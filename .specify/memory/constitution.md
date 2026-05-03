@@ -2,9 +2,9 @@
 
 **Project**: Personal experimental fork of TradingAgents — a research playground for studying multi-agent LLM debate dynamics, using equity-decision-making as the substrate because it has cheap, objective ground truth.
 
-**Version**: 1.1.0
+**Version**: 1.2.0
 **Adopted**: 2026-05-01
-**Last amended**: 2026-05-03 (added Principle VII; sharpened Principle IV)
+**Last amended**: 2026-05-03 (Principle III: tiered ceiling replaces single $30; added Principle VII; sharpened Principle IV)
 
 This constitution governs how this project evolves. The commitments below are intentionally short and few. They are constraints, not aspirations — when in conflict with convenience, they win.
 
@@ -33,13 +33,24 @@ Each experiment varies **one** parameter against a documented baseline. If you c
 
 **Acceptable exception**: a "shakeout run" of a new architecture against the existing baseline grid. Document explicitly as `shakeout_run: true` in `PARAMS.json`.
 
-### III. Stay Cheap
+### III. Stay Cheap (tiered ceiling — amended 2026-05-03)
 
-Each experimental run defaults to ≤ $30 in LLM API spend. Crossing that ceiling requires explicit deliberation in the experiment's `HYPOTHESIS.md` ("we expect this to cost $X because Y").
+Per-experiment LLM spend is governed by a 4-tier ladder. Higher tiers require progressively more deliberation in `HYPOTHESIS.md` before launching.
 
-**Why**: The pilot taught us that a 50-run grid is enough to detect signal-vs-noise. Bigger runs trade money for confidence intervals that we mostly don't need until late-stage findings. Default cheap; scale up only when the signal warrants it.
+| Tier | Range | Required deliberation |
+|---|---|---|
+| **T1: free exploration** | ≤ $5 | None. HYPOTHESIS may simply note "exploratory smoke." |
+| **T2: standard** | $5 – $30 | HYPOTHESIS lists predicted cost + brief rationale (current default). |
+| **T3: scaled** | $30 – $100 | HYPOTHESIS contains explicit cost-justification section: why this scale, what cheaper alternatives were considered, what specific outcome would justify the spend. |
+| **T4: capital** | > $100 | HYPOTHESIS contains all of T3 plus: written multi-day deliberation, explicit fallback plan if the experiment doesn't deliver, alternative-experiment comparisons, and a "kill criteria" line stating what result would invalidate further T4 spending. |
 
-**Implementation**: `scripts/backtest.py` already prints a cost estimate and gates on `--yes`. Future experiment runners follow the same pattern.
+The original $30 single-ceiling was set when Sonnet was the deep model (~$0.50/run) and the project had 0 prior experiments. As of 2026-05-03 we use Opus for the highest-impact runs (~$1/run) and have 13 experiments + $0-cost re-analysis pipelines (`scripts/horizon_sweep.py`, `identify_hold_extremes.py`, `bear_side_per_ticker.py`, `uw_suppression_filter.py`, etc.) that often substitute for new propagations entirely. The tiered structure reflects this maturity.
+
+**Why tiered**: T1 + T2 stay friction-free for normal exploration; T3 forces explicit thought when scaling past 30 runs or swapping to Opus for a meaningful grid; T4 reserves the highest-spend decisions for genuine architectural commitments (e.g., the signal-lifecycle Phase 5 LLM-discovery effort budgeted at ~$250 lifetime).
+
+**Implementation**: `scripts/backtest.py` already prints a cost estimate and gates on `--yes`. Future experiment runners follow the same pattern. The HYPOTHESIS template should grow a "Cost tier" frontmatter field; `scripts/new_experiment.py` should default it to T2 and require explicit elevation.
+
+**Why this still preserves "Stay Cheap" intent**: every tier escalation is friction. A T4 experiment requires multi-day deliberation; a T3 requires written cost-justification. The ladder doesn't enable casual large spend, it just acknowledges that the *right* experiment occasionally costs $50-250 at the framework's current maturity, and forces deliberateness rather than blocking.
 
 ### IV. No Production Claims
 
@@ -137,6 +148,7 @@ This constitution is amendable. Amendments follow the spec-kit constitution flow
 
 The principles above are themselves up for amendment if they prove ceremonial rather than load-bearing. The test: after one month of use, are we honoring this principle because it's helping or because it's written down? If the latter, amend or remove.
 
-**Version**: 1.1.0
-**Last amended**: 2026-05-03 — added Principle VII (Calibrated Abstention is a Valid Output) after 11-experiment chain converged on this reframe; sharpened Principle IV with empirical backing from cross-experiment horizon sweep
+**Version**: 1.2.0
+**Last amended**: 2026-05-03 — Principle III restructured from single $30 ceiling to 4-tier ladder (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 $100+) reflecting Opus pricing + accumulated re-analysis tooling; added Principle VII (Calibrated Abstention is a Valid Output) after 11-experiment chain; sharpened Principle IV with empirical backing.
+**Prior version**: 1.1.0 — added Principle VII + sharpened IV (2026-05-03 earlier in the day)
 **Prior version**: 1.0.0 — initial adoption 2026-05-01
