@@ -447,17 +447,34 @@ def main(
     console.print(f"  Next:   python scripts/analyze_backtest.py {out}")
 
     # Auto-sync overrides into PARAMS.json after successful completion.
-    if experiment_id and config_override:
+    # Per R-007: PARAMS.json should reflect every config diff vs DEFAULT_CONFIG,
+    # regardless of whether the diff came from --config-override or from a
+    # named flag like --news-vendor. We synthesize virtual override entries
+    # for non-default named flags so PARAMS captures the full ablation.
+    if experiment_id:
+        synthesized: list[str] = list(config_override)
+        if news_vendor != DEFAULT_CONFIG["data_vendors"]["news_data"]:
+            synthesized.append(f"data_vendors.news_data={news_vendor}")
+        if deep_model != DEFAULT_CONFIG["deep_think_llm"]:
+            synthesized.append(f"deep_think_llm={deep_model}")
+        if quick_model != DEFAULT_CONFIG["quick_think_llm"]:
+            synthesized.append(f"quick_think_llm={quick_model}")
+        if provider != DEFAULT_CONFIG["llm_provider"]:
+            synthesized.append(f"llm_provider={provider}")
+        if anthropic_effort:
+            synthesized.append(f"anthropic_effort={anthropic_effort}")
+
         explicit_flags = {
             "--debate-rounds": debate_rounds,
             "--analysts": analysts,
             "--provider": provider,
             "--deep-model": deep_model,
             "--quick-model": quick_model,
+            "--news-vendor": news_vendor,
         }
         if anthropic_effort:
             explicit_flags["--anthropic-effort"] = anthropic_effort
-        _autosync_params_json(experiment_id, config_override, explicit_flags)
+        _autosync_params_json(experiment_id, synthesized, explicit_flags)
 
 
 if __name__ == "__main__":

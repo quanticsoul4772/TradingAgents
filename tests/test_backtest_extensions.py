@@ -261,6 +261,48 @@ def test_autosync_no_op_when_no_overrides(tmp_path):
     assert (exp_dir / "PARAMS.json").read_text(encoding="utf-8") == "{}"
 
 
+def test_autosync_records_synthesized_news_vendor_override(tmp_path):
+    """Per R-007 + Win #3: --news-vendor non-default should appear in PARAMS
+    config_overrides as data_vendors.news_data=brave even when the user
+    didn't pass --config-override. This test exercises the synthesizer
+    output that scripts/backtest.py main() now feeds into _autosync."""
+    exp_dir = tmp_path / "2026-05-02-001-foo"
+    exp_dir.mkdir()
+    (exp_dir / "PARAMS.json").write_text("{}", encoding="utf-8")
+    # main() builds the synthesized list before calling _autosync; here we
+    # pass that synthesized form directly.
+    _autosync_params_json(
+        "2026-05-02-001-foo",
+        ["data_vendors.news_data=brave"],
+        explicit_flags={"--news-vendor": "brave"},
+        experiments_root=tmp_path,
+    )
+    saved = json.loads((exp_dir / "PARAMS.json").read_text(encoding="utf-8"))
+    assert saved["config_overrides"] == {"data_vendors.news_data": "brave"}
+    assert saved["explicit_flags"]["--news-vendor"] == "brave"
+
+
+def test_autosync_records_multiple_synthesized_overrides(tmp_path):
+    """A model swap + news vendor change synthesizes two overrides."""
+    exp_dir = tmp_path / "2026-05-03-005-foo"
+    exp_dir.mkdir()
+    (exp_dir / "PARAMS.json").write_text("{}", encoding="utf-8")
+    _autosync_params_json(
+        "2026-05-03-005-foo",
+        ["deep_think_llm=claude-opus-4-7", "data_vendors.news_data=exa"],
+        explicit_flags={
+            "--deep-model": "claude-opus-4-7",
+            "--news-vendor": "exa",
+        },
+        experiments_root=tmp_path,
+    )
+    saved = json.loads((exp_dir / "PARAMS.json").read_text(encoding="utf-8"))
+    assert saved["config_overrides"] == {
+        "deep_think_llm": "claude-opus-4-7",
+        "data_vendors.news_data": "exa",
+    }
+
+
 # ---- Backward compat: pre-cleanup CSVs still readable -----------------
 
 
