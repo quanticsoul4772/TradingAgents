@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 import typer
@@ -29,7 +28,7 @@ RATING_ORDER = ["Buy", "Overweight", "Hold", "Underweight", "Sell"]
 
 def _compute_returns(
     stock_df: pd.DataFrame, bench_df: pd.DataFrame, trade_date: str, holding_days: int
-) -> tuple[Optional[float], Optional[float], Optional[int]]:
+) -> tuple[float | None, float | None, int | None]:
     """Mirror of fetch_returns math, operating on cached frames."""
     try:
         td = pd.Timestamp(trade_date)
@@ -80,7 +79,7 @@ def main(
         "--benchmark",
         help='Benchmark ticker. NOTE: only "SPY" is honored — fetch_returns hardcodes SPY at trading_graph.py:205.',
     ),
-    export: Optional[Path] = typer.Option(
+    export: Path | None = typer.Option(
         None, "--export", help="Optional path to write enriched CSV with return columns appended."
     ),
 ):

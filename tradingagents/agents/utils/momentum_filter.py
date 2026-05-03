@@ -18,6 +18,7 @@ backtest --config-override.
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timedelta
 
 import yfinance as yf
@@ -91,10 +92,10 @@ def maybe_suppress_bear_rating(
     )
     # Replace the rating line. Both Research Manager and PM use "Rating: X" or
     # "**Rating**: X" patterns; we substitute conservatively.
-    import re
-
-    pattern = re.compile(r"(\*?\*?Rating\*?\*?\s*[:\-]\s*\*?\*?)" + re.escape(rating), re.IGNORECASE)
-    modified = pattern.sub(rf"\1Hold", decision_markdown, count=1)
+    pattern = re.compile(
+        r"(\*?\*?Rating\*?\*?\s*[:\-]\s*\*?\*?)" + re.escape(rating), re.IGNORECASE
+    )
+    modified = pattern.sub(r"\1Hold", decision_markdown, count=1)
     if modified == decision_markdown:
         # Couldn't find the rating to substitute — fall back to prepending a note.
         modified = note + decision_markdown

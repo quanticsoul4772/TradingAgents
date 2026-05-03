@@ -12,6 +12,7 @@ Usage:
 
 from __future__ import annotations
 
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -22,38 +23,13 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tradingagents.dataflows.returns import alpha_from_frames as _compute_alpha  # noqa: E402
+
 console = Console()
 app = typer.Typer(add_completion=False)
 
 RATING_ORDER = ["Buy", "Overweight", "Hold", "Underweight", "Sell"]
-
-
-def _compute_alpha(stock_df, bench_df, trade_date: str, holding_days: int):
-    td = pd.Timestamp(trade_date)
-    stock_idx = (
-        stock_df.index.tz_localize(None) if stock_df.index.tz is not None else stock_df.index
-    )
-    bench_idx = (
-        bench_df.index.tz_localize(None) if bench_df.index.tz is not None else bench_df.index
-    )
-
-    stock_slice = stock_df.loc[stock_idx >= td]
-    bench_slice = bench_df.loc[bench_idx >= td]
-    if len(stock_slice) < 2 or len(bench_slice) < 2:
-        return None
-    actual = min(holding_days, len(stock_slice) - 1, len(bench_slice) - 1)
-    if actual < holding_days:
-        # Don't fabricate a partial-window result; mark missing.
-        return None
-    raw = float(
-        (stock_slice["Close"].iloc[actual] - stock_slice["Close"].iloc[0])
-        / stock_slice["Close"].iloc[0]
-    )
-    bench = float(
-        (bench_slice["Close"].iloc[actual] - bench_slice["Close"].iloc[0])
-        / bench_slice["Close"].iloc[0]
-    )
-    return (raw - bench) * 100
 
 
 def _fetch_history(ticker: str, start: str, end: str) -> pd.DataFrame:

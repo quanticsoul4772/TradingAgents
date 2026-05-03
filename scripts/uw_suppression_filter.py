@@ -18,6 +18,7 @@ post-filter UW α correctness without losing too many calls.
 
 from __future__ import annotations
 
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -28,24 +29,11 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tradingagents.dataflows.returns import alpha_from_frames as _alpha  # noqa: E402
+
 console = Console()
 app = typer.Typer(add_completion=False)
-
-
-def _alpha(stock_df, bench_df, trade_date: str, holding_days: int):
-    td = pd.Timestamp(trade_date)
-    si = stock_df.index.tz_localize(None) if stock_df.index.tz is not None else stock_df.index
-    bi = bench_df.index.tz_localize(None) if bench_df.index.tz is not None else bench_df.index
-    s = stock_df.loc[si >= td]
-    b = bench_df.loc[bi >= td]
-    if len(s) < 2 or len(b) < 2:
-        return None
-    n = min(holding_days, len(s) - 1, len(b) - 1)
-    if n < holding_days:
-        return None
-    raw = float((s["Close"].iloc[n] - s["Close"].iloc[0]) / s["Close"].iloc[0])
-    bench = float((b["Close"].iloc[n] - b["Close"].iloc[0]) / b["Close"].iloc[0])
-    return (raw - bench) * 100
 
 
 def _trailing_return(df, trade_date: str, lookback_days: int) -> float | None:
@@ -202,7 +190,7 @@ def main(
         md.append(f"- Suppressed commits: n={n_supp}")
         md.append(f"- α improvement: **{baseline_alpha - kept_alpha:+.2f}pp**")
         md.append(
-            f"\n_Caveat: in-sample validation on the same 16 commits that informed the hypothesis. Out-of-sample test requires fresh data._"
+            "\n_Caveat: in-sample validation on the same 16 commits that informed the hypothesis. Out-of-sample test requires fresh data._"
         )
 
     out.parent.mkdir(parents=True, exist_ok=True)
