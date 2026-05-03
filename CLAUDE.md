@@ -8,6 +8,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Primary research question**: what structural conditions cause role-based multi-agent LLM debate to collapse to moderate ratings, and what enforcement mechanisms (or alternative architectures) would prevent that collapse?
 
+## Read the headline finding first
+
+After 11 experiments + cross-experiment horizon sweep, the architectural conclusion is captured in **`RESEARCH_FINDINGS.md`**. One paragraph:
+
+> At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls (Buy/OW/UW/Sell) are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) become directionally correct and produce ~+1.6% mean alpha across n=37 across-experiment commits. Bearish commits remain anti-calibrated at every horizon. Hold ≈ 0% at every horizon. The framework is a calibrated-abstention engine with asymmetric directional skill at 21-day. Single-call baseline does NOT show the 21-day lift — the signal is framework-specific.
+
+This is encoded in **Constitution Principle VII (Calibrated Abstention is a Valid Output)** added 2026-05-03. Any new structural change that reduces Hold rate must justify in HYPOTHESIS.md why the additional commits would be calibrated rather than noise, and at what horizon.
+
 ## Read the constitution first
 
 The design is governed by `.specify/memory/constitution.md`. Before non-trivial changes, read:
@@ -86,7 +94,29 @@ python scripts/backtest.py \
 python scripts/findings_aggregate.py
 # → walks experiments/*/ANALYSIS.md, writes findings.md at repo root
 #   (newest first). Lab-notebook view of the project.
+
+python scripts/horizon_sweep.py
+# → cross-experiment longer-horizon analysis on existing CSVs
+#   (5/10/21/90-day forward alpha per rating bucket per experiment).
+#   Zero new LLM cost — reuses saved data.
+
+python scripts/identify_hold_extremes.py --top-n 8 --horizon 21
+# → top-N Hold dates by |α| with state-log evidence summaries.
+#   Feeds counterfactual analysis ("what if framework had committed?").
+
+python scripts/single_call_baseline.py \
+    --ticker NVDA \
+    --dates 2026-01-30,2026-02-06,... \
+    --experiment-id <id> --out <path> --yes
+# → loads existing state logs, feeds 3 analyst reports to ONE Claude call,
+#   produces a 5-tier rating. Tests architectural premise of multi-agent
+#   structure vs single call on same inputs.
 ```
+
+**News vendors** (per `--news-vendor`):
+- `yfinance` (default, free, low quality — press releases + headlines)
+- `brave` (high quality, time-leaky — search ranking favors currently-popular articles)
+- `exa` (high quality, true historical date filter via startPublishedDate/endPublishedDate)
 
 Tests (pytest is configured in `pyproject.toml`, markers: `unit`, `integration`, `smoke`):
 ```bash

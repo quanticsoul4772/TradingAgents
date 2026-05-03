@@ -2,8 +2,9 @@
 
 **Project**: Personal experimental fork of TradingAgents — a research playground for studying multi-agent LLM debate dynamics, using equity-decision-making as the substrate because it has cheap, objective ground truth.
 
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Adopted**: 2026-05-01
+**Last amended**: 2026-05-03 (added Principle VII; sharpened Principle IV)
 
 This constitution governs how this project evolves. The commitments below are intentionally short and few. They are constraints, not aspirations — when in conflict with convenience, they win.
 
@@ -42,9 +43,11 @@ Each experimental run defaults to ≤ $30 in LLM API spend. Crossing that ceilin
 
 ### IV. No Production Claims
 
-The upstream disclaimer ("for research purposes... not investment advice") is load-bearing and we restate it. Nothing produced by this project may be presented as a trading recommendation, signal, or advice. The pilot proved the framework's ratings are anti-correlated with realized alpha; that finding is itself part of why this principle is non-negotiable.
+The upstream disclaimer ("for research purposes... not investment advice") is load-bearing and we restate it. Nothing produced by this project may be presented as a trading recommendation, signal, or advice.
 
-**Why**: Beyond the obvious legal reasons: presenting research output as advice would corrupt the experimental discipline. We are studying *how the agents fail*, not *whether they succeed at picking stocks*.
+**Empirical backing** (added 2026-05-03 after 11 experiments + horizon sweep): the framework's 5-day rating bucket alphas are at the LLM single-call calibration ceiling — Buy α=-1.27% (n=8, 25% hit), Overweight α=-0.59% (n=33, 42% hit), Underweight α=+0.62% (n=26, 62% positive — wrong direction). At 21-day windows bullish commits do show ~+1.6% mean alpha across n=37 with 60-71% hit rate, AND single-call baseline does NOT show this lift, BUT n=37 across 9 tickers/dates is not portfolio-grade evidence and bear commits remain anti-calibrated at every horizon. This is research substrate, not signal.
+
+**Why**: Beyond the obvious legal reasons: presenting research output as advice would corrupt the experimental discipline. We are studying *how the agents fail and where they marginally succeed*, not *whether they should be acted on*.
 
 ### V. Steal Liberally
 
@@ -73,6 +76,16 @@ Use the spec-kit slash commands: `/speckit.specify` → `/speckit.plan` → `/sp
 **Why**: The pilot showed the upstream framework had no spec for "the PM should produce all 5 ratings" — it was an implicit assumption that was violated emergently. Specs protect against the same class of failure here.
 
 **Acceptable exception**: ad-hoc scripts under `scripts/` that don't touch structural state can skip the spec workflow. Bias toward writing the spec when in doubt.
+
+### VII. Calibrated Abstention is a Valid Output (added 2026-05-03)
+
+The framework's mode collapse to Hold ratings is empirically calibrated abstention, not a defect. Across 11 experiments and 4 reasoning architectures (full multi-agent framework, PM-blind variant, single-call baseline, MCP-reasoning Bayesian evidence tool), 5-day public-info evidence does not disambiguate forward direction at better than coin-flip rates. Hold is the architecturally correct response to that ambiguity. Single-call baselines that suppress Hold manufacture wrong-direction conviction.
+
+**This principle replaces the prior implicit bias** that mode collapse needed fixing. MR-2 (synthesis prompt instrumentation) and MR-3 (v2 prompt) experiments were attacking honest output. Future experiments must justify why a proposed mode-collapse-breaking intervention would produce *better-calibrated* commits, not just *more* commits. The default null hypothesis is that more commits = more wrong commits.
+
+**Why**: Without this principle, the project keeps re-discovering that prompt tweaks don't lift the calibration ceiling. With it, we ask the right question instead: when committing IS warranted (e.g., bullish 21-day), what makes the framework's commits work where single-call's don't?
+
+**Operational test**: any new structural change that reduces Hold rate must include in its `HYPOTHESIS.md` (a) why the additional commits are expected to be calibrated rather than noise, (b) the horizon at which the calibration claim will be measured (5d? 21d? 90d?), (c) the directional asymmetry expectation (bull vs bear hit rate predictions).
 
 ---
 
@@ -124,5 +137,6 @@ This constitution is amendable. Amendments follow the spec-kit constitution flow
 
 The principles above are themselves up for amendment if they prove ceremonial rather than load-bearing. The test: after one month of use, are we honoring this principle because it's helping or because it's written down? If the latter, amend or remove.
 
-**Version**: 1.0.0 — initial adoption
-**Last amended**: 2026-05-01 (initial)
+**Version**: 1.1.0
+**Last amended**: 2026-05-03 — added Principle VII (Calibrated Abstention is a Valid Output) after 11-experiment chain converged on this reframe; sharpened Principle IV with empirical backing from cross-experiment horizon sweep
+**Prior version**: 1.0.0 — initial adoption 2026-05-01
