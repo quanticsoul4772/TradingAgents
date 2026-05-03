@@ -1,0 +1,50 @@
+[
+  {
+    "ticker": "MSFT",
+    "date": "2026-03-06",
+    "alpha": -7.009411475863536,
+    "experiments": "2026-05-02-006-wc12-cross-msft"
+  },
+  {
+    "ticker": "MSFT",
+    "date": "2026-01-30",
+    "alpha": -4.443957349759106,
+    "experiments": "2026-05-02-006-wc12-cross-msft"
+  },
+  {
+    "ticker": "AAPL",
+    "date": "2026-02-06",
+    "alpha": -4.270666351716401,
+    "experiments": "2026-05-02-005-wc12-cross-aapl, 2026-05-03-001-brave-news-smoke-aapl"
+  },
+  {
+    "ticker": "NVDA",
+    "date": "2026-03-13",
+    "alpha": 4.1634058370532765,
+    "experiments": "2026-05-02-004-mr3-synthesis-v2"
+  },
+  {
+    "ticker": "AAPL",
+    "date": "2026-03-27",
+    "alpha": -3.431740681109108,
+    "experiments": "2026-05-02-005-wc12-cross-aapl, 2026-05-03-001-brave-news-smoke-aapl, 2026-05-03-002-exa-news-smoke-aapl"
+  },
+  {
+    "ticker": "AAPL",
+    "date": "2026-01-30",
+    "alpha": 3.3277418046811085,
+    "experiments": "2026-05-03-001-brave-news-smoke-aapl, 2026-05-03-002-exa-news-smoke-aapl"
+  },
+  {
+    "ticker": "MSFT",
+    "date": "2026-03-20",
+    "alpha": 2.5156209654190715,
+    "experiments": "2026-05-02-006-wc12-cross-msft"
+  },
+  {
+    "ticker": "NVDA",
+    "date": "2026-03-06",
+    "alpha": 2.1146935471484047,
+    "experiments": "2026-05-02-004-mr3-synthesis-v2"
+  }
+]
