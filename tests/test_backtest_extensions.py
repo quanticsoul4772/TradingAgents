@@ -263,8 +263,8 @@ def test_autosync_no_op_when_no_overrides(tmp_path):
 
 def test_autosync_records_synthesized_news_vendor_override(tmp_path):
     """Per R-007 + Win #3: --news-vendor non-default should appear in PARAMS
-    config_overrides as data_vendors.news_data=brave even when the user
-    didn't pass --config-override. This test exercises the synthesizer
+    config_overrides as data_vendors.news_data=alpha_vantage even when the
+    user didn't pass --config-override. This test exercises the synthesizer
     output that scripts/backtest.py main() now feeds into _autosync."""
     exp_dir = tmp_path / "2026-05-02-001-foo"
     exp_dir.mkdir()
@@ -273,13 +273,13 @@ def test_autosync_records_synthesized_news_vendor_override(tmp_path):
     # pass that synthesized form directly.
     _autosync_params_json(
         "2026-05-02-001-foo",
-        ["data_vendors.news_data=brave"],
-        explicit_flags={"--news-vendor": "brave"},
+        ["data_vendors.news_data=alpha_vantage"],
+        explicit_flags={"--news-vendor": "alpha_vantage"},
         experiments_root=tmp_path,
     )
     saved = json.loads((exp_dir / "PARAMS.json").read_text(encoding="utf-8"))
-    assert saved["config_overrides"] == {"data_vendors.news_data": "brave"}
-    assert saved["explicit_flags"]["--news-vendor"] == "brave"
+    assert saved["config_overrides"] == {"data_vendors.news_data": "alpha_vantage"}
+    assert saved["explicit_flags"]["--news-vendor"] == "alpha_vantage"
 
 
 def test_autosync_records_multiple_synthesized_overrides(tmp_path):

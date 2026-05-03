@@ -1,14 +1,11 @@
-"""Exa Search News API adapter for TradingAgents news_data category.
-
-Third news vendor alongside yfinance (low-quality, free) and brave (good
-quality but search ranking favors *currently popular* articles, which
-leaks future information into historical backtests).
+"""Exa Search News API adapter — the framework's only first-party news vendor.
 
 Exa's `startPublishedDate` / `endPublishedDate` parameters constrain
-*ranking* (not just post-hoc filtering) — making it the right vendor for
-honest historical backtest news, where Brave's ranking time-leak was the
-caveat that left "news quality is the bottleneck" only partially ruled out
-across the 8-experiment chain.
+*ranking* (not just post-hoc filtering), making it the right vendor for
+honest historical backtest news. Earlier experiments compared yfinance (low
+quality, used as the original framework default) and Brave (high quality
+but rank-leaks currently-popular articles into historical windows); both
+are removed from the codebase as of 2026-05-03 — Exa replaced them.
 
 Exa Search API: https://api.exa.ai/search
 

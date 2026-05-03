@@ -283,11 +283,11 @@ def main(
         '(int → float → bool → null → str). Quoted strings (KEY="42") skip coercion.',
     ),
     news_vendor: str = typer.Option(
-        "yfinance",
+        "exa",
         "--news-vendor",
-        help="Vendor for news_data category: 'yfinance' (default), 'alpha_vantage', 'brave', "
-        "or 'exa'. Convenience flag — equivalent to setting data_vendors[news_data] in code, "
-        "since --config-override can't reach nested dict keys.",
+        help="Vendor for news_data category: 'exa' (default, requires EXA_API_KEY) or "
+        "'alpha_vantage'. Convenience flag — equivalent to setting data_vendors[news_data] "
+        "in code, since --config-override can't reach nested dict keys.",
     ),
 ):
     """Run propagate() over a grid and append results to CSV."""

@@ -65,7 +65,7 @@ DEFAULT_CONFIG = {
         "core_stock_apis": "yfinance",  # Options: alpha_vantage, yfinance
         "technical_indicators": "yfinance",  # Options: alpha_vantage, yfinance
         "fundamental_data": "yfinance",  # Options: alpha_vantage, yfinance
-        "news_data": "yfinance",  # Options: alpha_vantage, yfinance
+        "news_data": "exa",  # Options: exa (default), alpha_vantage. Requires EXA_API_KEY.
     },
     # Tool-level configuration (takes precedence over category-level)
     "tool_vendors": {

@@ -27,7 +27,6 @@ from .alpha_vantage import (
     get_stock as get_alpha_vantage_stock,
 )
 from .alpha_vantage_common import AlphaVantageRateLimitError
-from .brave_news import get_global_news_brave, get_news_brave
 
 # Configuration and routing logic
 from .config import get_config
@@ -51,7 +50,6 @@ from .y_finance import (
     get_stock_stats_indicators_window,
     get_YFin_data_online,
 )
-from .yfinance_news import get_global_news_yfinance, get_news_yfinance
 
 # Tools organized by category
 TOOLS_CATEGORIES = {
@@ -75,10 +73,9 @@ TOOLS_CATEGORIES = {
 }
 
 VENDOR_LIST = [
-    "yfinance",
-    "alpha_vantage",
-    "brave",  # news only
-    "exa",  # news only — true historical date filter (vs Brave's freshness time-leak)
+    "yfinance",      # stock prices, technicals, fundamentals only (NOT news)
+    "alpha_vantage", # alternative for stock/technical/fundamentals/news
+    "exa",           # ONLY supported news vendor (true historical date filter)
 ]
 
 # Mapping of methods to their vendor-specific implementations
@@ -110,18 +107,15 @@ VENDOR_METHODS = {
         "alpha_vantage": get_alpha_vantage_income_statement,
         "yfinance": get_yfinance_income_statement,
     },
-    # news_data
+    # news_data — exa is the only first-party news vendor; alpha_vantage
+    # remains as an alternative for users with that subscription
     "get_news": {
-        "alpha_vantage": get_alpha_vantage_news,
-        "yfinance": get_news_yfinance,
-        "brave": get_news_brave,
         "exa": get_news_exa,
+        "alpha_vantage": get_alpha_vantage_news,
     },
     "get_global_news": {
-        "yfinance": get_global_news_yfinance,
-        "alpha_vantage": get_alpha_vantage_global_news,
-        "brave": get_global_news_brave,
         "exa": get_global_news_exa,
+        "alpha_vantage": get_alpha_vantage_global_news,
     },
     "get_insider_transactions": {
         "alpha_vantage": get_alpha_vantage_insider_transactions,
