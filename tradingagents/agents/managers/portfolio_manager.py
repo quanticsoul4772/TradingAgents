@@ -15,6 +15,7 @@ from tradingagents.agents.utils.agent_utils import (
     build_instrument_context,
     get_language_instruction,
 )
+from tradingagents.agents.utils.momentum_filter import maybe_suppress_bear_rating
 from tradingagents.agents.utils.structured import (
     bind_structured,
     invoke_structured_or_freetext,
@@ -85,6 +86,20 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
             render_pm_decision,
             "Portfolio Manager",
         )
+
+        # A3 momentum filter: suppress UW/Sell commits when ticker is deeply
+        # down (mean-reversion zone). Disabled by default — set
+        # `uw_momentum_filter_threshold` (e.g. -5.0) in config to enable.
+        threshold = get_config().get("uw_momentum_filter_threshold")
+        if threshold is not None:
+            lookback = get_config().get("uw_momentum_filter_lookback_days", 30)
+            final_trade_decision, _ = maybe_suppress_bear_rating(
+                final_trade_decision,
+                state["company_of_interest"],
+                state["trade_date"],
+                threshold_pct=float(threshold),
+                lookback_days=int(lookback),
+            )
 
         new_risk_debate_state = {
             "judge_decision": final_trade_decision,

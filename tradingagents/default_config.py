@@ -53,6 +53,12 @@ DEFAULT_CONFIG = {
     # from "Hold-leaning rating" per docs/EXPERIMENT.md MR-2 finding.
     # Drives experiments/2026-05-02-004-mr3-synthesis-v2/.
     "research_manager_prompt_variant": "default",
+    # A3: mean-reversion suppression filter for Underweight / Sell commits.
+    # When set (e.g. -5.0 = "down >5% in 30d"), the PM overrides bear ratings
+    # to Hold on tickers in mean-reversion zone. Default None = disabled.
+    # See claudedocs/uw-suppression-filter.md for in-sample evidence.
+    "uw_momentum_filter_threshold": None,
+    "uw_momentum_filter_lookback_days": 30,
     # Data vendor configuration
     # Category-level configuration (default for all tools in category)
     "data_vendors": {
