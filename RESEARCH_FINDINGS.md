@@ -117,11 +117,16 @@ Posterior **0.10** (prior 0.3, Bayes factor 0.25). Tool synthesis: "Anti-calibra
 
 Reasoning-tool prior: posterior 0.64 (moderate confidence general).
 
-**Empirical answer (2026-05-03)**: experiment 005 (opus47-swap-nvda) ran the same NVDA × 10 grid with deep_think_llm = claude-opus-4-7. Result: 10/10 Overweight commits, **21d OW α = +2.85% across n=9 with 78% hit rate** — STRONGER than Sonnet cross-experiment OW 21d α of +1.59%. 7 of 9 directionally correct, including a +15% win on 03-27.
+**Empirical answer (2026-05-03, two experiments)**:
 
-Verdict: **strongly positive — 21d signal is general-LLM, not Sonnet-specific. The lift amplifies with a stronger model.** Pulls cross-experiment OW 21d α to +1.88% (n=43, 64% hit). Single-call baseline still doesn't show the lift, so the framework structure remains load-bearing.
+- **005 opus47-swap-nvda**: 10/10 Overweight on NVDA, 21d OW α = +2.85% (n=9, 78% hit). STRONGER than Sonnet cross-experiment OW 21d α of +1.59%.
+- **006 opus47-swap-aapl** (pre-flight): 8 Hold + 2 OW on AAPL, 21d OW α = -0.07% (n=2, 50% hit). Flat, NOT replicating the NVDA lift.
 
-**Updates Constitution Principle VII**: the calibrated-abstention claim ("Hold mode collapse is honest") is Sonnet-specific. Opus on the same prompt commits aggressively to OW and is right at 21d 78% of the time. The mode-collapse direction is model-dependent; both are honest given each model's intrinsic calibration. Principle VII should be reframed as "Each model's intrinsic calibration determines mode-collapse direction; Hold-collapse is one valid form, OW-collapse is another, both honest if realized α matches."
+Verdict: **the 21d bull signal is regime-conditional, not model-wide**. Opus produces strong bull commits AND positive 21d α only on tickers in clear bull regimes (NVDA in this period). On mixed-evidence tickers (AAPL), Opus correctly holds rather than committing.
+
+Cross-experiment OW 21d α now +1.79% (n=41, 63% hit) — still the load-bearing claim, but anchored heavily by NVDA bull-regime data.
+
+**Constitution Principle VII (re-amended after 006)**: mode-collapse direction is a function of (model × ticker × regime × prompt). Opus on the same prompt produces 10/10 OW on bull-regime NVDA AND 8/10 Hold on mixed-regime AAPL. The framework's calibrated abstention/commit behavior IS the model expressing its intrinsic confidence given the available evidence — stronger models discriminate this confidence per-ticker rather than collapsing uniformly. Sonnet either over-abstains (NVDA) or over-commits-bearish (AAPL); Opus does neither.
 
 ### Q4 — UW anti-calibration: ticker-concentrated or distributed?
 

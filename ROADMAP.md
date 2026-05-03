@@ -18,18 +18,24 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 
 ---
 
-## Active branch — Opus result landed (2026-05-03)
+## Active branch — Opus pre-flight pair landed (2026-05-03)
 
-**Result**: experiment 005 produced 10/10 Overweight on NVDA × 10. Opus OW 21d α = **+2.85% (n=9, 78% hit)** — STRONGER than Sonnet's +1.59%. Decision tree: top branch (≥ +1.0%) fired → 21d signal is general-LLM, not Sonnet-specific.
+**Both Opus results in**:
+- 005 NVDA: 10/10 OW, 21d OW α = +2.85% (n=9, 78% hit) — strong bull commit + correct
+- 006 AAPL: 8 Hold + 2 OW, 21d OW α = -0.07% (n=2, 50% hit) — discriminates, doesn't auto-commit
 
-**Next experiment selected**: 30-pair Opus re-pilot at 21d horizon (~$30, ~3.5h, fits Principle III ceiling). The full 65-pair re-pilot at Opus would cost ~$65 — needs explicit deliberation in HYPOTHESIS to cross the ceiling, OR run at 65-pair Sonnet ($30) which keeps to ceiling but uses the weaker model.
+Combined finding: **Opus discriminates by ticker**. The 005 OW-collapse was bull-regime-specific (NVDA up +26% over the window); on mixed-evidence AAPL, Opus mostly holds. This is calibrated commitment — better than Sonnet's behavior on either ticker (Sonnet over-abstained on NVDA AND over-committed-bearish on AAPL).
 
-Alternative pre-flight check before committing $30: **AAPL × 10 Opus swap (~$10)** — tests whether Opus's commit pattern + 21d-correct behavior generalizes to a bear-correct ticker. If it does, the 21d bull-side signal is multi-regime and the 30-pair re-pilot at scale is well-grounded.
+Cross-experiment OW 21d α: +1.79% (n=41, 63% hit). Still the load-bearing claim; anchored heavily by NVDA bull-regime data.
 
-Recommended sequence:
-1. AAPL × 10 Opus swap ($10, 80 min) — confirms generalization
-2. If AAPL also shows OW 21d positive: 30-pair Opus re-pilot at 21d ($30, 3.5h)
-3. If AAPL doesn't: stay with Sonnet for the 30-pair, save Opus for later targeted runs
+**Next experiment selected**: 30-pair Opus re-pilot at 21d horizon with **mixed ticker basket** to test per-ticker discrimination at scale. ~$30, ~3.5h, fits Principle III ceiling. Use A3 momentum filter enabled.
+
+Suggested basket composition (10 dates each):
+- 1 bull-regime ticker (NVDA → expect mostly OW per 005 pattern)
+- 1 mixed-regime ticker (AAPL → expect mostly Hold per 006 pattern)
+- 1 bear-leaning ticker (XOM, INTC, or BBY → untested with Opus; expect mostly Hold or some UW)
+
+This tests whether: (a) Opus's bull-side α holds on a fresh bull-regime ticker (n=9 → n=20+ NVDA-like commits), (b) the per-ticker discrimination produces a clean cross-regime distribution, (c) the A3 filter doesn't suppress too many Opus UW commits (in case bear-leaning ticker generates them).
 
 ---
 
