@@ -13,27 +13,22 @@ Usage:
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 import typer
-import yfinance as yf
 from rich import box
 from rich.console import Console
 from rich.table import Table
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from tradingagents.dataflows.returns import alpha_from_frames as _compute_alpha  # noqa: E402
+from tradingagents.dataflows.price_cache import PriceCache  # noqa: E402
 
 console = Console()
 app = typer.Typer(add_completion=False)
 
 RATING_ORDER = ["Buy", "Overweight", "Hold", "Underweight", "Sell"]
-
-
-def _fetch_history(ticker: str, start: str, end: str) -> pd.DataFrame:
-    return yf.Ticker(ticker).history(start=start, end=end, auto_adjust=False)
 
 
 @app.command()
@@ -46,7 +41,6 @@ def main(
     csv_paths = sorted(Path().glob(pattern))
     console.print(f"[bold]Found {len(csv_paths)} experiment CSVs; horizons={horizon_list}[/bold]\n")
 
-    # Per-ticker price cache. Pull once per ticker over the full window.
     all_dates, all_tickers = [], set()
     for p in csv_paths:
         df = pd.read_csv(p)
@@ -54,16 +48,8 @@ def main(
         all_dates.extend(df["analysis_date"].tolist())
         all_tickers.update(df["ticker"].unique())
 
-    min_date = min(all_dates)
-    max_date = max(all_dates)
-    fetch_end = (
-        datetime.strptime(max_date, "%Y-%m-%d") + timedelta(days=max(horizon_list) + 14)
-    ).strftime("%Y-%m-%d")
-    fetch_start = (datetime.strptime(min_date, "%Y-%m-%d") - timedelta(days=7)).strftime("%Y-%m-%d")
-
-    console.print(f"Fetching {len(all_tickers)} ticker histories: {fetch_start} → {fetch_end}")
-    cache = {t: _fetch_history(t, fetch_start, fetch_end) for t in all_tickers}
-    spy = _fetch_history("SPY", fetch_start, fetch_end)
+    console.print(f"Fetching {len(all_tickers)} ticker histories...")
+    cache = PriceCache(all_tickers, all_dates, horizon_days=max(horizon_list))
 
     # Long-format result table.
     rows = []
@@ -73,11 +59,7 @@ def main(
         df = df[df["error"].isna() | (df["error"] == "")]
         for h in horizon_list:
             for _, row in df.iterrows():
-                ticker = row["ticker"]
-                stock_df = cache.get(ticker)
-                if stock_df is None or stock_df.empty:
-                    continue
-                alpha = _compute_alpha(stock_df, spy, row["analysis_date"], h)
+                alpha = cache.alpha(row["ticker"], row["analysis_date"], h)
                 if alpha is None:
                     continue
                 rows.append(
@@ -85,7 +67,7 @@ def main(
                         "exp": exp_id,
                         "horizon": h,
                         "rating": row["rating"],
-                        "ticker": ticker,
+                        "ticker": row["ticker"],
                         "alpha": alpha,
                     }
                 )

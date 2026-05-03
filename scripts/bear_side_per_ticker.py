@@ -13,18 +13,17 @@ If distributed across all tickers → structural bullish lean is real.
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 import typer
-import yfinance as yf
 from rich import box
 from rich.console import Console
 from rich.table import Table
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from tradingagents.dataflows.returns import alpha_from_frames as _alpha  # noqa: E402
+from tradingagents.dataflows.price_cache import PriceCache  # noqa: E402
 
 console = Console()
 app = typer.Typer(add_completion=False)
@@ -62,22 +61,12 @@ def main(
         console.print("[yellow]No bear-side ratings found.[/yellow]")
         raise typer.Exit(0)
 
-    fetch_start = (datetime.strptime(min(dates), "%Y-%m-%d") - timedelta(days=7)).strftime(
-        "%Y-%m-%d"
-    )
-    fetch_end = (
-        datetime.strptime(max(dates), "%Y-%m-%d") + timedelta(days=max(horizon_list) + 14)
-    ).strftime("%Y-%m-%d")
-    cache = {
-        t: yf.Ticker(t).history(start=fetch_start, end=fetch_end, auto_adjust=False)
-        for t in tickers
-    }
-    spy = yf.Ticker("SPY").history(start=fetch_start, end=fetch_end, auto_adjust=False)
+    cache = PriceCache(tickers, dates, horizon_days=max(horizon_list))
 
     enriched = []
     for r in rows:
         for h in horizon_list:
-            a = _alpha(cache[r["ticker"]], spy, r["date"], h)
+            a = cache.alpha(r["ticker"], r["date"], h)
             if a is None:
                 continue
             enriched.append({**r, "horizon": h, "alpha": a})

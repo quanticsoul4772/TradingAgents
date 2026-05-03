@@ -19,35 +19,20 @@ post-filter UW α correctness without losing too many calls.
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 import typer
-import yfinance as yf
 from rich import box
 from rich.console import Console
 from rich.table import Table
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from tradingagents.dataflows.returns import alpha_from_frames as _alpha  # noqa: E402
+from tradingagents.dataflows.price_cache import PriceCache  # noqa: E402
 
 console = Console()
 app = typer.Typer(add_completion=False)
-
-
-def _trailing_return(df, trade_date: str, lookback_days: int) -> float | None:
-    """% return over the lookback_days trading days BEFORE trade_date.
-    No look-ahead — uses prices strictly before the trade date.
-    """
-    td = pd.Timestamp(trade_date)
-    idx = df.index.tz_localize(None) if df.index.tz is not None else df.index
-    past = df.loc[idx < td]
-    if len(past) < lookback_days + 1:
-        return None
-    p_now = past["Close"].iloc[-1]
-    p_then = past["Close"].iloc[-1 - lookback_days]
-    return float((p_now - p_then) / p_then) * 100
 
 
 @app.command()
@@ -71,16 +56,7 @@ def main(
             tickers.add(r["ticker"])
             dates.append(r["analysis_date"])
 
-    fetch_start = (
-        datetime.strptime(min(dates), "%Y-%m-%d") - timedelta(days=lookback + 30)
-    ).strftime("%Y-%m-%d")
-    fetch_end = (datetime.strptime(max(dates), "%Y-%m-%d") + timedelta(days=horizon + 14)).strftime(
-        "%Y-%m-%d"
-    )
-    cache = {
-        t: yf.Ticker(t).history(start=fetch_start, end=fetch_end, auto_adjust=False) for t in tickers
-    }
-    spy = yf.Ticker("SPY").history(start=fetch_start, end=fetch_end, auto_adjust=False)
+    cache = PriceCache(tickers, dates, horizon_days=horizon)
 
     # Dedupe (ticker, date) and compute features
     seen = set()
@@ -90,11 +66,11 @@ def main(
         if key in seen:
             continue
         seen.add(key)
-        a = _alpha(cache[r["ticker"]], spy, r["date"], horizon)
+        a = cache.alpha(r["ticker"], r["date"], horizon)
         if a is None:
             continue
-        spy_mom = _trailing_return(spy, r["date"], lookback)
-        tic_mom = _trailing_return(cache[r["ticker"]], r["date"], lookback)
+        spy_mom = cache.trailing_return(cache.benchmark, r["date"], lookback)
+        tic_mom = cache.trailing_return(r["ticker"], r["date"], lookback)
         if spy_mom is None or tic_mom is None:
             continue
         enriched.append(

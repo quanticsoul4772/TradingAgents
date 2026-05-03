@@ -10,17 +10,15 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
 import typer
-import yfinance as yf
 from rich.console import Console
 from rich.table import Table
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from tradingagents.dataflows.returns import alpha_from_frames as _alpha  # noqa: E402
+from tradingagents.dataflows.price_cache import PriceCache  # noqa: E402
 
 console = Console()
 app = typer.Typer(add_completion=False)
@@ -65,21 +63,11 @@ def main(
             tickers.add(r["ticker"])
             dates.append(r["analysis_date"])
 
-    fetch_start = (datetime.strptime(min(dates), "%Y-%m-%d") - timedelta(days=7)).strftime(
-        "%Y-%m-%d"
-    )
-    fetch_end = (datetime.strptime(max(dates), "%Y-%m-%d") + timedelta(days=horizon + 14)).strftime(
-        "%Y-%m-%d"
-    )
-    cache = {
-        t: yf.Ticker(t).history(start=fetch_start, end=fetch_end, auto_adjust=False)
-        for t in tickers
-    }
-    spy = yf.Ticker("SPY").history(start=fetch_start, end=fetch_end, auto_adjust=False)
+    cache = PriceCache(tickers, dates, horizon_days=horizon)
 
     enriched = []
     for r in rows:
-        a = _alpha(cache[r["ticker"]], spy, r["date"], horizon)
+        a = cache.alpha(r["ticker"], r["date"], horizon)
         if a is None:
             continue
         enriched.append({**r, "alpha": a, "abs_alpha": abs(a)})
