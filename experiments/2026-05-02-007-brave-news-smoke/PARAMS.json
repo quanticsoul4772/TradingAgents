@@ -1,6 +1,10 @@
 {
-  "config_overrides": {},
-  "explicit_flags": {},
-  "baseline": "",
-  "notes": ""
+  "config_overrides": {
+    "data_vendors.news_data": "brave"
+  },
+  "explicit_flags": {
+    "--news-vendor": "brave"
+  },
+  "baseline": "pilot (yfinance news)",
+  "notes": "Backfilled 2026-05-03 — predates the R-007 named-flag auto-sync fix (commit fa51f17). Original run used --news-vendor brave on NVDA × same 10 dates as pilot/WC-12/MR-3."
 }

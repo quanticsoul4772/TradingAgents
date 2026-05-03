@@ -1,6 +1,10 @@
 {
-  "config_overrides": {},
-  "explicit_flags": {},
-  "baseline": "",
-  "notes": ""
+  "config_overrides": {
+    "data_vendors.news_data": "exa"
+  },
+  "explicit_flags": {
+    "--news-vendor": "exa"
+  },
+  "baseline": "AAPL pilot + brave-news-smoke-aapl (compares 3 news vendors)",
+  "notes": "Backfilled 2026-05-03 — predates the R-007 named-flag auto-sync fix (commit fa51f17). Original run used --news-vendor exa on AAPL × same 10 dates as the brave smoke companion."
 }
