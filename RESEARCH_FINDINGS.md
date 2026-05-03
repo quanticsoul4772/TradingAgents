@@ -119,7 +119,18 @@ Posterior **0.64** (prior 0.5, Bayes factor 1.75). Tool synthesis: "Sonnet's doc
 
 ### Q4 — UW anti-calibration: ticker-concentrated or distributed?
 
-`reasoning_decision` (perspectives mode) gave a portfolio-strategy framed answer (60-70% concentrated allocation + 30-40% diversification overlay) rather than a research-design answer — output was muddled by the tool reading the question as portfolio-management rather than diagnostic. **Verdict**: tool wasn't well-suited; the actual answer requires running a per-ticker breakdown of UW α at 21d. ~30 min of pandas work on existing CSVs, no LLM cost.
+Answered empirically via `scripts/bear_side_per_ticker.py` (output at `claudedocs/bear-side-per-ticker.md`):
+
+| Ticker | n at 21d | mean α | wrong % | verdict |
+|---|---|---|---|---|
+| **AAPL** | 14 | **-0.18%** | 43% | **directionally correct** |
+| MSFT | 5 | +2.03% | 80% | anti-cal |
+| NVDA | 4 | +6.35% | 100% | anti-cal |
+| CROSS | 23 | +1.44% | 61% | anti-cal (NVDA + MSFT-driven) |
+
+**Verdict**: Anti-calibration is REGIME-CONCENTRATED, not structural. AAPL (the bear-correct ticker per WC-12 cross-AAPL) shows directionally correct bear-bucket α at 21d. NVDA + MSFT in their Q1 2026 bull regime drove the aggregate "anti-calibration" appearance. **This refines Q2's reasoning-tool verdict**: the bear-side problem isn't "structural bullish bias" — it's "the framework chose to commit UW at all on bull-regime tickers." The UW *rating* works when pointed at bear-correct tickers. The failure mode is UW *commit selection* during bull regimes.
+
+Implication for any UW user: only trust UW when the ticker has independent bear evidence. UW on bull-regime tickers is where anti-calibration concentrates.
 
 ### Q5 — Wire reasoning_evidence into PortfolioManager as 2nd opinion
 
