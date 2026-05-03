@@ -64,6 +64,103 @@ def test_hypothesis_explicit_overrides_used():
     assert "1999-12-31" in out
 
 
+# ---- Cost-tier infra (Constitution v1.2.0 Principle III) -----------------
+
+
+def test_hypothesis_default_tier_is_T2():
+    """No cost given + no tier given → T2 (default scaled-but-still-cheap)."""
+    from tradingagents.experiments.templates import infer_tier
+
+    out = render_hypothesis("2026-05-02-001-foo")
+    assert "**Cost tier**: T2" in out
+    assert infer_tier(None) == "T2"
+
+
+def test_hypothesis_tier_inferred_from_cost():
+    """Tier auto-derives from --cost when --tier not given."""
+    from tradingagents.experiments.templates import infer_tier
+
+    assert infer_tier(0) == "T1"
+    assert infer_tier(3) == "T1"
+    assert infer_tier(5) == "T1"  # boundary inclusive
+    assert infer_tier(5.01) == "T2"
+    assert infer_tier(20) == "T2"
+    assert infer_tier(30) == "T2"
+    assert infer_tier(30.01) == "T3"
+    assert infer_tier(75) == "T3"
+    assert infer_tier(100) == "T3"
+    assert infer_tier(100.01) == "T4"
+    assert infer_tier(250) == "T4"
+
+
+def test_hypothesis_T1_no_cost_justification_section():
+    """T1/T2 do NOT inject the Cost Justification section."""
+    out = render_hypothesis("2026-05-02-001-foo", cost=2.0)
+    assert "**Cost tier**: T1" in out
+    assert "## Cost Justification" not in out
+
+
+def test_hypothesis_T2_no_cost_justification_section():
+    out = render_hypothesis("2026-05-02-001-foo", cost=15.0)
+    assert "**Cost tier**: T2" in out
+    assert "## Cost Justification" not in out
+
+
+def test_hypothesis_T3_injects_cost_justification_section():
+    """T3 injects the required-fields scaffold (why this scale, alternatives, outcome)."""
+    out = render_hypothesis("2026-05-02-001-foo", cost=65.0)
+    assert "**Cost tier**: T3" in out
+    assert "## Cost Justification" in out
+    assert "Why this scale" in out
+    assert "Cheaper alternatives considered" in out
+    assert "Outcome that would justify the spend" in out
+    # T4-only fields should NOT appear in T3
+    assert "Multi-day deliberation log" not in out
+    assert "Kill criteria" not in out
+
+
+def test_hypothesis_T4_injects_full_capital_section():
+    """T4 includes T3 fields PLUS multi-day deliberation, fallback, kill criteria."""
+    out = render_hypothesis("2026-05-02-001-foo", cost=250.0)
+    assert "**Cost tier**: T4" in out
+    assert "## Cost Justification" in out
+    # T3 fields
+    assert "Why this scale" in out
+    assert "Cheaper alternatives considered" in out
+    assert "Outcome that would justify the spend" in out
+    # T4-additional fields
+    assert "Multi-day deliberation log" in out
+    assert "Fallback plan if experiment fails to deliver" in out
+    assert "Alternative-experiment comparisons" in out
+    assert "Kill criteria" in out
+
+
+def test_hypothesis_explicit_tier_overrides_cost_inference():
+    """If both --cost and --tier are given, --tier wins."""
+    # cost=$5 would infer T1, but explicit T3 should win
+    out = render_hypothesis("2026-05-02-001-foo", cost=5.0, tier="T3")
+    assert "**Cost tier**: T3" in out
+    assert "## Cost Justification" in out
+
+
+def test_hypothesis_invalid_tier_raises():
+    """Unknown tier → ValueError, not silent fallback."""
+    import pytest
+
+    with pytest.raises(ValueError, match="Invalid tier"):
+        render_hypothesis("2026-05-02-001-foo", tier="T5")
+
+
+def test_hypothesis_tier_label_includes_range_and_meaning():
+    """Tier line includes human-readable range + label, not just 'T3'."""
+    out = render_hypothesis("2026-05-02-001-foo", cost=50.0)
+    # Should mention the dollar range and the tier label
+    assert "T3" in out
+    assert "scaled" in out
+    assert "$30" in out
+    assert "$100" in out
+
+
 # ---- render_params_json -------------------------------------------------
 
 

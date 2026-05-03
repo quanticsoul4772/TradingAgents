@@ -23,6 +23,9 @@ console = Console()
 app = typer.Typer(add_completion=False)
 
 
+VALID_TIERS = {"T1", "T2", "T3", "T4"}
+
+
 def _create_experiment(
     short_name: str,
     *,
@@ -30,6 +33,7 @@ def _create_experiment(
     source_idea: str | None,
     cost: float | None,
     on_date: date | None,
+    tier: str | None = None,
 ) -> Path:
     """Create the experiment directory and populate templates.
 
@@ -43,6 +47,12 @@ def _create_experiment(
             "no leading/trailing hyphens."
         )
 
+    if tier is not None and tier not in VALID_TIERS:
+        raise ValueError(
+            f"Invalid tier {tier!r}: must be one of {sorted(VALID_TIERS)}. "
+            "T1 ≤$5 / T2 $5-30 (default) / T3 $30-100 / T4 >$100. See Constitution III."
+        )
+
     id_str = next_experiment_id(experiments_dir, short_name, date=on_date)
     exp_dir = experiments_dir / id_str
 
@@ -53,7 +63,7 @@ def _create_experiment(
     exp_dir.mkdir(parents=True, exist_ok=False)
 
     (exp_dir / "HYPOTHESIS.md").write_text(
-        render_hypothesis(id_str, source_idea=source_idea, cost=cost),
+        render_hypothesis(id_str, source_idea=source_idea, cost=cost, tier=tier),
         encoding="utf-8",
     )
     (exp_dir / "PARAMS.json").write_text(render_params_json(), encoding="utf-8")
@@ -79,6 +89,13 @@ def main(
         "--cost",
         help="Pre-fill the cost-estimate line in HYPOTHESIS.md (USD). "
         "Leave empty for zero-cost experiments.",
+    ),
+    tier: str | None = typer.Option(
+        None,
+        "--tier",
+        help="Cost tier (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100) per Constitution III. "
+        "If unset, derived from --cost; defaults to T2 if neither is given. "
+        "T3 / T4 inject a Cost-Justification section the researcher must fill in.",
     ),
     experiments_dir: Path = typer.Option(
         Path("experiments"),
@@ -107,6 +124,7 @@ def main(
             source_idea=source_idea,
             cost=cost,
             on_date=parsed_date,
+            tier=tier,
         )
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
