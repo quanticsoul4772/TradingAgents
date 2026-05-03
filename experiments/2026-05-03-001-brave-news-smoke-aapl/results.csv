@@ -1,0 +1,11 @@
+ticker,analysis_date,rating,error,run_seconds,deep_model,quick_model,debate_rounds,analysts,experiment_id
+AAPL,2026-01-30,Hold,,459.7,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-03-001-brave-news-smoke-aapl
+AAPL,2026-02-06,Hold,,444.91,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-03-001-brave-news-smoke-aapl
+AAPL,2026-02-13,Hold,,370.45,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-03-001-brave-news-smoke-aapl
+AAPL,2026-02-20,Hold,,433.77,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-03-001-brave-news-smoke-aapl
+AAPL,2026-02-27,Hold,,426.01,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-03-001-brave-news-smoke-aapl
+AAPL,2026-03-06,Underweight,,433.65,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-03-001-brave-news-smoke-aapl
+AAPL,2026-03-13,Underweight,,435.22,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-03-001-brave-news-smoke-aapl
+AAPL,2026-03-20,Hold,,421.83,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-03-001-brave-news-smoke-aapl
+AAPL,2026-03-27,Hold,,486.56,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-03-001-brave-news-smoke-aapl
+AAPL,2026-04-03,Underweight,,478.77,claude-sonnet-4-6,claude-haiku-4-5,1,"market,news,fundamentals",2026-05-03-001-brave-news-smoke-aapl
