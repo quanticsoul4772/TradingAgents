@@ -10,9 +10,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Read the headline finding first
 
-After 13 experiments + cross-experiment horizon sweep + per-ticker breakdown + Opus 4.7 model swap (NVDA + AAPL), the architectural conclusion is captured in **`RESEARCH_FINDINGS.md`**. Forward roadmap in **`ROADMAP.md`**.
+After 14 experiments + cross-experiment horizon sweep + per-ticker breakdown + Opus 4.7 model swap (NVDA + AAPL) + Opus 30-pair mixed basket (NVDA + AAPL + INTC) + A3 filter forensics, the architectural conclusion is captured in **`RESEARCH_FINDINGS.md`**. Forward roadmap in **`ROADMAP.md`**.
 
-> At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls (Buy/OW/UW/Sell) are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) become directionally correct and produce ~+1.79% mean alpha across n=41 across-experiment commits (63% hit rate). Bearish commits remain anti-calibrated at every horizon, with the failure mode concentrated on tickers in -10%+ drawdowns (mean-reversion plays the framework misidentifies). Hold ≈ 0% at every horizon. **Mode-collapse direction is a function of (model × ticker × regime × prompt)**: Sonnet over-abstains on bull tickers AND over-commits-bearish on bear tickers; Opus discriminates per-ticker (10/10 OW on NVDA bull regime, 8/10 Hold on AAPL mixed regime).
+> At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls (Buy/OW/UW/Sell) are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) become directionally correct and produce **+1.99% mean alpha across n=50 across-experiment commits (65% hit rate)**. Bearish commits are regime-asymmetric, not uniformly anti-calibrated: UW on bear-correct tickers (AAPL, INTC excl. tail outliers) are directionally appropriate; UW on bull-regime tickers (NVDA, MSFT) drive the aggregate anti-calibration. Hold ≈ 0% median at every horizon (mean is tail-distorted). **Mode-collapse direction is a function of (model × ticker × regime × prompt)**: Sonnet over-abstains on bull tickers AND over-commits-bearish on bear tickers; Opus discriminates per-ticker. **Bucket-level claims replicate; date-level claims do not** — 005's NVDA 10/10 OW becomes 6/10 OW + 4 Hold on the same dates in 007 (stochastic news API + evolving memory log produce real run-to-run variance). The A3 momentum filter is correctly inert on regime-mismatch failures (validated by `claudedocs/a3-filter-forensics-007.md`).
 
 This is encoded in **Constitution Principle VII (Calibrated Abstention is a Valid Output)** added 2026-05-03 then re-amended after 006. Any new structural change that reduces Hold rate must justify in HYPOTHESIS.md why the additional commits would be calibrated rather than noise, at what horizon, and with what directional asymmetry expectation.
 
@@ -21,7 +21,7 @@ This is encoded in **Constitution Principle VII (Calibrated Abstention is a Vali
 The design is governed by `.specify/memory/constitution.md`. Before non-trivial changes, read:
 
 1. `.specify/memory/constitution.md` — **seven** core principles (Save Everything, One Experiment Per Change, Stay Cheap, No Production Claims, Steal Liberally, Spec Before Structural Change, **Calibrated Abstention is a Valid Output**). The principles are constraints, not aspirations.
-2. `RESEARCH_FINDINGS.md` — project-level synthesis across all 13 experiments + the 5 open questions with their reasoning-tool-derived priors and empirical answers.
+2. `RESEARCH_FINDINGS.md` — project-level synthesis across all 14 experiments + the 5 open questions with their reasoning-tool-derived priors and empirical answers.
 3. `ROADMAP.md` — sequenced phases of exploration (Phase B validate / C operationalize / D substrate-extend / E architectural variants) + cross-pollination opportunities from sibling projects.
 4. `docs/EXPERIMENT.md` — original brainstorm of ~50 ideas tagged by source project (agent-harness-v2 / ladybird / battlecode2026 / bruno-swarm / mcp-reasoning). Most Tier 1 ideas now superseded by completed experiments; Tier 2/3 still untouched.
 5. `docs/MULTI_AGENT_DEBATE_RESEARCH.md` — strategic-context doc evaluating three integration paths against the user's portfolio. Recorded for reference; superseded by ROADMAP framing.
@@ -59,7 +59,7 @@ mypy (`v1.20`) is installed but **not** in pre-commit (too slow). Run manually: 
 
 **Baseline** (recorded at scaffolding install): ruff = 305 errors, mypy = 167 errors. New code adds zero new violations; the existing baseline is grandfathered for now (we'll be replacing much of it as part of `EXPERIMENT.md` plans).
 
-**Test coverage** (as of 2026-05-03): 466 tests passing, 81% project coverage. Anthropic + OpenAI clients ~95%, all 4 analyst factories + 5 debate-agent factories 100%, graph/setup.py 100%, conditional_logic.py 100%, trading_graph.py 88%, dataflows/interface.py 98%.
+**Test coverage** (as of 2026-05-03): 501 tests passing, 81% project coverage. Anthropic + OpenAI clients ~95%, all 4 analyst factories + 5 debate-agent factories 100%, graph/setup.py 100%, conditional_logic.py 100%, trading_graph.py 88%, dataflows/interface.py 98%. Routing-mismatch regression test (`tests/test_interface_routing.py::test_every_categorized_tool_has_impl_for_default_vendor`) added 2026-05-03 after experiment 008 caught the `get_insider_transactions × news_data × exa` mismatch.
 
 ## Commands
 
@@ -135,7 +135,7 @@ python scripts/uw_suppression_filter.py
 
 `yfinance` and `brave` news vendors were removed 2026-05-03; `yfinance` the package is still used for stock prices, technical indicators, and fundamental data.
 
-**A3 momentum filter** (opt-in production augmentation): set `config["uw_momentum_filter_threshold"] = -5.0` to enable mean-reversion suppression of UW/Sell commits. Wired in `tradingagents/agents/managers/portfolio_manager.py` via `tradingagents/agents/utils/momentum_filter.py`. Default disabled.
+**A3 momentum filter** (opt-in production augmentation): set `config["uw_momentum_filter_threshold"] = -5.0` to enable mean-reversion suppression of UW/Sell commits. Wired in `tradingagents/agents/managers/portfolio_manager.py` via `tradingagents/agents/utils/momentum_filter.py`. Default disabled. **Forensics validation** (post-experiment 007): the filter targets mean-reversion bounces specifically — it correctly stays inert on regime-mismatch UW commits (e.g. INTC was UP +11-33% at 4 of 6 UW dates and never in suppression zone). See `claudedocs/a3-filter-forensics-007.md` for per-row breakdown.
 
 Tests (pytest is configured in `pyproject.toml`, markers: `unit`, `integration`, `smoke`):
 ```bash

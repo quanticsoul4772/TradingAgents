@@ -90,14 +90,18 @@ TOOLS_CATEGORIES = {
             "get_short_interest",
             "get_institutional_holders",
             "get_corporate_actions",
+            # Insider transactions are conceptually fundamental data, not news.
+            # Moved here from news_data so route_to_vendor falls back to the
+            # fundamental_data category vendor (yfinance) instead of the
+            # news_data vendor (exa, which has no impl for this tool).
+            "get_insider_transactions",
         ],
     },
     "news_data": {
-        "description": "News and insider data",
+        "description": "News data",
         "tools": [
             "get_news",
             "get_global_news",
-            "get_insider_transactions",
         ],
     },
     "macro_data": {
@@ -156,9 +160,6 @@ VENDOR_METHODS = {
         "alpha_vantage": get_alpha_vantage_global_news,
     },
     "get_insider_transactions": {
-        # yfinance first: news_data category default is "exa" which has no impl
-        # for this tool, so fallback chain hits the next dict key. yfinance is
-        # the no-API-key option; alpha_vantage requires ALPHA_VANTAGE_API_KEY.
         "yfinance": get_yfinance_insider_transactions,
         "alpha_vantage": get_alpha_vantage_insider_transactions,
     },

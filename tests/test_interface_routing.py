@@ -25,7 +25,6 @@ from tradingagents.dataflows.interface import (
     route_to_vendor,
 )
 
-
 # -- get_category_for_method ------------------------------------------------
 
 
@@ -41,7 +40,7 @@ from tradingagents.dataflows.interface import (
         ("get_income_statement", "fundamental_data"),
         ("get_news", "news_data"),
         ("get_global_news", "news_data"),
-        ("get_insider_transactions", "news_data"),
+        ("get_insider_transactions", "fundamental_data"),
     ],
 )
 def test_get_category_for_known_method(method, expected_category):
@@ -104,10 +103,14 @@ def test_get_vendor_method_arg_with_no_tool_vendors_falls_back_to_category():
 @pytest.mark.unit
 def test_route_to_vendor_calls_configured_vendor():
     """Happy path: configured vendor's impl is invoked with passed args."""
-    fake_impl = lambda *a, **kw: f"called with {a}, {kw}"
+
+    def fake_impl(*a, **kw):
+        return f"called with {a}, {kw}"
+
     config = {"data_vendors": {"news_data": "exa"}, "tool_vendors": {}}
-    with patch("tradingagents.dataflows.interface.get_config", return_value=config), patch.dict(
-        VENDOR_METHODS, {"get_news": {"exa": fake_impl}}, clear=False
+    with (
+        patch("tradingagents.dataflows.interface.get_config", return_value=config),
+        patch.dict(VENDOR_METHODS, {"get_news": {"exa": fake_impl}}, clear=False),
     ):
         result = route_to_vendor("get_news", "NVDA", "2026-01-30", "2026-02-06")
     assert "NVDA" in result
@@ -135,10 +138,13 @@ def test_route_to_vendor_falls_back_on_rate_limit():
         return "fallback result"
 
     config = {"data_vendors": {"news_data": "alpha_vantage"}, "tool_vendors": {}}
-    with patch("tradingagents.dataflows.interface.get_config", return_value=config), patch.dict(
-        VENDOR_METHODS,
-        {"get_news": {"alpha_vantage": primary, "exa": fallback}},
-        clear=False,
+    with (
+        patch("tradingagents.dataflows.interface.get_config", return_value=config),
+        patch.dict(
+            VENDOR_METHODS,
+            {"get_news": {"alpha_vantage": primary, "exa": fallback}},
+            clear=False,
+        ),
     ):
         result = route_to_vendor("get_news", "NVDA")
     assert result == "fallback result"
@@ -157,10 +163,13 @@ def test_route_to_vendor_propagates_non_rate_limit_exceptions():
         return "should not reach"
 
     config = {"data_vendors": {"news_data": "alpha_vantage"}, "tool_vendors": {}}
-    with patch("tradingagents.dataflows.interface.get_config", return_value=config), patch.dict(
-        VENDOR_METHODS,
-        {"get_news": {"alpha_vantage": primary, "exa": fallback}},
-        clear=False,
+    with (
+        patch("tradingagents.dataflows.interface.get_config", return_value=config),
+        patch.dict(
+            VENDOR_METHODS,
+            {"get_news": {"alpha_vantage": primary, "exa": fallback}},
+            clear=False,
+        ),
     ):
         with pytest.raises(RuntimeError, match="network down"):
             route_to_vendor("get_news")
@@ -180,10 +189,13 @@ def test_route_to_vendor_comma_separated_primary_vendors():
         return "b result"
 
     config = {"data_vendors": {"news_data": "alpha_vantage,exa"}, "tool_vendors": {}}
-    with patch("tradingagents.dataflows.interface.get_config", return_value=config), patch.dict(
-        VENDOR_METHODS,
-        {"get_news": {"alpha_vantage": vendor_a, "exa": vendor_b}},
-        clear=False,
+    with (
+        patch("tradingagents.dataflows.interface.get_config", return_value=config),
+        patch.dict(
+            VENDOR_METHODS,
+            {"get_news": {"alpha_vantage": vendor_a, "exa": vendor_b}},
+            clear=False,
+        ),
     ):
         result = route_to_vendor("get_news")
     assert calls == ["a", "b"]
@@ -198,10 +210,13 @@ def test_route_to_vendor_no_available_vendor_raises():
         raise AlphaVantageRateLimitError("rate")
 
     config = {"data_vendors": {"news_data": "alpha_vantage"}, "tool_vendors": {}}
-    with patch("tradingagents.dataflows.interface.get_config", return_value=config), patch.dict(
-        VENDOR_METHODS,
-        {"get_news": {"alpha_vantage": vendor_a}},
-        clear=False,
+    with (
+        patch("tradingagents.dataflows.interface.get_config", return_value=config),
+        patch.dict(
+            VENDOR_METHODS,
+            {"get_news": {"alpha_vantage": vendor_a}},
+            clear=False,
+        ),
     ):
         with pytest.raises(RuntimeError, match="No available vendor"):
             route_to_vendor("get_news")
@@ -217,10 +232,13 @@ def test_route_to_vendor_skips_unknown_vendor_in_config():
 
     # Config says "ghost" first then "exa"; ghost isn't in VENDOR_METHODS at all
     config = {"data_vendors": {"news_data": "ghost,exa"}, "tool_vendors": {}}
-    with patch("tradingagents.dataflows.interface.get_config", return_value=config), patch.dict(
-        VENDOR_METHODS,
-        {"get_news": {"exa": real_vendor}},
-        clear=False,
+    with (
+        patch("tradingagents.dataflows.interface.get_config", return_value=config),
+        patch.dict(
+            VENDOR_METHODS,
+            {"get_news": {"exa": real_vendor}},
+            clear=False,
+        ),
     ):
         result = route_to_vendor("get_news")
     assert result == "real result"
@@ -229,10 +247,52 @@ def test_route_to_vendor_skips_unknown_vendor_in_config():
 @pytest.mark.unit
 def test_route_to_vendor_handles_vendor_impl_as_list():
     """Some vendor impls might be wrapped as [callable] — route should unwrap."""
-    fake_impl = lambda *a, **kw: "list-wrapped result"
+
+    def fake_impl(*a, **kw):
+        return "list-wrapped result"
+
     config = {"data_vendors": {"news_data": "exa"}, "tool_vendors": {}}
-    with patch("tradingagents.dataflows.interface.get_config", return_value=config), patch.dict(
-        VENDOR_METHODS, {"get_news": {"exa": [fake_impl]}}, clear=False
+    with (
+        patch("tradingagents.dataflows.interface.get_config", return_value=config),
+        patch.dict(VENDOR_METHODS, {"get_news": {"exa": [fake_impl]}}, clear=False),
     ):
         result = route_to_vendor("get_news")
     assert result == "list-wrapped result"
+
+
+# -- Categorization regression guard ---------------------------------------
+#
+# Reason: experiment 008 errored on 22/22 runs because get_insider_transactions
+# was in news_data category (default vendor "exa") but had no exa impl. The
+# fallback chain skipped exa and tried alpha_vantage (next dict key), which
+# raised ValueError on missing ALPHA_VANTAGE_API_KEY — never reached yfinance.
+# This test asserts every (category, tool) pair has an impl for the category's
+# DEFAULT_CONFIG vendor, catching the same class of bug at unit-test time.
+
+
+@pytest.mark.unit
+def test_every_categorized_tool_has_impl_for_default_vendor():
+    """For every tool in TOOLS_CATEGORIES, the DEFAULT_CONFIG vendor for its
+    category must appear in VENDOR_METHODS[tool] — otherwise route_to_vendor
+    will fall through to whichever vendor happens to be next in dict order."""
+    from tradingagents.dataflows.interface import TOOLS_CATEGORIES
+    from tradingagents.default_config import DEFAULT_CONFIG
+
+    default_vendors = DEFAULT_CONFIG["data_vendors"]
+    failures = []
+    for category, info in TOOLS_CATEGORIES.items():
+        default_vendor = default_vendors.get(category)
+        assert default_vendor is not None, (
+            f"DEFAULT_CONFIG['data_vendors'] is missing a default for category {category!r}"
+        )
+        for tool in info["tools"]:
+            available = list(VENDOR_METHODS.get(tool, {}).keys())
+            if default_vendor not in available:
+                failures.append(
+                    f"{category}.{tool}: default vendor {default_vendor!r} not in "
+                    f"VENDOR_METHODS[{tool!r}]={available!r}"
+                )
+    assert not failures, (
+        "Some categorized tools have no impl for their category's default vendor:\n  "
+        + "\n  ".join(failures)
+    )
