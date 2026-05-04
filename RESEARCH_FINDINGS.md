@@ -181,6 +181,26 @@ Implication for any UW user: only trust UW when the ticker has independent bear 
 
 **Synthesis**: build asymmetric handling — agreement boosts confidence/sizing, disagreement triggers human review (NOT algorithmic resolution). Build escape valves — system must degrade gracefully when reasoning_evidence fails. Implement time-boxed decision windows to prevent overthinking. **Verdict**: integration is worth building IF designed asymmetrically (agreement → augment, disagreement → flag for review), NOT as a calibration auto-correct.
 
+## Spec 001 Phase 5 + Phase 2 — weight tuning overfits; bots-mode wired as opt-in (added 2026-05-04 late-evening)
+
+**Phase 5 (weight tuning, analytical)**: grid search over WEIGHTS to maximize aggregator IC vs realized α. Train/test date-ordered 70/30 split (n=109/47).
+
+| Metric | Default (train) | Default (test) | Tuned (train) | Tuned (test) |
+|---|---:|---:|---:|---:|
+| IC vs α | -0.172 | -0.191 | **+0.079** | **-0.062** |
+| Direction agreement | 46.8% | 31.9% | 57.8% | 38.3% |
+| Within ±1 tier | 95.4% | 91.5% | 95.4% | 95.7% |
+
+Tuned weights: 100% on `investment_plan`, 0% on all 4 analyst-prose bots. Train IC flips +0.079 but test IC stays -0.062 — **overfits, doesn't generalize**. SC-006 fails (test ±0.3pp of train would require IC drift ≤0.003; observed 0.141).
+
+**Honest interpretation**: the analyst-prose featurizers carry minimal generalizable predictive signal in this corpus. Only `investment_plan` (the bridge synthesis) shows weak in-sample predictive value, but it doesn't replicate out-of-sample. The whole featurization-based-aggregator approach has a low ceiling on this data.
+
+**Phase 2 (opt-in bots mode)**: shipped via `config["framework_mode"] = "bots"` flag. When set, the deterministic aggregator's output replaces the LLM-PM's `final_trade_decision` in `_run_graph`. Phase 1 shadow logging always runs regardless (the state log gets `signals: [...]` and `shadow_aggregate_decision: {...}` fields whether the flag is set or not). Default `framework_mode = "prose"` preserves existing behavior (FR-004 backwards-compat).
+
+The `render_aggregated_decision_markdown` helper produces output parseable by `parse_rating` so memory log + signal processor consume bots-mode output identically to PM output.
+
+Phase 2 is wired but UNTESTED end-to-end against a live propagate. Validation would require launching a propagate with `framework_mode=bots` set; deferred since the Phase 5 result suggests the aggregator's own quality is the limiting factor, not the wiring.
+
 ## Spec 001 Phase 1 — Shadow Aggregator: 42.3% direction match (FAILS SC-001 ≥80% target) (added 2026-05-04 late-evening)
 
 Spec 001 Phase 1 (Shadow Aggregator) shipped via "Approach A" — derive Signals from analyst prose using the Phase 1.5+ featurizers (no new LLM cost). Aggregator: weighted sum of (direction × magnitude) → 5-tier rating with `DEFAULT_WEIGHTS` (market 0.25, news 0.20, fundamentals 0.30, sentiment 0.10, investment_plan 0.15).

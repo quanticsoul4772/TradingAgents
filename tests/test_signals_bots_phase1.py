@@ -320,3 +320,75 @@ def test_shadow_aggregate_custom_horizon_propagates_to_signals():
     state = {"market_report": "bullish strong upgrade momentum" * 10}
     signals, _ = shadow_aggregate_from_state_log(state, horizon_days=5)
     assert all(s.horizon_days == 5 for s in signals)
+
+
+# ---- Phase 2: render_aggregated_decision_markdown -------------------------
+
+
+def test_render_aggregated_decision_markdown_includes_rating():
+    """The Rating: line is the load-bearing parseable token."""
+    from tradingagents.signals.bots import render_aggregated_decision_markdown
+
+    decision = AggregatedDecision(
+        rating="Overweight",
+        confidence=0.7,
+        direction_score=0.45,
+        bots_used=["market_report", "fundamentals_report"],
+        abstained=["sentiment_report"],
+    )
+    sig = Signal(bot_id="market_report", direction=0.5, magnitude=0.7)
+    md = render_aggregated_decision_markdown(decision, [sig], "NVDA", "2026-01-30")
+    assert "Rating: Overweight" in md or "Rating**: Overweight" in md
+    assert "NVDA" in md
+    assert "2026-01-30" in md
+
+
+def test_render_aggregated_decision_parseable_by_parse_rating():
+    """Output must be parseable by tradingagents.agents.utils.rating.parse_rating
+    so memory log + signal processor still work in bots mode."""
+    from tradingagents.agents.utils.rating import parse_rating
+    from tradingagents.signals.bots import render_aggregated_decision_markdown
+
+    for rating in ("Buy", "Overweight", "Hold", "Underweight", "Sell"):
+        decision = AggregatedDecision(
+            rating=rating,
+            confidence=0.5,
+            direction_score=0.0,
+            bots_used=[],
+            abstained=[],
+        )
+        md = render_aggregated_decision_markdown(decision, [], "X", "2026-01-01")
+        assert parse_rating(md) == rating, f"parse_rating failed for {rating}: {md[:200]}"
+
+
+def test_render_includes_signals_audit_trail():
+    from tradingagents.signals.bots import render_aggregated_decision_markdown
+
+    decision = AggregatedDecision(
+        rating="Hold",
+        confidence=0.0,
+        direction_score=0.0,
+        bots_used=[],
+        abstained=["market_report"],
+    )
+    sig = Signal(bot_id="market_report", direction=0.0, magnitude=0.0, abstain=True)
+    md = render_aggregated_decision_markdown(decision, [sig], "X", "2026-01-01")
+    assert "market_report" in md
+    assert "abstain" in md.lower()
+
+
+def test_render_includes_decision_source_disclaimer():
+    """The output should make it clear the decision came from the aggregator,
+    not the LLM PortfolioManager."""
+    from tradingagents.signals.bots import render_aggregated_decision_markdown
+
+    decision = AggregatedDecision(
+        rating="Buy",
+        confidence=0.8,
+        direction_score=0.7,
+        bots_used=["market_report"],
+        abstained=[],
+    )
+    md = render_aggregated_decision_markdown(decision, [], "X", "2026-01-01")
+    assert "aggregator" in md.lower()
+    assert "spec 001" in md.lower() or "phase 2" in md.lower() or "bots mode" in md.lower()

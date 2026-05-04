@@ -70,6 +70,13 @@ DEFAULT_CONFIG = {
     "second_opinion_enabled": False,
     "second_opinion_agree_threshold": 0.6,
     "second_opinion_disagree_threshold": 0.4,
+    # Spec 001 Phase 2: framework mode. "prose" (default) = current LLM-based
+    # PM pipeline. "bots" = route the final rating through the deterministic
+    # aggregator in tradingagents/signals/bots.py (skips LLM PM call). Phase 1
+    # (shadow mode) always logs the aggregator output alongside the actual PM
+    # rating regardless of this flag; Phase 2 uses this flag to override the
+    # actual final_trade_decision when set to "bots".
+    "framework_mode": "prose",
     # Data vendor configuration
     # Category-level configuration (default for all tools in category)
     "data_vendors": {

@@ -343,6 +343,44 @@ class TradingAgentsGraph:
         else:
             final_state = self.graph.invoke(init_agent_state, **args)
 
+        # Spec 001 Phase 1 (shadow) + Phase 2 (override): always derive
+        # signals + aggregator decision from the state. In shadow mode they
+        # are logged alongside the actual PM rating; in bots mode they
+        # REPLACE the actual final_trade_decision before downstream
+        # consumers (memory log, signal processor, return value) see it.
+        try:
+            from tradingagents.signals.bots import (
+                render_aggregated_decision_markdown,
+                shadow_aggregate_from_state_log,
+            )
+
+            shadow_signals, shadow_decision = shadow_aggregate_from_state_log(final_state)
+            final_state["signals"] = [s.model_dump() for s in shadow_signals]
+            final_state["shadow_aggregate_decision"] = {
+                "rating": shadow_decision.rating,
+                "confidence": shadow_decision.confidence,
+                "direction_score": shadow_decision.direction_score,
+                "bots_used": list(shadow_decision.bots_used),
+                "abstained": list(shadow_decision.abstained),
+            }
+
+            if self.config.get("framework_mode") == "bots":
+                # Override final_trade_decision with the aggregator's output
+                final_state["final_trade_decision"] = render_aggregated_decision_markdown(
+                    shadow_decision,
+                    shadow_signals,
+                    company_name,
+                    str(trade_date),
+                )
+                final_state["framework_mode"] = "bots"
+            else:
+                final_state["framework_mode"] = self.config.get("framework_mode", "prose")
+        except Exception as exc:  # noqa: BLE001 — Phase 1/2 must not break prose pipeline
+            logger.warning(
+                "spec-001 Phase 1/2 hook failed (%s); proceeding with prose decision",
+                exc,
+            )
+
         # Store current state for reflection.
         self.curr_state = final_state
 
@@ -388,6 +426,10 @@ class TradingAgentsGraph:
             },
             "investment_plan": final_state["investment_plan"],
             "final_trade_decision": final_state["final_trade_decision"],
+            # Spec 001 Phase 1 + 2 additions (always logged when present)
+            "signals": final_state.get("signals", []),
+            "shadow_aggregate_decision": final_state.get("shadow_aggregate_decision", {}),
+            "framework_mode": final_state.get("framework_mode", "prose"),
         }
 
         # Save to file

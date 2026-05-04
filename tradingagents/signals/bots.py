@@ -267,6 +267,58 @@ _STATE_LOG_FIELDS_TO_BOT_ID = {
 }
 
 
+def render_aggregated_decision_markdown(
+    decision: AggregatedDecision,
+    signals: list[Signal],
+    ticker: str,
+    trade_date: str,
+) -> str:
+    """Render an AggregatedDecision into the markdown shape that downstream
+    code (parse_rating, memory log, state log readers) expects.
+
+    Used by Phase 2 (bots mode) to replace the LLM-produced
+    final_trade_decision when ``config["framework_mode"] = "bots"``.
+    The Rating: line is the load-bearing parseable token; the rest is
+    audit-trail prose.
+    """
+    used = ", ".join(decision.bots_used) if decision.bots_used else "(none — all abstained)"
+    abstained = ", ".join(decision.abstained) if decision.abstained else "(none)"
+
+    sig_lines = []
+    for s in signals:
+        sig_lines.append(
+            f"  - `{s.bot_id}`: direction={s.direction:+.2f}, "
+            f"magnitude={s.magnitude:.2f}, abstain={s.abstain}"
+        )
+    sig_block = "\n".join(sig_lines) if sig_lines else "  - (no signals derived)"
+
+    return f"""**Rating: {decision.rating}**
+
+**Decision source**: deterministic aggregator (spec 001 Phase 2 bots mode)
+**Ticker**: {ticker}
+**Trade date**: {trade_date}
+
+## Aggregator output
+
+- **Direction score**: {decision.direction_score:+.3f} (range [-1, +1])
+- **Confidence**: {decision.confidence:.3f} (range [0, 1])
+- **Bots used (non-abstaining)**: {used}
+- **Bots abstained**: {abstained}
+
+## Per-bot signals
+
+{sig_block}
+
+## Notes
+
+- This decision was produced by ``tradingagents.signals.bots.aggregate``,
+  not by the LLM-based PortfolioManager. The aggregator is deterministic
+  and reproducible from the analyst-prose state log.
+- Set ``config["framework_mode"] = "prose"`` (or unset) to revert to the
+  LLM-based PM pipeline.
+"""
+
+
 def shadow_aggregate_from_state_log(
     state: dict,
     horizon_days: int = 21,
