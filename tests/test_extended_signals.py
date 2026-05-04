@@ -49,7 +49,6 @@ from tradingagents.dataflows.y_finance import (
     get_short_interest,
 )
 
-
 # --- y_finance: get_recommendations ----------------------------------------
 
 
@@ -57,8 +56,9 @@ from tradingagents.dataflows.y_finance import (
 def test_get_recommendations_renders_history_and_upgrades():
     recs = pd.DataFrame({"Firm": ["Goldman"], "Action": ["upgrade"]})
     upgrades = pd.DataFrame({"Firm": ["Morgan"], "ToGrade": ["Buy"]})
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.recommendations = recs
         mock.return_value.upgrades_downgrades = upgrades
@@ -71,8 +71,9 @@ def test_get_recommendations_renders_history_and_upgrades():
 
 @pytest.mark.unit
 def test_get_recommendations_handles_missing_data():
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.recommendations = pd.DataFrame()
         mock.return_value.upgrades_downgrades = pd.DataFrame()
@@ -82,9 +83,7 @@ def test_get_recommendations_handles_missing_data():
 
 @pytest.mark.unit
 def test_get_recommendations_swallows_exceptions():
-    with patch(
-        "tradingagents.dataflows.y_finance.yf.Ticker", side_effect=RuntimeError("net")
-    ):
+    with patch("tradingagents.dataflows.y_finance.yf.Ticker", side_effect=RuntimeError("net")):
         out = get_recommendations("NVDA")
     assert "Error retrieving recommendations" in out
 
@@ -98,8 +97,9 @@ def test_get_earnings_calendar_renders_dates():
         {"EPS Estimate": [2.5, 2.3]},
         index=pd.to_datetime(["2026-04-25", "2026-01-25"]),
     )
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.earnings_dates = ed
         mock.return_value.calendar = {"Earnings Date": ["2026-04-25"]}
@@ -110,8 +110,9 @@ def test_get_earnings_calendar_renders_dates():
 
 @pytest.mark.unit
 def test_get_earnings_calendar_no_data_message():
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.earnings_dates = pd.DataFrame()
         mock.return_value.calendar = None
@@ -125,18 +126,27 @@ def test_get_earnings_calendar_no_data_message():
 @pytest.mark.unit
 def test_get_options_summary_computes_pc_ratio_and_iv_skew():
     calls = pd.DataFrame(
-        {"strike": [100, 110, 120], "openInterest": [100, 200, 50], "impliedVolatility": [0.20, 0.22, 0.25]}
+        {
+            "strike": [100, 110, 120],
+            "openInterest": [100, 200, 50],
+            "impliedVolatility": [0.20, 0.22, 0.25],
+        }
     )
     puts = pd.DataFrame(
-        {"strike": [100, 110, 120], "openInterest": [200, 100, 50], "impliedVolatility": [0.30, 0.28, 0.27]}
+        {
+            "strike": [100, 110, 120],
+            "openInterest": [200, 100, 50],
+            "impliedVolatility": [0.30, 0.28, 0.27],
+        }
     )
 
     chain = MagicMock()
     chain.calls = calls
     chain.puts = puts
 
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.options = ["2026-02-28", "2026-03-28"]
         mock.return_value.option_chain.return_value = chain
@@ -151,8 +161,9 @@ def test_get_options_summary_computes_pc_ratio_and_iv_skew():
 
 @pytest.mark.unit
 def test_get_options_summary_no_options_message():
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.options = []
         out = get_options_summary("BOGUS")
@@ -171,8 +182,9 @@ def test_get_short_interest_renders_known_fields():
         "heldPercentInsiders": 0.04,
         "heldPercentInstitutions": 0.78,
     }
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.info = info
         out = get_short_interest("NVDA")
@@ -183,8 +195,9 @@ def test_get_short_interest_renders_known_fields():
 
 @pytest.mark.unit
 def test_get_short_interest_empty_info():
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.info = {}
         out = get_short_interest("BOGUS")
@@ -198,8 +211,9 @@ def test_get_short_interest_empty_info():
 def test_get_institutional_holders_renders_both_sections():
     inst = pd.DataFrame({"Holder": ["Vanguard"], "Shares": [50_000_000]})
     mf = pd.DataFrame({"Holder": ["Vanguard 500"], "Shares": [10_000_000]})
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.institutional_holders = inst
         mock.return_value.mutualfund_holders = mf
@@ -219,8 +233,9 @@ def test_get_corporate_actions_renders_dividends_and_esg():
         index=pd.to_datetime(["2025-12-15", "2026-03-15"]),
     )
     esg = pd.DataFrame({"Score": [8.5]}, index=["totalEsg"])
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.actions = actions
         mock.return_value.sustainability = esg
@@ -238,8 +253,9 @@ def test_get_vix_returns_level_change_and_regime():
     """VIX rising from 15 to 28 → fear regime classification."""
     closes = [15.0] * 35 + [28.0]  # last value 28
     df = pd.DataFrame({"Close": closes})
-    with patch("tradingagents.dataflows.macro.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.macro.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.macro.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.macro.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.history.return_value = df
         out = get_vix("2026-02-06", lookback_days=30)
@@ -252,8 +268,9 @@ def test_get_vix_returns_level_change_and_regime():
 def test_get_vix_complacency_regime():
     closes = [12.0] * 36
     df = pd.DataFrame({"Close": closes})
-    with patch("tradingagents.dataflows.macro.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.macro.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.macro.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.macro.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.history.return_value = df
         out = get_vix("2026-02-06")
@@ -262,8 +279,9 @@ def test_get_vix_complacency_regime():
 
 @pytest.mark.unit
 def test_get_vix_handles_empty_data():
-    with patch("tradingagents.dataflows.macro.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.macro.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.macro.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.macro.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.history.return_value = pd.DataFrame()
         out = get_vix("2026-02-06")
@@ -290,8 +308,9 @@ def test_get_sector_etf_strength_outperforms_sector():
             m.history.return_value = xlk_df
         return m
 
-    with patch("tradingagents.dataflows.macro.yf.Ticker", side_effect=fake_ticker), patch(
-        "tradingagents.dataflows.macro.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.macro.yf.Ticker", side_effect=fake_ticker),
+        patch("tradingagents.dataflows.macro.yf_retry", side_effect=lambda fn: fn()),
     ):
         out = get_sector_etf_strength("NVDA", "2026-02-06", lookback_days=30)
     assert "Technology" in out
@@ -304,8 +323,9 @@ def test_get_sector_etf_strength_outperforms_sector():
 
 @pytest.mark.unit
 def test_get_sector_etf_strength_unknown_sector():
-    with patch("tradingagents.dataflows.macro.yf.Ticker") as mock, patch(
-        "tradingagents.dataflows.macro.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.macro.yf.Ticker") as mock,
+        patch("tradingagents.dataflows.macro.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock.return_value.info = {"sector": "Made-up Sector"}
         out = get_sector_etf_strength("XYZ", "2026-02-06")
@@ -318,6 +338,34 @@ def test_sector_etf_mapping_covers_major_sectors():
     expected_etfs = {"XLK", "XLE", "XLF", "XLV", "XLI", "XLY", "XLP", "XLU", "XLRE", "XLB", "XLC"}
     actual = set(SECTOR_ETF.values())
     assert expected_etfs <= actual
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("etf_ticker", ["XLK", "XLE", "XLF", "XLV", "XLI"])
+def test_get_sector_etf_strength_short_circuits_on_etf_input(etf_ticker):
+    """Short-circuit when ticker IS one of the sector ETFs themselves.
+
+    Reason: yfinance Ticker.info call 404s on ETFs (no fundamentals data),
+    producing noisy log output. The comparison is also self-referential.
+    Short-circuit avoids both problems without invoking yfinance at all.
+    Verified by patching yf.Ticker to raise if instantiated — the guard
+    must run before any yfinance call.
+    """
+    with patch("tradingagents.dataflows.macro.yf.Ticker") as mock_ticker:
+        mock_ticker.side_effect = AssertionError("yf.Ticker should not be called for ETF inputs")
+        out = get_sector_etf_strength(etf_ticker, "2026-02-06")
+    assert etf_ticker in out
+    assert "sector ETF" in out
+    assert "self" in out.lower() or "not meaningful" in out.lower()
+
+
+@pytest.mark.unit
+def test_get_sector_etf_strength_etf_input_lowercase_normalized():
+    """The ETF-input guard works regardless of input case."""
+    with patch("tradingagents.dataflows.macro.yf.Ticker") as mock_ticker:
+        mock_ticker.side_effect = AssertionError("yf.Ticker should not be called for ETF inputs")
+        out = get_sector_etf_strength("xlk", "2026-02-06")
+    assert "XLK" in out
 
 
 # --- @tool dispatch: extended fundamentals --------------------------------

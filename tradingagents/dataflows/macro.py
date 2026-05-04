@@ -18,7 +18,6 @@ import yfinance as yf
 
 from .stockstats_utils import yf_retry
 
-
 # Sector → SPDR ETF ticker mapping. yfinance Ticker.info["sector"] returns
 # normalized sector names; this maps to the corresponding SPDR Select Sector ETF.
 SECTOR_ETF: dict[str, str] = {
@@ -115,9 +114,22 @@ def get_sector_etf_strength(
 
     Looks up the sector via Ticker.info["sector"] then maps to the
     corresponding SPDR Select Sector ETF (XLK, XLE, etc.).
+
+    Short-circuits when the ticker is itself a known sector ETF —
+    yfinance's Ticker.info call 404s on ETFs (no fundamentals data) and
+    the comparison would be self-referential anyway. Without this guard
+    every Phase D ETF backtest run prints an HTTP 404 from yfinance
+    internals (non-fatal but noisy).
     """
+    ticker_upper = ticker.upper()
+    if ticker_upper in set(SECTOR_ETF.values()):
+        return (
+            f"'{ticker_upper}' is itself a sector ETF; relative-strength comparison "
+            f"vs its own sector is not meaningful. Use ticker-vs-SPY or ticker-vs-other-sector instead."
+        )
+
     try:
-        ticker_obj = yf.Ticker(ticker.upper())
+        ticker_obj = yf.Ticker(ticker_upper)
         info = yf_retry(lambda: ticker_obj.info)
         sector = info.get("sector") if info else None
         if not sector:
