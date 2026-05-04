@@ -4,24 +4,26 @@ Personal copy of [TauricResearch/TradingAgents](https://github.com/TauricResearc
 
 ## Headline finding
 
-After 13 experiments + cross-experiment horizon sweep + per-ticker breakdown + Opus 4.7 model swap (NVDA + AAPL):
+After 14 experiments + cross-experiment horizon sweep + per-ticker breakdown + Opus 4.7 model swap (NVDA + AAPL) + Opus 30-pair mixed basket (NVDA + AAPL + INTC) + A3 filter forensics:
 
-**At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) are directionally correct and produce ~+1.79% mean alpha across n=41 commits (63% hit rate).** Bearish commits remain anti-calibrated at every horizon, with the failure mode concentrated on tickers in -10%+ drawdowns (mean-reversion plays the framework misidentifies). Hold ≈ 0% at every horizon. **Mode-collapse direction is a function of (model × ticker × regime × prompt)**: Sonnet over-abstains on bull tickers + over-commits-bearish on bear tickers; Opus discriminates per-ticker (10/10 OW on NVDA bull regime, 8/10 Hold on AAPL mixed regime).
+**At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) are directionally correct and produce +1.99% mean alpha across n=50 commits (65% hit rate).** Single-experiment OW hit-rate climbs 56→67→75% across 5d/10d/21d on the latest 30-pair Opus run — cleanest single-run horizon-emergence signal yet. Bearish commits are **regime-asymmetric, not uniformly anti-calibrated**: UW on bear-correct tickers (AAPL, INTC excl. tail outliers) are directionally appropriate; UW on bull-regime tickers (NVDA, MSFT) drive the aggregate anti-calibration. Hold ≈ 0% median at every horizon (mean is tail-distorted). **Mode-collapse direction is a function of (model × ticker × regime × prompt)**: Sonnet over-abstains on bull tickers + over-commits-bearish on bear tickers; Opus discriminates per-ticker. **Bucket-level claims replicate; date-level claims do not** — the same Opus model on the same 10 NVDA dates produces 10/10 OW one run (005) and 6/10 OW + 4 Hold the next (007); per-ticker bucket ratios hold across reruns, specific commit dates do not.
 
-Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadmap in [`ROADMAP.md`](ROADMAP.md). Per-experiment summaries auto-aggregated in [`findings.md`](findings.md).
+Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadmap in [`ROADMAP.md`](ROADMAP.md). Per-experiment summaries auto-aggregated in [`findings.md`](findings.md). A3 filter forensics in [`claudedocs/a3-filter-forensics-007.md`](claudedocs/a3-filter-forensics-007.md).
 
 ## What's local
 
 **Research substrate**
-- `experiments/<YYYY-MM-DD>-NNN-<slug>/` — 13 experiments with HYPOTHESIS / ANALYSIS / PARAMS.json / run.sh
+- `experiments/<YYYY-MM-DD>-NNN-<slug>/` — 14 experiments with HYPOTHESIS / ANALYSIS / PARAMS.json / run.sh (latest: 008 cross-period in flight)
 - `findings.md` — auto-generated per-experiment one-paragraph summaries
 - `RESEARCH_FINDINGS.md` — project-level synthesis across all experiments
 - `ROADMAP.md` — sequenced phases of exploration + cross-pollination ideas
-- `claudedocs/horizon-sweep.md` — bucket alpha across 5/10/21-day windows
+- `claudedocs/horizon-sweep.md` + `claudedocs/horizon-sweep-007.md` — bucket alpha across 5/10/21-day windows
 - `claudedocs/bear-side-per-ticker.md` — per-ticker UW analysis (bull-regime vs bear-correct)
 - `claudedocs/uw-debate-diagnostic.md` — debate-quality features for correct vs wrong UW commits
 - `claudedocs/uw-suppression-filter.md` — A3 mean-reversion filter retrospective
-- `.specify/memory/constitution.md` — seven principles governing research approach (v1.1.0)
+- `claudedocs/a3-filter-forensics-007.md` — A3 filter validated as correctly inert on regime-mismatch (post-007)
+- `.specify/memory/constitution.md` — seven principles governing research approach (v1.2.1)
+- `.specify/specs/001-bots-architecture/` + `.specify/specs/002-signal-lifecycle/` — formal specs for two unimplemented refactors
 
 **Tooling**
 - `scripts/backtest.py` — typer CLI looping `propagate(ticker, date)` over a grid; resumable; `--news-vendor` flag
@@ -33,7 +35,7 @@ Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadma
 - `scripts/bear_side_per_ticker.py` — per-ticker UW α breakdown (Q4 diagnostic)
 - `scripts/diagnose_uw_quality.py` — debate features (bull/bear length, hedge words, keywords) per UW commit
 - `scripts/uw_suppression_filter.py` — A3 retrospective on momentum-based suppression
-- `scripts/new_experiment.py` + `scripts/findings_aggregate.py` — experiments scaffolding
+- `scripts/new_experiment.py` + `scripts/findings_aggregate.py` — experiments scaffolding (with `--tier T1/T2/T3/T4` for the cost-tier ladder; T3/T4 inject required Cost-Justification scaffold per Constitution III)
 
 **Data vendors**
 - News: `tradingagents/dataflows/exa_news.py` — Exa Search API (true historical date filter via startPublishedDate/endPublishedDate). Requires `EXA_API_KEY`.
@@ -87,11 +89,11 @@ All operate on existing `experiments/*/results.csv` files; zero new LLM cost.
 
 ## Constitution
 
-Seven principles in [`.specify/memory/constitution.md`](.specify/memory/constitution.md): Save Everything, One Experiment Per Change, Stay Cheap (≤$30 per session), No Production Claims, Steal Liberally, Spec Before Structural Change, **Calibrated Abstention is a Valid Output** (added 2026-05-03 after the 11-experiment chain converged on this reframe). The principles are constraints, not aspirations.
+Seven principles in [`.specify/memory/constitution.md`](.specify/memory/constitution.md) (v1.2.1): Save Everything, One Experiment Per Change, Stay Cheap (4-tier ladder T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100, replaces single $30 ceiling), No Production Claims, Steal Liberally, Spec Before Structural Change, **Calibrated Abstention is a Valid Output** (with 2026-05-03 evening Replicability-scope clarification: claims must distinguish bucket-level / replicable from date-level / single-observation evidence). The principles are constraints, not aspirations.
 
 ## Tests
 
-466 tests, 81% coverage as of 2026-05-03.
+501 tests, 81% coverage as of 2026-05-03 evening.
 
 ```bash
 pytest                # full suite

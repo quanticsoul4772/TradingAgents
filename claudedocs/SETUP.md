@@ -10,9 +10,11 @@ Your local config, distilled. This reflects what's actually on disk, not generic
 - **Models:** `claude-sonnet-4-6` (deep) + `claude-haiku-4-5` (quick) for default runs; `claude-opus-4-7` for the strongest deep model
 - **Data:**
   - News: **Exa** (`EXA_API_KEY` required; in `.env`) — yfinance/brave news vendors were removed 2026-05-03
-  - Stock prices / technicals / fundamentals: yfinance (no key needed)
+  - Stock prices / technicals / fundamentals: yfinance (no key needed); insider transactions also yfinance (moved out of news_data category 2026-05-03 evening to fix routing-mismatch)
+  - 18 tools wired into analyst layer (was 8 before SIGNALS expansion): full inventory in `docs/SIGNALS.md`
 - **Checkpoint resume:** enabled in `main.py` (opt-in for the CLI)
-- **A3 momentum filter:** opt-in via `config["uw_momentum_filter_threshold"] = -5.0` — suppresses UW/Sell commits on tickers in -5%+ trailing-30d drawdown (mean-reversion zone). Default off.
+- **A3 momentum filter:** opt-in via `config["uw_momentum_filter_threshold"] = -5.0` — suppresses UW/Sell commits on tickers in -5%+ trailing-30d drawdown (mean-reversion zone). Default off. **Validated post-007**: filter correctly stays inert when ticker isn't in mean-reversion zone (per `claudedocs/a3-filter-forensics-007.md`); targets specifically the mean-reversion failure mode, not regime-mismatch.
+- **Cost-tier ladder** (Constitution v1.2.0 → v1.2.1): per-experiment LLM spend governed by T1 ≤$5 (free exploration) / T2 $5-30 (standard, default) / T3 $30-100 (scaled — requires Cost-Justification scaffold) / T4 >$100 (capital — requires multi-day deliberation + kill criteria). Use `python scripts/new_experiment.py <slug> --tier T2 --cost 15` when scaffolding.
 
 Persistent state lives under `~/.tradingagents/`:
 ```
@@ -192,10 +194,12 @@ Get a key from https://dashboard.exa.ai/api-keys. Free tier is ~1000 calls/month
 
 **Tests** —
 ```bash
-pytest                                  # full suite (placeholder API keys auto-injected)
+pytest                                  # full suite (placeholder API keys auto-injected) — currently 501 passing
 pytest -m unit                          # fast subset
 pytest tests/test_checkpoint_resume.py  # one file
 ```
+
+**Vendor routing safety**: `tests/test_interface_routing.py::test_every_categorized_tool_has_impl_for_default_vendor` asserts every (TOOLS_CATEGORIES tool, default vendor) pair has an impl. Added 2026-05-03 evening after experiment 008 v1 errored on 22/22 runs because `get_insider_transactions` was in `news_data` category but had no `exa` impl. Run this test before adding any new tool to a category, or you'll hit the same class of bug at runtime.
 
 **Smoke-test just the structured-output decision agents** (cheap — no full propagate):
 ```bash

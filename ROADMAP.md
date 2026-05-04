@@ -1,6 +1,6 @@
 # ROADMAP — TradingAgents-lab
 
-_Forward-looking exploration map. Updated 2026-05-03._
+_Forward-looking exploration map. Updated 2026-05-03 evening (post-007 + 008-in-flight)._
 
 This is a research playground, not a product. The roadmap is directions for exploration, not delivery milestones. Per Constitution Principle V ("Steal Liberally"), cross-pollination from sibling projects in the portfolio is a primary driver — many ideas listed here originate elsewhere.
 
@@ -8,46 +8,51 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 
 ---
 
-## Current state (2026-05-03)
+## Current state (2026-05-03 evening)
 
-- 11 completed experiments + cross-experiment horizon sweep + Q4 per-ticker breakdown + A1 debate-quality diagnostic + A3 retrospective filter
-- A3 mean-reversion suppression filter productionized (`tradingagents/agents/utils/momentum_filter.py`, gated by `config["uw_momentum_filter_threshold"]`)
-- Constitution v1.1.0 with Principle VII (Calibrated Abstention is a Valid Output)
-- Two load-bearing claims: (a) framework's Buy/OW commits at 21d show ~+1.6% α (n=37, framework-specific vs single-call), (b) UW failure mode is mean-reversion on tickers in -10%+ drawdowns
-- Active: Opus 4.7 swap on NVDA × 10 (experiment 005, 7/10 complete at last check, all Overweight so far)
+- **14 completed experiments** + cross-experiment horizon sweep + Q4 per-ticker breakdown + A1 debate-quality diagnostic + A3 retrospective filter + A3 forensics on 007
+- A3 mean-reversion suppression filter productionized (`tradingagents/agents/utils/momentum_filter.py`, gated by `config["uw_momentum_filter_threshold"]`); validated as correctly inert on regime-mismatch failures (007 INTC half)
+- Constitution **v1.2.1** with Principle VII (Calibrated Abstention is a Valid Output) + Replicability-scope clarification (bucket vs date claims)
+- Cost-tier ladder shipped (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100); first end-to-end exercise on 008
+- 501 tests passing (was 466) — added regression guard for the routing-mismatch class of bug exposed by 008 v1
+- Two load-bearing claims at the n=50 milestone:
+  - (a) Framework's Buy/OW commits at 21d show **+1.99% α (n=50, 65% hit)**, framework-specific vs single-call
+  - (b) UW failure mode is **regime-asymmetric, not uniformly anti-calibrated** — UW on bear-correct tickers (AAPL, INTC excl. tail outliers) directionally appropriate; UW on bull-regime tickers drives aggregate anti-calibration
+- **Active**: experiment 008 (Opus cross-period 30-pair on Q4 2025 dates) running in background (~$30, ~4h)
 
 ---
 
-## Active branch — Opus pre-flight pair landed (2026-05-03)
+## Active branch — 007 landed, 008 in flight (2026-05-03 evening)
 
-**Both Opus results in**:
-- 005 NVDA: 10/10 OW, 21d OW α = +2.85% (n=9, 78% hit) — strong bull commit + correct
-- 006 AAPL: 8 Hold + 2 OW, 21d OW α = -0.07% (n=2, 50% hit) — discriminates, doesn't auto-commit
+**007 (Opus 30-pair mixed basket NVDA + AAPL + INTC × 10 dates Q1 2026)** — landed:
+- Distribution: 9 OW + 15 Hold + 6 UW. Per-ticker 6/4/0, 3/7/0, 0/4/6.
+- Cross-experiment OW 21d α now **n=50, +1.99%, 65% hit** — load-bearing claim sturdier than at n=30 milestone
+- Single-experiment OW hit-rate climb 56→67→75% across 5d/10d/21d — cleanest single-run horizon-emergence evidence yet
+- INTC bear-side reframed via `claudedocs/a3-filter-forensics-007.md`: 3 correct + 2 wrong + 1 unresolved → 60% hit. Headline +20.31% mean dominated by single 03-20 outlier (INTC ripped +51% post-catalyst). Excluding that, INTC UW α is -1.73% (correctly bearish).
+- **A3 filter validated** — INTC was UP +11-33% at 4 of 6 UW dates, never in suppression zone. Filter targets mean-reversion bounces specifically; behaved correctly per design.
+- 005's NVDA 10/10 OW does NOT replicate (007 NVDA = 6/10 OW + 4 Hold during local Feb selloff). Bucket-level claims hold; date-level claims do not.
 
-Combined finding: **Opus discriminates by ticker**. The 005 OW-collapse was bull-regime-specific (NVDA up +26% over the window); on mixed-evidence AAPL, Opus mostly holds. This is calibrated commitment — better than Sonnet's behavior on either ticker (Sonnet over-abstained on NVDA AND over-committed-bearish on AAPL).
-
-Cross-experiment OW 21d α: +1.79% (n=41, 63% hit). Still the load-bearing claim; anchored heavily by NVDA bull-regime data.
-
-**Next experiment selected**: 30-pair Opus re-pilot at 21d horizon with **mixed ticker basket** to test per-ticker discrimination at scale. ~$30, ~3.5h, fits Principle III ceiling. Use A3 momentum filter enabled.
-
-Suggested basket composition (10 dates each):
-- 1 bull-regime ticker (NVDA → expect mostly OW per 005 pattern)
-- 1 mixed-regime ticker (AAPL → expect mostly Hold per 006 pattern)
-- 1 bear-leaning ticker (XOM, INTC, or BBY → untested with Opus; expect mostly Hold or some UW)
-
-This tests whether: (a) Opus's bull-side α holds on a fresh bull-regime ticker (n=9 → n=20+ NVDA-like commits), (b) the per-ticker discrimination produces a clean cross-regime distribution, (c) the A3 filter doesn't suppress too many Opus UW commits (in case bear-leaning ticker generates them).
+**008 (Opus cross-period validation Q4 2025)** — in flight (~20/30 done as of last check):
+- Same config as 007 (Opus + Haiku + A3 filter + exa + 3 analysts + 1 round)
+- Grid shifted to 2025-11-07 → 2026-01-09 (10 weekly Fridays preceding the 005-007 grid)
+- Tests period-specificity of n=50 OW signal + per-ticker discrimination
+- First end-to-end exercise of the new T3 Cost-Justification scaffold
+- Decision tree: 55% Scenario A (period-general), 25% B (partial dilution), 15% C (collapse), 5% D (discrimination fails)
+- ANALYSIS.md will be written when 008 lands; expected to push cross-experiment OW 21d to ~n=80
 
 ---
 
 ## Sequenced phases of exploration (post-Opus)
 
-### Phase B — out-of-sample validation of the existing claims
+### Phase B — out-of-sample validation (priorities reordered post-007)
 
-Current findings rest on n=37 21d-bull commits and n=16 UW commits, all in-sample. Out-of-sample validation could cover:
+After 007 the n=50 milestone has a sturdy bull-side α claim and the bear-side problem is reframed as regime-asymmetric + tail-distorted, not structural. Phase B priorities now:
 
-- **Q1 65-pair re-pilot at 21d** with the A3 filter enabled — tests both the bull-side signal at scale AND whether the filter generalizes off the in-sample 16 commits ($30, ~14h)
-- **Smaller filter A/B** on a fresh 10-pair grid (filter on vs off, same dates) — cheaper validation of just the filter ($10, ~2h)
-- **Bear-correct ticker pilot** — run the framework on a basket of tickers known to have bear pressure (XOM, PFE, INTC, BBY) at 10 dates each, see if UW commits there look different than NVDA/MSFT. Tests the "UW works on bear-correct tickers" claim ($15, ~12h)
+- **B-priority 1 — A3 filter forensics**: **DONE** (`claudedocs/a3-filter-forensics-007.md`). Filter validated as correctly inert on the regime-mismatch failure mode; no tuning needed from 007 evidence.
+- **B-priority 2 — cross-period validation**: **IN FLIGHT as experiment 008** (Opus 30-pair Q4 2025 dates, T3 $30, ~4h). Tests period-specificity of n=50 OW signal + per-ticker discrimination on shifted grid. Will push cross-experiment OW 21d to n≈80.
+- **B-priority 3 — bear-correct ticker pilot**: REINSTATED, lower priority. INTC half of 007 was already this experiment, but n=6 UW with one tail outlier is too small to generalize. Re-running on XOM or PFE × 10 dates would add fresh bear-side data points. Defer until 008 lands. ($15, ~12h, T2)
+- **B-priority 4 — same-date rerun-variance quantification**: 005-vs-007 NVDA non-replication suggests rerun variance is non-trivial. n=3 reps on the same 10 NVDA dates with current config would quantify the bucket-ratio variance bands. ($15, ~12h, T2 — would be the formal evidence backing Constitution VII Replicability scope)
+- **B-priority 5 — model-swap matrix**: Sonnet vs Opus vs GPT-5.4 vs Gemini 3.x on the same NVDA grid. Currently we have Sonnet + Opus only. ($20-40, T2/T3)
 
 ### Phase C — operational integration
 
@@ -121,19 +126,21 @@ Patterns from sibling projects worth porting:
 
 ---
 
-## Open data questions
+## Open data questions (post-007)
 
 These need new experiments to answer; no amount of analysis on existing CSVs will resolve them.
 
-| Question | Proposed experiment | Cost |
-|---|---|---|
-| Does the 21d bull lift hold at n=100+? | Q1 65-pair re-pilot at 21d (same as Phase B Q1) | $30 |
-| Is the lift ticker-class specific (mega-cap tech vs others)? | Sector-stratified pilot | $20 |
-| Does the A3 filter generalize off-sample? | Filter A/B on fresh dates | $10 |
-| Does Opus / GPT-5.4 / Gemini 3.x show the same 21d shape? | Model-swap matrix | $20-40 |
-| Is the bear-correct-ticker UW signal robust beyond AAPL? | Bear-leaning ticker pilot | $15 |
-| Does the framework predict longer horizons (60/90d) where 5d failed and 21d worked? | Re-aggregate current data + extend window with future price data (60-day wait) | $0 + time |
-| Does same-prompt rerun-variance dominate the signal? | n=3 reps on the existing 10 NVDA dates with current config | $15 |
+| Question | Proposed experiment | Cost | Status |
+|---|---|---|---|
+| Does the 21d bull lift hold at n=100+? | 008 cross-period (in flight) → if A, will be at n=80; one more pass = n=110 | $30 | **partial — n=50 confirmed, n=80 in flight** |
+| Is the lift period-specific or persistent across calendar windows? | 008 cross-period validation Q4 2025 | $30 | **in flight as 008** |
+| Is the lift ticker-class specific (mega-cap tech vs others)? | Sector-stratified pilot | $20 | open |
+| Does the A3 filter generalize off-sample? | Already validated by 007 forensics for regime-mismatch case; off-sample mean-reversion test still open | $10 | **partial** |
+| Does Opus / GPT-5.4 / Gemini 3.x show the same 21d shape? | Model-swap matrix | $20-40 | partial — Sonnet + Opus done, others open |
+| Is the bear-correct-ticker UW signal robust beyond AAPL + INTC? | XOM or PFE 10-date pilot | $15 | open (B-priority 3) |
+| Does the framework predict longer horizons (60/90d) where 5d failed and 21d worked? | Re-aggregate current data + extend window with future price data (60-day wait) | $0 + time | open |
+| Does same-prompt rerun-variance dominate the signal at the date level? | n=3 reps on the existing 10 NVDA dates with current config — formalizes the 005-vs-007 finding | $15 | open (B-priority 4) |
+| Does spec 002 (signal-lifecycle) IC measurement reveal which signals are noise? | Build signal-lifecycle pipeline + run on saved state logs | $0 build + $0 run | open (~1 week build) |
 
 ---
 
