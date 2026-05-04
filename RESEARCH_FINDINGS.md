@@ -181,6 +181,20 @@ Implication for any UW user: only trust UW when the ticker has independent bear 
 
 **Synthesis**: build asymmetric handling — agreement boosts confidence/sizing, disagreement triggers human review (NOT algorithmic resolution). Build escape valves — system must degrade gracefully when reasoning_evidence fails. Implement time-boxed decision windows to prevent overthinking. **Verdict**: integration is worth building IF designed asymmetrically (agreement → augment, disagreement → flag for review), NOT as a calibration auto-correct.
 
+## Phase 1 evaluation harness — first IC measurement (added 2026-05-04 evening)
+
+Spec 002 Phase 1 (evaluation harness MVP) shipped after Phase 0 backfill from 156 historical state logs across 10 tickers. First Spearman IC measurement on the framework:
+
+**`final_trade_decision` IC = -0.172 at 21d horizon** (n=153 cached pairs, hit rate 70.6%).
+
+Negative IC means: the framework's PM rating score (Buy=+2, OW=+1, Hold=0, UW=-1, Sell=-2) is **mildly anti-correlated with realized 21d alpha across the cross-experiment, cross-ticker corpus**. This is consistent with — and a clean numerical summary of — the bear-side anti-calibration finding: UW commits on bull-regime tickers had high positive realized α (wrong direction), pulling the rank correlation negative even though OW alone had +1.52% positive α.
+
+The 70.6% hit rate looks high but is dominated by Hold (the majority commit) being recorded as a "hit" when |α| < 0.5%. The IC is the more honest population summary.
+
+**Phase 1 MVP scope**: only `final_trade_decision` is currently IC-evaluated (parsed 5-tier rating → numeric score). Five other synthesis-level signals (market_report, news_report, fundamentals_report, investment_plan, sentiment_report) are cached as prose and report coverage stats only. Featurization of prose signals is deferred to Phase 1.5+. See `claudedocs/signal-evaluation-2026-05-04.md` for the full report.
+
+This is the first **single-number summary** of the framework's PM behavior across the corpus. It does not refute the bull-side α claim (still +1.52% n=73, 62% hit on OW alone) — it captures the bear-side anti-calibration as a population-level rank correlation.
+
 ## Phase D substrate exploration (added 2026-05-04, expanded post-multi-sector)
 
 Two Phase D experiments landed:
