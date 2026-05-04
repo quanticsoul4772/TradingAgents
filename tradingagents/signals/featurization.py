@@ -234,10 +234,164 @@ def numeric_mention_count(text: str) -> float:
     return float(len(_NUMERIC_PATTERN.findall(text or "")))
 
 
+# -- Phase 1.5+ featurizers (added 2026-05-04 late) --------------------------
+#
+# Phase 1.5 unigram + density featurizers found multiple anti-correlated
+# IC pairs but they're highly inter-correlated. The featurizers below add
+# structurally different signal: bigrams, negation-aware sentiment, question
+# density, percentage-vs-dollar mention shape. Each is one-line registration
+# in FEATURIZERS. All deterministic, no extra dependencies.
+
+
+# Curated bigrams. Two-word phrases carry directional information that
+# single-word counts miss (e.g., "strong buy" vs "strong concern").
+_BULL_BIGRAMS = {
+    ("strong", "buy"),
+    ("strong", "growth"),
+    ("strong", "momentum"),
+    ("strong", "tailwind"),
+    ("high", "conviction"),
+    ("high", "growth"),
+    ("clear", "upside"),
+    ("upgrade", "to"),  # "upgrade to Buy"
+    ("raise", "guidance"),
+    ("raised", "guidance"),
+    ("beat", "estimates"),
+    ("beat", "consensus"),
+    ("expanding", "margins"),
+    ("market", "leader"),
+    ("competitive", "advantage"),
+    ("accelerating", "growth"),
+    ("price", "target"),  # often paired with raises
+}
+
+_BEAR_BIGRAMS = {
+    ("downside", "risk"),
+    ("downside", "risks"),
+    ("guidance", "cut"),
+    ("guidance", "lowered"),
+    ("lowered", "guidance"),
+    ("missed", "estimates"),
+    ("missed", "consensus"),
+    ("declining", "margins"),
+    ("compressed", "margins"),
+    ("competitive", "pressure"),
+    ("market", "share"),  # often "losing market share"
+    ("share", "loss"),
+    ("regulatory", "risk"),
+    ("regulatory", "risks"),
+    ("execution", "risk"),
+    ("downgrade", "to"),
+    ("trim", "exposure"),
+    ("reduce", "exposure"),
+    ("decelerating", "growth"),
+}
+
+# Negation tokens that flip the polarity of the next sentiment word.
+_NEGATIONS = {"not", "no", "never", "n't", "without"}
+
+
+def _word_pairs(text: str):
+    """Iterate (lower, lower) consecutive word pairs."""
+    words = list(_word_iter(text))
+    return zip(words, words[1:], strict=False)
+
+
+def bull_bigram_count(text: str) -> float:
+    """Count of curated bullish bigrams ('strong buy', 'high conviction', etc.)."""
+    n = sum(1 for pair in _word_pairs(text or "") if pair in _BULL_BIGRAMS)
+    return float(n)
+
+
+def bear_bigram_count(text: str) -> float:
+    """Count of curated bearish bigrams ('downside risk', 'guidance cut', etc.)."""
+    n = sum(1 for pair in _word_pairs(text or "") if pair in _BEAR_BIGRAMS)
+    return float(n)
+
+
+def negation_aware_sentiment_score(text: str) -> float:
+    """Sentiment score with simple negation handling.
+
+    Walks the text word by word: if the previous word is in _NEGATIONS,
+    flip the polarity of the current sentiment word. So "not bullish" is
+    counted as -1 (bearish) instead of +1 (bullish). Conservative: only
+    looks back one word.
+
+    Returns (bull_adj - bear_adj) / (bull_adj + bear_adj) in [-1, +1], or
+    0.0 if no sentiment words present.
+    """
+    bull = 0
+    bear = 0
+    prev: str | None = None
+    for w in _word_iter(text or ""):
+        is_bull = w in _BULL_KEYWORDS
+        is_bear = w in _BEAR_KEYWORDS
+        if not (is_bull or is_bear):
+            prev = w
+            continue
+        negated = prev in _NEGATIONS
+        if is_bull:
+            if negated:
+                bear += 1
+            else:
+                bull += 1
+        else:  # is_bear
+            if negated:
+                bull += 1
+            else:
+                bear += 1
+        prev = w
+    total = bull + bear
+    if total == 0:
+        return 0.0
+    return (bull - bear) / total
+
+
+def question_density(text: str) -> float:
+    """Question marks per 1000 chars. Markers of uncertainty / open questions.
+
+    Returns 0.0 for empty text.
+    """
+    if not text:
+        return 0.0
+    n = text.count("?")
+    return (n * 1000.0) / len(text)
+
+
+def percent_mention_count(text: str) -> float:
+    """Count of percentage tokens (e.g., '25%', '5.5%'). Subset of
+    numeric_mention_count specifically for proportional figures.
+    """
+    return float(len(re.findall(r"\d+(?:\.\d+)?\s*%", text or "")))
+
+
+def dollar_mention_count(text: str) -> float:
+    """Count of dollar tokens (e.g., '$2.5B', '$100K'). Subset of
+    numeric_mention_count specifically for monetary figures.
+    """
+    return float(len(re.findall(r"\$\d+(?:\.\d+)?[BMKT]?", text or "")))
+
+
+def bull_bear_keyword_ratio(text: str) -> float:
+    """Bull keywords / (bull + bear) keywords. Returns 0.5 for balanced or
+    no-sentiment-words text. Range [0, 1]; high = bull-heavy.
+
+    Different from sentiment_score in scaling: this is in [0, 1] (probability-
+    style), sentiment_score is in [-1, +1] (signed).
+    """
+    bull = _count_keywords(text or "", _BULL_KEYWORDS)
+    bear = _count_keywords(text or "", _BEAR_KEYWORDS)
+    total = bull + bear
+    if total == 0:
+        return 0.5
+    return bull / total
+
+
 # Registry of feature extractors. Each entry: (feature_name, extractor_fn).
 # To add a new feature: append to this list. Each (signal_id, feature_name)
 # pair becomes a separately-evaluated row in the Phase 1.5 report.
 FEATURIZERS: list[tuple[str, Callable[[str], float]]] = [
+    # Phase 1.5 unigram + density features
     ("sentiment_score", sentiment_score),
     ("bull_keyword_count", bull_keyword_count),
     ("bear_keyword_count", bear_keyword_count),
@@ -245,6 +399,14 @@ FEATURIZERS: list[tuple[str, Callable[[str], float]]] = [
     ("conviction_density", conviction_density),
     ("numeric_mention_count", numeric_mention_count),
     ("value_length", value_length),
+    # Phase 1.5+ structural features
+    ("bull_bigram_count", bull_bigram_count),
+    ("bear_bigram_count", bear_bigram_count),
+    ("negation_aware_sentiment_score", negation_aware_sentiment_score),
+    ("question_density", question_density),
+    ("percent_mention_count", percent_mention_count),
+    ("dollar_mention_count", dollar_mention_count),
+    ("bull_bear_keyword_ratio", bull_bear_keyword_ratio),
 ]
 
 

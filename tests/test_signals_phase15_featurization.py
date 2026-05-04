@@ -258,6 +258,165 @@ def test_evaluate_signal_features_skips_pairs_with_no_alpha(monkeypatch):
         assert ev["ic"] is None
 
 
+# ---- Phase 1.5+ structural featurizers (added 2026-05-04 late) -----------
+
+
+def test_bull_bigram_count_matches_curated_phrases():
+    from tradingagents.signals.featurization import bull_bigram_count
+
+    text = "The thesis: strong buy with high conviction and clear upside potential."
+    # bigrams: ('strong', 'buy'), ('high', 'conviction'), ('clear', 'upside') = 3
+    assert bull_bigram_count(text) == 3.0
+
+
+def test_bull_bigram_count_zero_for_no_bullish_phrases():
+    from tradingagents.signals.featurization import bull_bigram_count
+
+    assert bull_bigram_count("Random words with no curated bigrams.") == 0.0
+
+
+def test_bull_bigram_count_handles_empty():
+    from tradingagents.signals.featurization import bull_bigram_count
+
+    assert bull_bigram_count("") == 0.0
+
+
+def test_bear_bigram_count_matches_curated_phrases():
+    from tradingagents.signals.featurization import bear_bigram_count
+
+    text = "Downside risk: missed estimates with declining margins on regulatory risks."
+    # ('downside', 'risk'), ('missed', 'estimates'), ('declining', 'margins'),
+    # ('regulatory', 'risks') = 4
+    assert bear_bigram_count(text) == 4.0
+
+
+def test_bear_bigram_count_zero_for_no_bearish_phrases():
+    from tradingagents.signals.featurization import bear_bigram_count
+
+    assert bear_bigram_count("Bullish thesis with strong fundamentals.") == 0.0
+
+
+def test_negation_aware_sentiment_flips_negated_bullish():
+    """'not bullish' should count as bearish (-1), not bullish (+1)."""
+    from tradingagents.signals.featurization import negation_aware_sentiment_score
+
+    assert negation_aware_sentiment_score("not bullish") == pytest.approx(-1.0)
+
+
+def test_negation_aware_sentiment_flips_negated_bearish():
+    """'not bearish' should count as bullish (+1), not bearish (-1)."""
+    from tradingagents.signals.featurization import negation_aware_sentiment_score
+
+    assert negation_aware_sentiment_score("not bearish") == pytest.approx(1.0)
+
+
+def test_negation_aware_sentiment_handles_no_words():
+    from tradingagents.signals.featurization import negation_aware_sentiment_score
+
+    assert negation_aware_sentiment_score("just plain text") == 0.0
+
+
+def test_negation_aware_sentiment_handles_mixed():
+    """'bullish but not weak' = bullish + (negated weak = bullish?) wait.
+    Actually 'weak' is bearish, so 'not weak' should count as bullish.
+    bullish=2, bearish=0 → +1.0.
+    """
+    from tradingagents.signals.featurization import negation_aware_sentiment_score
+
+    assert negation_aware_sentiment_score("bullish but not weak") == pytest.approx(1.0)
+
+
+def test_negation_aware_sentiment_unaffected_by_distant_negation():
+    """Conservative: only the IMMEDIATELY-prior word counts as negation.
+    'not just bullish' has 'just' between → negation is NOT applied."""
+    from tradingagents.signals.featurization import negation_aware_sentiment_score
+
+    # bullish without an immediate negation → +1.0
+    assert negation_aware_sentiment_score("not just bullish") == pytest.approx(1.0)
+
+
+def test_question_density_basic():
+    from tradingagents.signals.featurization import question_density
+
+    text = "Is the rally sustainable? Will earnings beat? Three risks?"
+    expected = 3 * 1000.0 / len(text)
+    assert question_density(text) == pytest.approx(expected)
+
+
+def test_question_density_zero_for_no_questions():
+    from tradingagents.signals.featurization import question_density
+
+    assert question_density("Statements without questions.") == 0.0
+
+
+def test_question_density_zero_for_empty():
+    from tradingagents.signals.featurization import question_density
+
+    assert question_density("") == 0.0
+
+
+def test_percent_mention_count_isolates_percentage_tokens():
+    from tradingagents.signals.featurization import percent_mention_count
+
+    text = "Up 5%, growth 10.5%, but $25M revenue not counted here"
+    # 5%, 10.5% = 2
+    assert percent_mention_count(text) == 2.0
+
+
+def test_dollar_mention_count_isolates_dollar_tokens():
+    from tradingagents.signals.featurization import dollar_mention_count
+
+    text = "Revenue $2.5B, EPS $1.2, market cap $300B, but 25% growth excluded"
+    # $2.5B, $1.2, $300B = 3
+    assert dollar_mention_count(text) == 3.0
+
+
+def test_bull_bear_keyword_ratio_balanced():
+    from tradingagents.signals.featurization import bull_bear_keyword_ratio
+
+    # bull=2 (bullish, strong), bear=2 (bearish, weak) → 0.5
+    assert bull_bear_keyword_ratio("bullish strong bearish weak") == pytest.approx(0.5)
+
+
+def test_bull_bear_keyword_ratio_all_bullish():
+    from tradingagents.signals.featurization import bull_bear_keyword_ratio
+
+    assert bull_bear_keyword_ratio("bullish strong upgrade") == pytest.approx(1.0)
+
+
+def test_bull_bear_keyword_ratio_all_bearish():
+    from tradingagents.signals.featurization import bull_bear_keyword_ratio
+
+    assert bull_bear_keyword_ratio("bearish weak downgrade") == pytest.approx(0.0)
+
+
+def test_bull_bear_keyword_ratio_no_words_returns_neutral():
+    from tradingagents.signals.featurization import bull_bear_keyword_ratio
+
+    # No bull or bear words → neutral 0.5 (instead of div-by-zero)
+    assert bull_bear_keyword_ratio("plain text without sentiment") == 0.5
+
+
+def test_featurizers_registry_includes_new_features():
+    from tradingagents.signals.featurization import FEATURIZERS
+
+    names = {n for n, _ in FEATURIZERS}
+    assert "bull_bigram_count" in names
+    assert "bear_bigram_count" in names
+    assert "negation_aware_sentiment_score" in names
+    assert "question_density" in names
+    assert "percent_mention_count" in names
+    assert "dollar_mention_count" in names
+    assert "bull_bear_keyword_ratio" in names
+
+
+def test_featurizers_registry_count_grew():
+    from tradingagents.signals.featurization import FEATURIZERS
+
+    # Phase 1.5 had 7; Phase 1.5+ adds 7 more → 14
+    assert len(FEATURIZERS) == 14
+
+
 # ---- multi-horizon evaluation ---------------------------------------------
 
 

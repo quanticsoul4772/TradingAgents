@@ -181,6 +181,30 @@ Implication for any UW user: only trust UW when the ticker has independent bear 
 
 **Synthesis**: build asymmetric handling — agreement boosts confidence/sizing, disagreement triggers human review (NOT algorithmic resolution). Build escape valves — system must degrade gracefully when reasoning_evidence fails. Implement time-boxed decision windows to prevent overthinking. **Verdict**: integration is worth building IF designed asymmetrically (agreement → augment, disagreement → flag for review), NOT as a calibration auto-correct.
 
+## Phase 1.5+ structural featurizers — bear bigrams hit +0.457 IC at 90d (added 2026-05-04 late-evening)
+
+7 new structural featurizers added to FEATURIZERS (Phase 1.5+):
+- `bull_bigram_count` / `bear_bigram_count` — curated 2-word phrase counts
+- `negation_aware_sentiment_score` — flips sentiment when preceded by "not" / "no" / "n't"
+- `question_density` — ?-marks per 1000 chars (uncertainty marker)
+- `percent_mention_count` / `dollar_mention_count` — split numeric mentions
+- `bull_bear_keyword_ratio` — [0, 1] probability-style scaling
+
+**NEW STRONGEST IC IN PROJECT**: `fundamentals_report bear_bigram_count` at 90d = **+0.457** (n=113). Surpasses the previous champion `fundamentals_report conviction_density -0.407`. The bear-side mirror confirms the language-level anti-prediction is bidirectional — bearish bigrams in fundamentals prose predict MORE positive forward α just as bullish words predict MORE negative α.
+
+| Featurizer family | Best IC at 90d | Signal |
+|---|---|---|
+| Bigram (Phase 1.5+) | +0.457 (`bear_bigram_count` fundamentals) | structurally richer than unigrams |
+| Conviction density (Phase 1.5) | -0.407 (`conviction_density` fundamentals) | unigram-level still strong |
+| Hedge density (Phase 1.5) | +0.305 (`hedge_density` fundamentals) | uncertainty markers correlate positively |
+| Bull unigram count (Phase 1.5) | -0.306 (`bull_keyword_count` fundamentals) | bullish unigrams predict negative |
+| Sentiment score (Phase 1.5) | -0.266 (`sentiment_score` fundamentals) | population-level summary |
+| Negation-aware sentiment | -0.266 (same as plain sentiment_score) | negation patterns rare in corpus |
+
+Bigrams add **structurally different** IC: +0.276 (unigram bear keywords) → +0.457 (bigrams) is a meaningful jump, suggesting curated 2-word phrases capture richer information than single-word counts. The negation-aware variant is statistically equivalent to plain sentiment_score in this corpus — consistent with: state logs are formal analyst prose, not casual speech with frequent negations.
+
+`bull_bear_keyword_ratio` mirrors `sentiment_score` exactly (mathematically equivalent up to scaling). Documented but redundant.
+
 ## Phase 2 drift detector + counterfactual — prose anti-prediction is time-localized (added 2026-05-04 late-evening)
 
 Spec 002 Phase 2 shipped: `tradingagents/signals/drift.py` (rolling-IC degradation + KS-distribution drift) + `tradingagents/signals/counterfactual.py` (alpha-delta against alternative-rating rules) + matching CLI scripts. 19 new unit tests.
