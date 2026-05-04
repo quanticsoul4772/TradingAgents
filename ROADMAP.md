@@ -1,6 +1,6 @@
 # ROADMAP — TradingAgents-lab
 
-_Forward-looking exploration map. Updated 2026-05-03 evening (post-007 + 008-in-flight)._
+_Forward-looking exploration map. Updated 2026-05-03 late-evening (post-008 — Scenario C, signal period-conditional)._
 
 This is a research playground, not a product. The roadmap is directions for exploration, not delivery milestones. Per Constitution Principle V ("Steal Liberally"), cross-pollination from sibling projects in the portfolio is a primary driver — many ideas listed here originate elsewhere.
 
@@ -8,51 +8,58 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 
 ---
 
-## Current state (2026-05-03 evening)
+## Current state (2026-05-03 late-evening)
 
-- **14 completed experiments** + cross-experiment horizon sweep + Q4 per-ticker breakdown + A1 debate-quality diagnostic + A3 retrospective filter + A3 forensics on 007
+- **15 completed experiments** + cross-experiment horizon sweep + Q4 per-ticker breakdown + A1 debate-quality diagnostic + A3 retrospective filter + A3 forensics on 007 + reasoning_evidence Bayesian update post-008
 - A3 mean-reversion suppression filter productionized (`tradingagents/agents/utils/momentum_filter.py`, gated by `config["uw_momentum_filter_threshold"]`); validated as correctly inert on regime-mismatch failures (007 INTC half)
-- Constitution **v1.2.1** with Principle VII (Calibrated Abstention is a Valid Output) + Replicability-scope clarification (bucket vs date claims)
-- Cost-tier ladder shipped (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100); first end-to-end exercise on 008
-- 501 tests passing (was 466) — added regression guard for the routing-mismatch class of bug exposed by 008 v1
-- Two load-bearing claims at the n=50 milestone:
-  - (a) Framework's Buy/OW commits at 21d show **+1.99% α (n=50, 65% hit)**, framework-specific vs single-call
-  - (b) UW failure mode is **regime-asymmetric, not uniformly anti-calibrated** — UW on bear-correct tickers (AAPL, INTC excl. tail outliers) directionally appropriate; UW on bull-regime tickers drives aggregate anti-calibration
-- **Active**: experiment 008 (Opus cross-period 30-pair on Q4 2025 dates) running in background (~$30, ~4h)
+- Constitution **v1.2.2** with Principle VII (Calibrated Abstention is a Valid Output) + Replicability-scope (bucket vs date) + Cross-period-scope (realized α is period-conditional unless multi-period validated) clarifications
+- Cost-tier ladder shipped (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100); end-to-end exercised on 008
+- 501 tests passing (was 466) — includes regression guard for the routing-mismatch class of bug exposed by 008 v1
+- **Load-bearing claim revised post-008**: framework's Buy/OW commits at 21d show **+1.30% α (n=61, ~61% hit)** — POSITIVE BUT PERIOD-CONDITIONAL. Q1 2026 cohort (n=50) showed +1.99%; Q4 2025 cohort (n=11) showed -1.81%. Reasoning_evidence Bayesian posterior on stable-cross-period-signal: 0.64 → 0.52
+- UW failure mode is **regime-asymmetric, not uniformly anti-calibrated** — UW on bear-correct tickers directionally appropriate; UW on bull-regime tickers drives aggregate anti-calibration
+- **No experiments running** — 008 landed at 30/30 0 errors
 
 ---
 
-## Active branch — 007 landed, 008 in flight (2026-05-03 evening)
+## Active branch — 008 landed, Scenario C reframe (2026-05-03 late-evening)
 
-**007 (Opus 30-pair mixed basket NVDA + AAPL + INTC × 10 dates Q1 2026)** — landed:
-- Distribution: 9 OW + 15 Hold + 6 UW. Per-ticker 6/4/0, 3/7/0, 0/4/6.
-- Cross-experiment OW 21d α now **n=50, +1.99%, 65% hit** — load-bearing claim sturdier than at n=30 milestone
-- Single-experiment OW hit-rate climb 56→67→75% across 5d/10d/21d — cleanest single-run horizon-emergence evidence yet
-- INTC bear-side reframed via `claudedocs/a3-filter-forensics-007.md`: 3 correct + 2 wrong + 1 unresolved → 60% hit. Headline +20.31% mean dominated by single 03-20 outlier (INTC ripped +51% post-catalyst). Excluding that, INTC UW α is -1.73% (correctly bearish).
-- **A3 filter validated** — INTC was UP +11-33% at 4 of 6 UW dates, never in suppression zone. Filter targets mean-reversion bounces specifically; behaved correctly per design.
-- 005's NVDA 10/10 OW does NOT replicate (007 NVDA = 6/10 OW + 4 Hold during local Feb selloff). Bucket-level claims hold; date-level claims do not.
+**008 (Opus cross-period validation Q4 2025)** — landed:
+- 30/30, 0 errors, 252.6 min, $30 (Principle III T3 ceiling)
+- Distribution: 11 OW + 15 Hold + 4 UW. Per-ticker 9/1/0 (NVDA), 2/7/1 (AAPL), 0/7/3 (INTC)
+- **Bull signal flipped sign cross-period**: OW 21d α = -1.81% n=11, 45% hit (vs 007's +3.05% n=8, 75% hit). Per-ticker: NVDA OW -0.47%, AAPL OW -7.81%
+- **No horizon emergence** — OW hit pattern 5d/10d/21d = 55→27→45% (vs 007's 56→67→75% climb)
+- What replicates: per-ticker bucket distribution (NVDA 90% vs 60% OW, both >50%; AAPL 70% Hold = 70% Hold)
+- What does NOT replicate: realized α direction. INTC pattern shifted (30% UW vs 60%) because Q4 2025 INTC wasn't bear-leaning
+- **Decision: Scenario C** per HYPOTHESIS tree — major reframe applied:
+  - RESEARCH_FINDINGS softened ("period-conditional" not "stable")
+  - Empirical core table updated: OW 21d n=50 +1.99% → n=61 +1.30%
+  - Constitution v1.2.1 → v1.2.2 with Cross-period scope clarification
+  - Project status reframed: discrimination behavior robust; realized-α period-conditional
+- Reasoning_evidence Bayesian update on "stable cross-period signal": prior 0.64, likelihood ratio 0.6, posterior 0.52 — roughly even odds
 
-**008 (Opus cross-period validation Q4 2025)** — in flight (~20/30 done as of last check):
-- Same config as 007 (Opus + Haiku + A3 filter + exa + 3 analysts + 1 round)
-- Grid shifted to 2025-11-07 → 2026-01-09 (10 weekly Fridays preceding the 005-007 grid)
-- Tests period-specificity of n=50 OW signal + per-ticker discrimination
-- First end-to-end exercise of the new T3 Cost-Justification scaffold
-- Decision tree: 55% Scenario A (period-general), 25% B (partial dilution), 15% C (collapse), 5% D (discrimination fails)
-- ANALYSIS.md will be written when 008 lands; expected to push cross-experiment OW 21d to ~n=80
+**Next experiment selected**: third cross-period at **smaller scale (T2 ~$10)** to disambiguate which of Q1 2026 / Q4 2025 is the outlier.
+- Same NVDA + AAPL + INTC × 10 weekly Fridays grid
+- Q3 2025 dates (e.g., 2025-08-01 → 2025-10-10)
+- Same config as 007 + 008 (Opus + Haiku + A3 + exa + 3 analysts + 1 round)
+- T2 (~$10), no Cost-Justification scaffold required
+- **If Q3 2025 OW α positive**: Q4 2025 was the outlier; load-bearing claim recovers; posterior climbs back toward 0.64
+- **If Q3 2025 OW α negative**: Q1 2026 was the outlier; load-bearing claim further weakens; framework's commit-direction skill is essentially absent (calibrated abstention remains the load-bearing principle)
+- **If Q3 2025 OW α near zero**: signal is genuinely period-randomly-distributed around ~0; signal claim should be retired
 
 ---
 
 ## Sequenced phases of exploration (post-Opus)
 
-### Phase B — out-of-sample validation (priorities reordered post-007)
+### Phase B — out-of-sample validation (priorities reordered post-008)
 
-After 007 the n=50 milestone has a sturdy bull-side α claim and the bear-side problem is reframed as regime-asymmetric + tail-distorted, not structural. Phase B priorities now:
+After 008 the load-bearing claim is reframed as period-conditional. Phase B priorities now:
 
 - **B-priority 1 — A3 filter forensics**: **DONE** (`claudedocs/a3-filter-forensics-007.md`). Filter validated as correctly inert on the regime-mismatch failure mode; no tuning needed from 007 evidence.
-- **B-priority 2 — cross-period validation**: **IN FLIGHT as experiment 008** (Opus 30-pair Q4 2025 dates, T3 $30, ~4h). Tests period-specificity of n=50 OW signal + per-ticker discrimination on shifted grid. Will push cross-experiment OW 21d to n≈80.
-- **B-priority 3 — bear-correct ticker pilot**: REINSTATED, lower priority. INTC half of 007 was already this experiment, but n=6 UW with one tail outlier is too small to generalize. Re-running on XOM or PFE × 10 dates would add fresh bear-side data points. Defer until 008 lands. ($15, ~12h, T2)
-- **B-priority 4 — same-date rerun-variance quantification**: 005-vs-007 NVDA non-replication suggests rerun variance is non-trivial. n=3 reps on the same 10 NVDA dates with current config would quantify the bucket-ratio variance bands. ($15, ~12h, T2 — would be the formal evidence backing Constitution VII Replicability scope)
-- **B-priority 5 — model-swap matrix**: Sonnet vs Opus vs GPT-5.4 vs Gemini 3.x on the same NVDA grid. Currently we have Sonnet + Opus only. ($20-40, T2/T3)
+- **B-priority 2 — cross-period validation**: **DONE as experiment 008**. Result: Scenario C (signal collapses on shifted period). Bayesian posterior 0.64 → 0.52. Reframe applied to RESEARCH_FINDINGS + Constitution v1.2.2.
+- **B-priority 2b — third cross-period (Q3 2025) at T2 ~$10**: **PROMOTED to next**. Disambiguates which of Q1 2026 / Q4 2025 is the outlier. Three-way comparison Q3'25 vs Q4'25 vs Q1'26 produces the cleanest update yet on the period-conditional claim.
+- **B-priority 3 — bear-correct ticker pilot (XOM, PFE)**: lower priority. Adds fresh bear-side data points but doesn't directly address the load-bearing period-conditional question. ($15, ~12h, T2)
+- **B-priority 4 — same-date rerun-variance quantification**: 005-vs-007 NVDA non-replication suggests rerun variance is non-trivial. n=3 reps on the same 10 NVDA dates with current config would quantify the bucket-ratio variance bands. ($15, ~12h, T2 — would be the formal evidence backing Constitution VII Replicability-scope clarification)
+- **B-priority 5 — model-swap matrix**: Sonnet vs Opus vs GPT-5.4 vs Gemini 3.x on the same grid. Tests whether the period-conditional realized α is a model property or a substrate property (does Sonnet show the same Q1-vs-Q4 sign flip?). ($20-40, T2/T3)
 
 ### Phase C — operational integration
 
@@ -132,8 +139,8 @@ These need new experiments to answer; no amount of analysis on existing CSVs wil
 
 | Question | Proposed experiment | Cost | Status |
 |---|---|---|---|
-| Does the 21d bull lift hold at n=100+? | 008 cross-period (in flight) → if A, will be at n=80; one more pass = n=110 | $30 | **partial — n=50 confirmed, n=80 in flight** |
-| Is the lift period-specific or persistent across calendar windows? | 008 cross-period validation Q4 2025 | $30 | **in flight as 008** |
+| Does the 21d bull lift hold at n=100+? | Q3 2025 third cross-period (T2 $10) → if positive, posterior recovers; one more pass = n=80+ | $30 | **partial — n=61 cross-period evidence; signal +1.30% but period-conditional** |
+| Is the lift period-specific or persistent across calendar windows? | 008 done: Q1 2026 + Q4 2025 cohorts split sign. Q3 2025 third pass would disambiguate. | $10 | **partial-resolved** — 008 says period-conditional; need 3rd period to confirm |
 | Is the lift ticker-class specific (mega-cap tech vs others)? | Sector-stratified pilot | $20 | open |
 | Does the A3 filter generalize off-sample? | Already validated by 007 forensics for regime-mismatch case; off-sample mean-reversion test still open | $10 | **partial** |
 | Does Opus / GPT-5.4 / Gemini 3.x show the same 21d shape? | Model-swap matrix | $20-40 | partial — Sonnet + Opus done, others open |

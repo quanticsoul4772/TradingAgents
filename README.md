@@ -4,16 +4,16 @@ Personal copy of [TauricResearch/TradingAgents](https://github.com/TauricResearc
 
 ## Headline finding
 
-After 14 experiments + cross-experiment horizon sweep + per-ticker breakdown + Opus 4.7 model swap (NVDA + AAPL) + Opus 30-pair mixed basket (NVDA + AAPL + INTC) + A3 filter forensics:
+After 15 experiments + cross-experiment horizon sweep + per-ticker breakdown + Opus 4.7 model swap (NVDA + AAPL) + Opus 30-pair mixed basket (NVDA + AAPL + INTC, Q1 2026) + Opus cross-period validation (NVDA + AAPL + INTC, Q4 2025) + A3 filter forensics + reasoning_evidence Bayesian update:
 
-**At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) are directionally correct and produce +1.99% mean alpha across n=50 commits (65% hit rate).** Single-experiment OW hit-rate climbs 56→67→75% across 5d/10d/21d on the latest 30-pair Opus run — cleanest single-run horizon-emergence signal yet. Bearish commits are **regime-asymmetric, not uniformly anti-calibrated**: UW on bear-correct tickers (AAPL, INTC excl. tail outliers) are directionally appropriate; UW on bull-regime tickers (NVDA, MSFT) drive the aggregate anti-calibration. Hold ≈ 0% median at every horizon (mean is tail-distorted). **Mode-collapse direction is a function of (model × ticker × regime × prompt)**: Sonnet over-abstains on bull tickers + over-commits-bearish on bear tickers; Opus discriminates per-ticker. **Bucket-level claims replicate; date-level claims do not** — the same Opus model on the same 10 NVDA dates produces 10/10 OW one run (005) and 6/10 OW + 4 Hold the next (007); per-ticker bucket ratios hold across reruns, specific commit dates do not.
+**At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) produce +1.30% mean alpha across n=61 commits (~61% hit rate) — POSITIVE BUT PERIOD-CONDITIONAL.** The Q1 2026 cohort (n=50) showed +1.99%, 65% hit; the Q4 2025 cohort (n=11) showed -1.81%, 45% hit. Same model + prompt + A3 filter + tickers in both cohorts; only calendar period changed. **Reasoning_evidence Bayesian posterior on "stable cross-period signal" moved from 0.64 → 0.52** — roughly even odds. Bearish commits are **regime-asymmetric, not uniformly anti-calibrated**: UW on bear-correct tickers (AAPL, INTC excl. tail outliers) are directionally appropriate; UW on bull-regime tickers (NVDA, MSFT) drive the aggregate anti-calibration. Hold ≈ 0% median at every horizon. **Mode-collapse direction is a function of (model × ticker × regime × prompt)**: Sonnet over-abstains on bull tickers + over-commits-bearish on bear tickers; Opus discriminates per-ticker. **Bucket-level claims replicate; date-level and realized-α claims do not** — the same Opus model on the same 10 NVDA dates produces 10/10 OW one run (005) and 6/10 OW + 4 Hold the next (007); per-ticker bucket ratios hold across reruns, specific commit dates and realized α do not.
 
-Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadmap in [`ROADMAP.md`](ROADMAP.md). Per-experiment summaries auto-aggregated in [`findings.md`](findings.md). A3 filter forensics in [`claudedocs/a3-filter-forensics-007.md`](claudedocs/a3-filter-forensics-007.md).
+Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadmap in [`ROADMAP.md`](ROADMAP.md). Per-experiment summaries auto-aggregated in [`findings.md`](findings.md). A3 filter forensics in [`claudedocs/a3-filter-forensics-007.md`](claudedocs/a3-filter-forensics-007.md). Cross-period validation in [`experiments/2026-05-03-008-opus47-cross-period/ANALYSIS.md`](experiments/2026-05-03-008-opus47-cross-period/ANALYSIS.md).
 
 ## What's local
 
 **Research substrate**
-- `experiments/<YYYY-MM-DD>-NNN-<slug>/` — 14 experiments with HYPOTHESIS / ANALYSIS / PARAMS.json / run.sh (latest: 008 cross-period in flight)
+- `experiments/<YYYY-MM-DD>-NNN-<slug>/` — 15 experiments with HYPOTHESIS / ANALYSIS / PARAMS.json / run.sh (latest: 008 cross-period validation, Scenario C — period-conditional signal)
 - `findings.md` — auto-generated per-experiment one-paragraph summaries
 - `RESEARCH_FINDINGS.md` — project-level synthesis across all experiments
 - `ROADMAP.md` — sequenced phases of exploration + cross-pollination ideas
@@ -22,7 +22,7 @@ Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadma
 - `claudedocs/uw-debate-diagnostic.md` — debate-quality features for correct vs wrong UW commits
 - `claudedocs/uw-suppression-filter.md` — A3 mean-reversion filter retrospective
 - `claudedocs/a3-filter-forensics-007.md` — A3 filter validated as correctly inert on regime-mismatch (post-007)
-- `.specify/memory/constitution.md` — seven principles governing research approach (v1.2.1)
+- `.specify/memory/constitution.md` — seven principles governing research approach (v1.2.2)
 - `.specify/specs/001-bots-architecture/` + `.specify/specs/002-signal-lifecycle/` — formal specs for two unimplemented refactors
 
 **Tooling**
@@ -89,7 +89,7 @@ All operate on existing `experiments/*/results.csv` files; zero new LLM cost.
 
 ## Constitution
 
-Seven principles in [`.specify/memory/constitution.md`](.specify/memory/constitution.md) (v1.2.1): Save Everything, One Experiment Per Change, Stay Cheap (4-tier ladder T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100, replaces single $30 ceiling), No Production Claims, Steal Liberally, Spec Before Structural Change, **Calibrated Abstention is a Valid Output** (with 2026-05-03 evening Replicability-scope clarification: claims must distinguish bucket-level / replicable from date-level / single-observation evidence). The principles are constraints, not aspirations.
+Seven principles in [`.specify/memory/constitution.md`](.specify/memory/constitution.md) (v1.2.2): Save Everything, One Experiment Per Change, Stay Cheap (4-tier ladder T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100, replaces single $30 ceiling), No Production Claims, Steal Liberally, Spec Before Structural Change, **Calibrated Abstention is a Valid Output** (with 2026-05-03 Replicability-scope + Cross-period-scope clarifications: claims must distinguish bucket-level / replicable from date-level / single-observation evidence; realized-α claims are period-conditional unless validated across multiple calendar periods). The principles are constraints, not aspirations.
 
 ## Tests
 
