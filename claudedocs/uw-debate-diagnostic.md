@@ -2,6 +2,8 @@
 
 _Generated 2026-05-03T06:40:11.491195_
 
+> **Status**: pre-007 / pre-Opus snapshot. Findings still valid as a feature inventory of correct vs wrong UW debates in the Sonnet era. NOT regenerated after 007 because 007 didn't add new debate-feature dimensions; rerun via `scripts/diagnose_uw_quality.py` if a future experiment introduces a new debate variant or the bear-side n grows materially.
+
 Horizon 21d. Convention: UW correct ⇔ α<0.
 
 

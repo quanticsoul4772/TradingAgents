@@ -1,8 +1,8 @@
 # Scaffolding plan for tradingagents-lab
 
-**Status**: design doc, not committed to install yet
-**Date**: 2026-05-01
-**Companion docs**: `EXPERIMENT.md` (what we're building toward), `MULTI_AGENT_DEBATE_RESEARCH.md` (strategic context)
+**Status**: INSTALLED 2026-05-01 → 2026-05-03 evening (cost-tier scaffolding added). spec-kit at `.specify/`, ruff + mypy + pre-commit all wired, 501 tests passing, Constitution v1.2.1.
+**Date**: 2026-05-01 (original); see CHANGELOG.md for installation history
+**Companion docs**: `EXPERIMENT.md` (what we're building toward), `MULTI_AGENT_DEBATE_RESEARCH.md` (strategic context, superseded by `ROADMAP.md`)
 
 ## Goal
 

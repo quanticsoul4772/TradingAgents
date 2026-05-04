@@ -2,6 +2,8 @@
 
 _Generated 2026-05-03T06:45:54.405271_
 
+> **Status**: in-sample retrospective on n=16 UW commits prior to A3 productionization. Superseded for the post-007 question of "does the filter behave correctly on a fresh run" by [`a3-filter-forensics-007.md`](a3-filter-forensics-007.md) — which showed the filter correctly stays inert on regime-mismatch failures (INTC × Q1 2026 was UP +11-33% at 4 of 6 UW dates, never in the suppression zone). This doc remains the in-sample evidence base for the filter's design rationale; do not cite it for "filter is/isn't generalizing" — cite the forensics doc instead.
+
 Filter rule: suppress UW (treat as Hold) if ticker is in mean-reversion zone (tic_mom < downside_thr).
 Hypothesis discovered in this analysis: wrong UW commits cluster on tickers already deeply down → forward 21d mean-reverts bullishly.
 Horizon 21d. Convention: UW correct ⇔ α<0.

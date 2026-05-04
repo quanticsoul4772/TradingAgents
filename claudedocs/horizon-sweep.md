@@ -1,11 +1,11 @@
 # Horizon sweep — bucket alpha across 5/10/21/90-day windows
 
-_Generated 2026-05-03T10:09:55.304789_
+_Generated 2026-05-03T19:58:34.613064_
 
 Convention: Underweight/Sell directionally correct when α<0; Buy/Overweight correct when α>0; Hold neutral. Hit rate = % positive α.
 
 
-_horizons: [5, 10, 21, 90]; experiments: 11; total resolved (rating, horizon) cells: 348_
+_horizons: [5, 10, 21, 90]; experiments: 13; total resolved (rating, horizon) cells: 517_
 
 
 ## 2026-05-02-002-wc12-pm-blind
@@ -118,12 +118,32 @@ _horizons: [5, 10, 21, 90]; experiments: 11; total resolved (rating, horizon) ce
 | Underweight | — | — | — | — |
 | Sell | — | — | — | — |
 
+## 2026-05-03-007-opus47-30pair-mixed
+
+| Rating | 5d α (n, hit%) | 10d α (n, hit%) | 21d α (n, hit%) | 90d α (n, hit%) |
+|---|---|---|---|---|
+| Buy | — | — | — | — |
+| Overweight | +0.71% (n=9, 56%) | +0.78% (n=9, 67%) | +3.05% (n=8, 75%) | — |
+| Hold | +1.79% (n=15, 60%) | +3.42% (n=15, 47%) | +9.53% (n=14, 57%) | — |
+| Underweight | +2.13% (n=6, 50%) | +4.12% (n=6, 67%) | +7.11% (n=5, 40%) | — |
+| Sell | — | — | — | — |
+
+## 2026-05-03-008-opus47-cross-period
+
+| Rating | 5d α (n, hit%) | 10d α (n, hit%) | 21d α (n, hit%) | 90d α (n, hit%) |
+|---|---|---|---|---|
+| Buy | — | — | — | — |
+| Overweight | -0.10% (n=11, 55%) | -1.00% (n=11, 27%) | -1.67% (n=11, 45%) | -0.07% (n=8, 38%) |
+| Hold | -1.88% (n=10, 20%) | -1.03% (n=10, 40%) | -0.30% (n=10, 50%) | +5.08% (n=7, 43%) |
+| Underweight | +1.05% (n=1, 100%) | -1.38% (n=1, 0%) | -4.07% (n=1, 0%) | -4.64% (n=1, 0%) |
+| Sell | — | — | — | — |
+
 ## Cross-experiment summary (mean α across experiments per horizon × bucket)
 
 | Rating | 5d mean α (Σn) | 10d mean α (Σn) | 21d mean α (Σn) | 90d mean α (Σn) |
 |---|---|---|---|---|
 | Buy | -1.27% (n=8, 25%) | -0.55% (n=8, 38%) | +1.16% (n=7, 71%) | — |
-| Overweight | -0.36% (n=45, 44%) | +0.41% (n=45, 47%) | +1.79% (n=41, 63%) | — |
-| Hold | +0.31% (n=40, 55%) | -0.09% (n=40, 42%) | -0.29% (n=37, 54%) | — |
-| Underweight | +0.62% (n=26, 62%) | +0.75% (n=26, 54%) | +1.56% (n=22, 64%) | — |
+| Overweight | -0.17% (n=65, 48%) | +0.22% (n=65, 46%) | +1.32% (n=60, 62%) | -0.07% (n=8, 38%) |
+| Hold | +0.31% (n=65, 51%) | +0.58% (n=65, 43%) | +1.96% (n=61, 54%) | +5.08% (n=7, 43%) |
+| Underweight | +0.91% (n=33, 61%) | +1.30% (n=33, 55%) | +2.35% (n=28, 57%) | -4.64% (n=1, 0%) |
 | Sell | +1.22% (n=1, 100%) | +3.73% (n=1, 100%) | -1.38% (n=1, 0%) | — |

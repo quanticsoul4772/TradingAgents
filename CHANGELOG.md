@@ -6,6 +6,43 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (research milestone — 14 experiments + n=50 OW signal)
+- Constitution **v1.2.1** (`.specify/memory/constitution.md`):
+  - **Principle III restructured** from single $30 ceiling to 4-tier ladder (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100). Higher tiers require progressively more deliberation in HYPOTHESIS.md.
+  - **Principle VII added** (Calibrated Abstention is a Valid Output) after the 11-experiment chain converged on the architectural reframe.
+  - **Principle VII Replicability scope appended** (v1.2.1) after the 005-vs-007 NVDA non-replication finding: claims must distinguish bucket-level (replicable) from date-level (single observation) evidence.
+- Cost-tier scaffolding in `tradingagents/experiments/templates.py` + `scripts/new_experiment.py`:
+  - `infer_tier(cost)` derives tier from a USD cost estimate (None → T2 default).
+  - `--tier T1/T2/T3/T4` flag on `new_experiment.py`; T3/T4 inject required Cost-Justification scaffold (T4 adds multi-day deliberation, fallback, alternatives, kill criteria).
+  - HYPOTHESIS template grew a `**Cost tier**` line. First end-to-end exercise: experiment 008.
+- Signals expansion (`tradingagents/dataflows/y_finance.py`, `tradingagents/dataflows/macro.py`):
+  - 10 yfinance fields (`get_recommendations`, `get_earnings_calendar`, `get_options_summary`, `get_short_interest`, `get_institutional_holders`, `get_corporate_actions`, plus existing 4 statements).
+  - 5 P1 macro/regime additions: `get_vix`, `get_sector_etf_strength` (SPDR Select Sector ETFs).
+  - 18 tools total wired into analyst layer (was 8).
+  - +25 unit tests for fetchers and tool dispatchers.
+- `tradingagents/agents/utils/momentum_filter.py` (A3 production augmentation):
+  - Mean-reversion suppression filter for UW/Sell commits, gated by `config["uw_momentum_filter_threshold"]`. Default disabled.
+  - Wired in `tradingagents/agents/managers/portfolio_manager.py`.
+  - **Validated post-007** by `claudedocs/a3-filter-forensics-007.md`: filter correctly stays inert on regime-mismatch failures (INTC was UP +11-33% at 4 of 6 UW dates, never in suppression zone).
+- New analysis scripts: `bear_side_per_ticker.py`, `diagnose_uw_quality.py`, `uw_suppression_filter.py`, `single_call_baseline.py`, `horizon_sweep.py`, `identify_hold_extremes.py` — all $0-cost, operate on existing CSVs.
+- Two formal specs (unimplemented): `.specify/specs/001-bots-architecture/` (battlecode-style refactor), `.specify/specs/002-signal-lifecycle/` (discover/evaluate/promote/retire/learn pipeline).
+- Spec-kit + ruff + mypy + pre-commit scaffolding installed (per `docs/SCAFFOLDING_PLAN.md`).
+- `RESEARCH_FINDINGS.md` — project-level synthesis with 5 open questions + reasoning-tool-derived priors and empirical answers.
+- `ROADMAP.md` — sequenced phases (B validate / C operationalize / D substrate-extend / E architectural variants) + cross-pollination table from sibling projects.
+- 13 completed experiments + 1 in flight (008 cross-period validation). Latest committed: 007 Opus 30-pair mixed basket NVDA + AAPL + INTC at 21d horizon.
+
+### Changed
+- News vendor: removed `yfinance_news.py` and `brave_news.py` entirely. **Exa** is the only first-party news vendor; `alpha_vantage` retained as alternative for users with that subscription.
+- `get_insider_transactions` moved from `news_data` → `fundamental_data` category (2026-05-03 evening) to fix routing-mismatch where `route_to_vendor` would try alpha_vantage before yfinance when the news_data vendor (exa) had no impl. Discovered when experiment 008 v1 errored on 22/22 runs.
+- Test count: 92 → 466 → 501 (added regression guard `test_every_categorized_tool_has_impl_for_default_vendor` to catch the 008 class of bug at unit-test time).
+
+### Fixed
+- Routing-mismatch bug in `tradingagents/dataflows/interface.py` (commit `b00a203`): structural fix moves `get_insider_transactions` to the right category; supersedes the dict-order workaround from `505d2b1`.
+- Two pre-existing E731 lambda-assignment lints in `tests/test_interface_routing.py` (cosmetic).
+
+### Headline finding (post-007)
+**At 5-day windows the framework is at the LLM single-call calibration ceiling. At 21-day windows, bullish commits (Buy + Overweight) produce +1.99% mean alpha across n=50 commits (65% hit rate)**. Single-experiment OW hit-rate climbs 56→67→75% across 5d/10d/21d on the latest 30-pair Opus run. Bearish commits are regime-asymmetric (not uniformly anti-calibrated): UW on bear-correct tickers directionally appropriate; UW on bull-regime tickers drives the aggregate anti-calibration. Bucket-level claims replicate; date-level claims do not (005 NVDA 10/10 OW vs 007 NVDA 6/10 OW on the same dates).
+
 ### Added (experiments scaffolding — spec 001)
 - `tradingagents/experiments/` module — ID generation/validation (`ids.py`), config-override parsing (`overrides.py`), template renderers (`templates.py`).
 - `scripts/new_experiment.py` — scaffold a new `experiments/<id>/` directory with templated `HYPOTHESIS.md`, `PARAMS.json`, `run.sh`, `run.ps1`. `--source-idea` and `--cost` pre-fills supported.

@@ -291,7 +291,7 @@ Pre-earnings vs post-earnings vs mid-cycle behave differently. Stratify IC by `d
 - `SIGNALS.md` — inventory; will be auto-generated from registry once Phase 0 lands
 - `BOTS_DESIGN.md` — Signal class consumer; aggregator weighting in this doc plugs into BOTS_DESIGN aggregator
 - `ROADMAP.md` cross-pollination table — this doc IS the formalization of the "Steal Liberally" pattern from agent-harness-v2's "knowledge digestion + antibodies" entry
-- `RESEARCH_FINDINGS.md` — IC measurement on existing 13 experiments will validate or invalidate our current architectural reframe (Constitution VII calibrated abstention claim depends on signals not being predictive at 5d but being predictive at 21d — that's a testable claim per this lifecycle)
+- `RESEARCH_FINDINGS.md` — IC measurement on existing 14 experiments will validate or invalidate our current architectural reframe (Constitution VII calibrated abstention claim depends on signals not being predictive at 5d but being predictive at 21d — that's a testable claim per this lifecycle)
 - `.specify/specs/001-bots-architecture/spec.md` — must be implemented through Phase 2 before Phase 3 (reweight) here
 - Constitution Principle VI (Spec Before Structural Change) — this doc would need promotion to `.specify/specs/<id>-signal-lifecycle/spec.md` before code
 
