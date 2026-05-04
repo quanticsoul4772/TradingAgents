@@ -194,6 +194,32 @@ def test_get_short_interest_renders_known_fields():
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize("etf_ticker", ["XLK", "XLE", "XLF", "XLV", "XLI"])
+def test_get_short_interest_short_circuits_on_etf_input(etf_ticker):
+    """Short-circuit when ticker IS a sector ETF — yfinance Ticker.info 404s
+    on ETFs and short-interest is meaningless for index funds. Same pattern
+    as get_sector_etf_strength in macro.py.
+
+    Verified by patching yf.Ticker to raise if instantiated — the guard
+    must run before any yfinance call.
+    """
+    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker:
+        mock_ticker.side_effect = AssertionError("yf.Ticker should not be called for ETF inputs")
+        out = get_short_interest(etf_ticker)
+    assert etf_ticker in out
+    assert "sector ETF" in out
+    assert "not meaningful" in out.lower() or "index fund" in out.lower()
+
+
+@pytest.mark.unit
+def test_get_short_interest_etf_input_lowercase_normalized():
+    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker:
+        mock_ticker.side_effect = AssertionError("yf.Ticker should not be called for ETF inputs")
+        out = get_short_interest("xlk")
+    assert "XLK" in out
+
+
+@pytest.mark.unit
 def test_get_short_interest_empty_info():
     with (
         patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock,
