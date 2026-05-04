@@ -181,6 +181,32 @@ Implication for any UW user: only trust UW when the ticker has independent bear 
 
 **Synthesis**: build asymmetric handling — agreement boosts confidence/sizing, disagreement triggers human review (NOT algorithmic resolution). Build escape valves — system must degrade gracefully when reasoning_evidence fails. Implement time-boxed decision windows to prevent overthinking. **Verdict**: integration is worth building IF designed asymmetrically (agreement → augment, disagreement → flag for review), NOT as a calibration auto-correct.
 
+## Phase 2 drift detector + counterfactual — prose anti-prediction is time-localized (added 2026-05-04 late-evening)
+
+Spec 002 Phase 2 shipped: `tradingagents/signals/drift.py` (rolling-IC degradation + KS-distribution drift) + `tradingagents/signals/counterfactual.py` (alpha-delta against alternative-rating rules) + matching CLI scripts. 19 new unit tests.
+
+### Drift findings (n_recent=30, ic_threshold=0.05, ks_threshold=0.2)
+
+**Multiple prose-feature ICs FLIP SIGN between baseline (older 126 rows) and recent (last 30 rows)**:
+- `fundamentals_report sentiment_score`: baseline **-0.215** → recent **+0.129** (flipped to positive)
+- `news_report sentiment_score`: baseline -0.092 → recent **+0.138** (flipped)
+- `investment_plan numeric_mention_count`: baseline -0.164 → recent +0.012 (flipped to near-zero)
+- `investment_plan value_length`: baseline -0.027 → recent +0.227 (flipped to strong positive)
+
+Many KS-statistic alerts (>0.20) — recent value distributions differ from baseline. KS values: market_report sentiment 0.305, news_report sentiment 0.467, fundamentals sentiment 0.300, etc.
+
+**Interpretation**: the prose-anti-prediction pattern from Phase 1.5 is **time-localized**, not stable across the whole corpus. Earlier dates showed strong anti-correlation (most of corpus = Q1 2026 bull-tailwind period); recent dates show neutral or positive correlation. Consistent with: Q1 2026 was bullish-then-mean-reverting; the prose-anti-prediction pattern reflects "early Q1 bullish prose was wrong because mean-reversion came later" rather than a stable framework property.
+
+### Counterfactual findings (`hold-all-uw` rule)
+
+Of 156 cached PM commits, 25 were UW. Flipping all 25 to Hold produces:
+- Mean alpha delta: **+0.015% per commit** (across all 153 resolved pairs)
+- Total alpha delta: +2.232% over 25 changed commits = **~+0.09% per changed commit**
+
+Modest gain. Does NOT strongly support "stop all UW commits" as a portfolio rule. The bear-side anti-calibration loss is real but the absolute magnitude per commit is small enough that a wholesale UW→Hold override doesn't dramatically improve the corpus alpha.
+
+This counterfactual provides a concrete dollar-equivalent: the framework's bear-side anti-calibration costs roughly 0.09% per UW commit. Across 25 commits ≈ 2.2% total alpha. Useful for sizing the "is this worth fixing?" question.
+
 ## Multi-horizon evaluation — horizon-dependent IC structure (added 2026-05-04 late-evening)
 
 After multi-horizon was added to the evaluation harness (5d / 10d / 21d / 90d in parallel), per-feature IC reveals dramatic horizon-dependent patterns. **Strongest IC in the project**: `fundamentals_report conviction_density` at 90d = **-0.407**.
