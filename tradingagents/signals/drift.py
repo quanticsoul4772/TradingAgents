@@ -267,6 +267,101 @@ def analyze_all_signals(
     return reports
 
 
+# -- Phase 2.5: auto-state-transitions on drift alerts -----------------------
+#
+# When a drift report flags an IC-decline alert, the signal's state in the
+# registry is auto-transitioned per the spec FR-005 lifecycle:
+#   - production -> deprecated   (IC declined materially)
+#   - deprecated -> archived     (signal continues to decline after demotion)
+# KS-drift alerts are NOT auto-acted (drift can be benign; flag for human
+# review instead).
+#
+# Per the spec Edge Cases section: "human review window of 1 measurement
+# cycle before the soft-alert escalates to demotion" — left as Phase 2.6.
+# The MVP transitions immediately on first alert.
+
+
+@dataclass
+class DriftAction:
+    """One state-transition action triggered by a drift report."""
+
+    signal_id: str
+    feature: str | None
+    from_state: str
+    to_state: str
+    reason: str
+    applied: bool  # False if --dry-run; True if registry was actually mutated
+
+
+_DEMOTION_LADDER = {
+    "production": "deprecated",
+    "deprecated": "archived",
+}
+
+
+def apply_drift_actions(
+    reports: list[DriftReport],
+    dry_run: bool = False,
+) -> list[DriftAction]:
+    """Auto-transition signals based on IC-decline alerts.
+
+    For each report with ``ic_decline_alert`` set:
+    - Look up the signal_id in the registry.
+    - If the signal is in production or deprecated state, transition one step
+      down the ladder (production -> deprecated, deprecated -> archived).
+    - Other states (candidate, experimental, archived) are skipped — no auto-
+      transition outside the production-stability ladder.
+    - KS-only alerts are skipped (drift can be benign).
+
+    When ``dry_run=True``, returns the list of actions that WOULD be applied
+    without mutating the registry.
+
+    Per-feature drift reports do NOT trigger state transitions on their own
+    (a single feature's decline isn't enough to demote the whole signal).
+    Only reports without a ``feature`` field — i.e., signal-level reports —
+    trigger transitions.
+    """
+    from tradingagents.signals.registry import (
+        get_signal,
+        transition_state,
+    )
+
+    actions: list[DriftAction] = []
+    for r in reports:
+        if not r.ic_decline_alert:
+            continue
+        if r.feature is not None:
+            # Per-feature reports are diagnostic — only signal-level demotions
+            continue
+        existing = get_signal(r.signal_id)
+        if existing is None:
+            continue
+        next_state = _DEMOTION_LADDER.get(existing.state)
+        if next_state is None:
+            continue
+
+        reason = (
+            f"auto-demoted on IC decline of {r.ic_decline:+.3f} "
+            f"(baseline {r.ic_baseline:+.3f} -> recent {r.ic_recent:+.3f}) "
+            f"at {r.horizon_days}d horizon, threshold 0.05"
+        )
+
+        if not dry_run:
+            transition_state(r.signal_id, next_state, reason)
+
+        actions.append(
+            DriftAction(
+                signal_id=r.signal_id,
+                feature=None,
+                from_state=existing.state,
+                to_state=next_state,
+                reason=reason,
+                applied=not dry_run,
+            )
+        )
+    return actions
+
+
 def render_drift_report(reports: list[DriftReport], horizon_days: int) -> str:
     """Render drift analysis as markdown."""
     from datetime import datetime, timezone

@@ -20,7 +20,11 @@ from rich.console import Console
 from rich.table import Table
 
 from tradingagents.signals.cache import query_all
-from tradingagents.signals.drift import analyze_all_signals, render_drift_report
+from tradingagents.signals.drift import (
+    analyze_all_signals,
+    apply_drift_actions,
+    render_drift_report,
+)
 
 console = Console()
 app = typer.Typer(add_completion=False)
@@ -46,6 +50,21 @@ def main(
         None,
         "--out",
         help="Markdown output path (default: claudedocs/signal-drift-<date>.md).",
+    ),
+    apply_actions: bool = typer.Option(
+        False,
+        "--apply-actions",
+        help=(
+            "Phase 2.5: auto-transition signals down the demotion ladder "
+            "(production -> deprecated -> archived) when IC-decline alerts "
+            "fire. Default off — runs in report-only mode. Use --dry-run-actions "
+            "to preview what would happen without mutating the registry."
+        ),
+    ),
+    dry_run_actions: bool = typer.Option(
+        False,
+        "--dry-run-actions",
+        help="Preview Phase 2.5 auto-transitions without mutating the registry.",
     ),
 ):
     """Run drift detection across all cached signals."""
@@ -93,6 +112,24 @@ def main(
         feat = r.feature or "—"
         table.add_row(r.signal_id, feat, ic_b, ic_r, ic_d, ks, flags)
     console.print(table)
+
+    # Phase 2.5: auto-state-transitions on IC-decline alerts
+    if apply_actions or dry_run_actions:
+        actions = apply_drift_actions(reports, dry_run=dry_run_actions)
+        action_label = "WOULD APPLY" if dry_run_actions else "APPLIED"
+        if actions:
+            action_table = Table(title=f"Phase 2.5 state transitions ({action_label})")
+            action_table.add_column("Signal", style="cyan")
+            action_table.add_column("From state", style="yellow")
+            action_table.add_column("To state", style="red")
+            action_table.add_column("Reason", style="white")
+            for a in actions:
+                action_table.add_row(a.signal_id, a.from_state, a.to_state, a.reason)
+            console.print(action_table)
+        else:
+            console.print(
+                "[green]No drift actions to apply (no IC-decline alerts on production/deprecated signals).[/green]"
+            )
 
     if out is None:
         out = (

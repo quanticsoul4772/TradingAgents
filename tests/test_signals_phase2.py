@@ -309,6 +309,204 @@ def test_run_counterfactual_handles_no_change(monkeypatch):
     assert report.pairs[0].alpha_delta == pytest.approx(0.0)
 
 
+# ---- Phase 2.5: apply_drift_actions ---------------------------------------
+
+
+def _make_report(
+    signal_id: str = "test_signal",
+    feature: str | None = None,
+    ic_decline_alert: bool = True,
+    ks_drift_alert: bool = False,
+    ic_baseline: float | None = -0.1,
+    ic_recent: float | None = -0.3,
+    ic_decline: float | None = 0.2,
+):
+    from tradingagents.signals.drift import DriftReport
+
+    return DriftReport(
+        signal_id=signal_id,
+        feature=feature,
+        horizon_days=21,
+        n_total=100,
+        n_recent=30,
+        n_baseline=70,
+        ic_recent=ic_recent,
+        ic_baseline=ic_baseline,
+        ic_decline=ic_decline,
+        ic_decline_alert=ic_decline_alert,
+        ks_statistic=0.15,
+        ks_drift_alert=ks_drift_alert,
+    )
+
+
+def test_apply_drift_actions_demotes_production_to_deprecated(tmp_path, monkeypatch):
+    """A production signal with IC-decline alert is auto-demoted to deprecated."""
+    from tradingagents.signals.drift import apply_drift_actions
+    from tradingagents.signals.registry import register_signal
+
+    reg = tmp_path / "registry.jsonl"
+    monkeypatch.setattr("tradingagents.signals.registry.get_registry_path", lambda: reg)
+    register_signal("s1", "S1", "x.y", ["a"], state="production", registry_path=reg)
+
+    actions = apply_drift_actions([_make_report(signal_id="s1")])
+    assert len(actions) == 1
+    assert actions[0].signal_id == "s1"
+    assert actions[0].from_state == "production"
+    assert actions[0].to_state == "deprecated"
+    assert actions[0].applied is True
+    assert "IC decline" in actions[0].reason
+
+    # Verify registry was actually updated
+    from tradingagents.signals.registry import get_signal
+
+    sig = get_signal("s1", registry_path=reg)
+    assert sig.state == "deprecated"
+
+
+def test_apply_drift_actions_demotes_deprecated_to_archived(tmp_path, monkeypatch):
+    from tradingagents.signals.drift import apply_drift_actions
+    from tradingagents.signals.registry import register_signal
+
+    reg = tmp_path / "registry.jsonl"
+    monkeypatch.setattr("tradingagents.signals.registry.get_registry_path", lambda: reg)
+    register_signal("s2", "S2", "x.y", ["a"], state="deprecated", registry_path=reg)
+
+    actions = apply_drift_actions([_make_report(signal_id="s2")])
+    assert actions[0].to_state == "archived"
+    from tradingagents.signals.registry import get_signal
+
+    assert get_signal("s2", registry_path=reg).state == "archived"
+
+
+def test_apply_drift_actions_skips_non_alerts(tmp_path, monkeypatch):
+    """No alert → no action."""
+    from tradingagents.signals.drift import apply_drift_actions
+
+    actions = apply_drift_actions([_make_report(signal_id="s3", ic_decline_alert=False)])
+    assert actions == []
+
+
+def test_apply_drift_actions_skips_ks_only_alerts(tmp_path, monkeypatch):
+    """KS-only alerts (no IC decline) don't trigger transitions per spec
+    Edge Case ('drift can be benign; flag for human review instead')."""
+    from tradingagents.signals.drift import apply_drift_actions
+
+    actions = apply_drift_actions(
+        [
+            _make_report(
+                signal_id="s4",
+                ic_decline_alert=False,
+                ks_drift_alert=True,
+            )
+        ]
+    )
+    assert actions == []
+
+
+def test_apply_drift_actions_skips_per_feature_reports(tmp_path, monkeypatch):
+    """Per-feature drift reports are diagnostic — only signal-level reports
+    trigger state transitions."""
+    from tradingagents.signals.drift import apply_drift_actions
+    from tradingagents.signals.registry import register_signal
+
+    reg = tmp_path / "registry.jsonl"
+    monkeypatch.setattr("tradingagents.signals.registry.get_registry_path", lambda: reg)
+    register_signal("market_report", "M", "x.y", ["a"], registry_path=reg)
+
+    actions = apply_drift_actions(
+        [
+            _make_report(signal_id="market_report", feature="sentiment_score"),
+        ]
+    )
+    assert actions == []  # feature-level → skipped
+
+
+def test_apply_drift_actions_skips_unregistered_signals(tmp_path, monkeypatch):
+    """If a signal isn't in the registry, the action is silently skipped."""
+    from tradingagents.signals.drift import apply_drift_actions
+
+    reg = tmp_path / "registry.jsonl"
+    monkeypatch.setattr("tradingagents.signals.registry.get_registry_path", lambda: reg)
+
+    actions = apply_drift_actions([_make_report(signal_id="nonexistent")])
+    assert actions == []
+
+
+def test_apply_drift_actions_skips_archived_signals(tmp_path, monkeypatch):
+    """Already-archived signals can't be demoted further."""
+    from tradingagents.signals.drift import apply_drift_actions
+    from tradingagents.signals.registry import register_signal
+
+    reg = tmp_path / "registry.jsonl"
+    monkeypatch.setattr("tradingagents.signals.registry.get_registry_path", lambda: reg)
+    register_signal("s5", "S5", "x.y", ["a"], state="archived", registry_path=reg)
+
+    actions = apply_drift_actions([_make_report(signal_id="s5")])
+    assert actions == []
+
+
+def test_apply_drift_actions_skips_candidate_and_experimental(tmp_path, monkeypatch):
+    """Candidate / experimental signals aren't on the production-stability
+    ladder; auto-demotion only applies to production -> deprecated -> archived."""
+    from tradingagents.signals.drift import apply_drift_actions
+    from tradingagents.signals.registry import register_signal
+
+    reg = tmp_path / "registry.jsonl"
+    monkeypatch.setattr("tradingagents.signals.registry.get_registry_path", lambda: reg)
+    register_signal("s6", "S6", "x.y", ["a"], state="candidate", registry_path=reg)
+    register_signal("s7", "S7", "x.y", ["a"], state="experimental", registry_path=reg)
+
+    actions = apply_drift_actions(
+        [
+            _make_report(signal_id="s6"),
+            _make_report(signal_id="s7"),
+        ]
+    )
+    assert actions == []
+
+
+def test_apply_drift_actions_dry_run_does_not_mutate_registry(tmp_path, monkeypatch):
+    from tradingagents.signals.drift import apply_drift_actions
+    from tradingagents.signals.registry import get_signal, register_signal
+
+    reg = tmp_path / "registry.jsonl"
+    monkeypatch.setattr("tradingagents.signals.registry.get_registry_path", lambda: reg)
+    register_signal("s8", "S8", "x.y", ["a"], state="production", registry_path=reg)
+
+    actions = apply_drift_actions([_make_report(signal_id="s8")], dry_run=True)
+    # The action is reported as a preview...
+    assert len(actions) == 1
+    assert actions[0].applied is False
+    assert actions[0].to_state == "deprecated"
+    # ...but the registry is NOT updated
+    sig = get_signal("s8", registry_path=reg)
+    assert sig.state == "production"
+
+
+def test_apply_drift_actions_includes_reason_with_ic_values(tmp_path, monkeypatch):
+    from tradingagents.signals.drift import apply_drift_actions
+    from tradingagents.signals.registry import register_signal
+
+    reg = tmp_path / "registry.jsonl"
+    monkeypatch.setattr("tradingagents.signals.registry.get_registry_path", lambda: reg)
+    register_signal("s9", "S9", "x.y", ["a"], state="production", registry_path=reg)
+
+    actions = apply_drift_actions(
+        [
+            _make_report(
+                signal_id="s9",
+                ic_baseline=-0.05,
+                ic_recent=-0.20,
+                ic_decline=0.15,
+            )
+        ]
+    )
+    reason = actions[0].reason
+    # Specific IC values appear in the reason for auditability
+    assert "0.150" in reason or "+0.15" in reason
+    assert "21d" in reason
+
+
 def test_run_counterfactual_aggregate_stats(monkeypatch):
     from tradingagents.signals.counterfactual import hold_all_uw, run_counterfactual
 

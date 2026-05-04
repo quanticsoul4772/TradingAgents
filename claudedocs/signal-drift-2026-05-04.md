@@ -1,6 +1,6 @@
 # Signal Drift Report (spec 002 Phase 2)
 
-_Generated 2026-05-04T22:53:20+00:00._
+_Generated 2026-05-04T23:01:40+00:00._
 
 Horizon: **21d**. Reports: **38**. Alerts: **25**.
 
