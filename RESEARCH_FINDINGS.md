@@ -181,6 +181,29 @@ Implication for any UW user: only trust UW when the ticker has independent bear 
 
 **Synthesis**: build asymmetric handling — agreement boosts confidence/sizing, disagreement triggers human review (NOT algorithmic resolution). Build escape valves — system must degrade gracefully when reasoning_evidence fails. Implement time-boxed decision windows to prevent overthinking. **Verdict**: integration is worth building IF designed asymmetrically (agreement → augment, disagreement → flag for review), NOT as a calibration auto-correct.
 
+## Phase 1.5 prose-signal featurization — language-level anti-prediction (added 2026-05-04 late-evening)
+
+After Phase 1.5 shipped, the evaluation harness produces IC for prose signals via 7 cheap featurizers (sentiment_score, bull/bear keyword counts, hedge density, conviction density, numeric mentions, value length). 5 prose signals × 7 features = 35 (signal, feature) IC values.
+
+**MAJOR FINDING**: bullish prose features are systematically anti-correlated with realized 21d alpha across the corpus. Top |IC| pairs:
+- `market_report sentiment_score`: **-0.185** (n=153) — most bullish-sentiment market reports → most NEGATIVE forward α
+- `fundamentals_report conviction_density`: **-0.162** (n=113)
+- `investment_plan hedge_density`: -0.162 (n=153)
+- `fundamentals_report hedge_density`: **+0.154** (n=113)
+- `market_report bull_keyword_count`: -0.149 (n=153)
+- `market_report bear_keyword_count`: +0.144 (n=153)
+- `fundamentals_report bull_keyword_count`: -0.132 (n=113)
+
+**Pattern**: across market_report, fundamentals_report, investment_plan — bullish word choice is anti-predictive, bearish word choice is mildly predictive of better forward α. This is consistent with the `final_trade_decision` IC = -0.172 but goes deeper: the anti-calibration is at the **language level**, not just the rating level.
+
+**Two interpretations**:
+1. **Q1-2026 period artifact**: most of the 156-log corpus is the Q1 2026 bull-tailwind period, which we already know inverted on cross-period validation (008 NVDA Q4 2025). The language-level anti-correlation may reflect "Q1 2026 was a period where bullish commitment didn't predict alpha because mega-cap tech mean-reverted."
+2. **Genuine framework prose-language anti-prediction**: the analysts' prose word choice is systematically inverse to forward returns at 21d.
+
+This is the most empirically testable finding to date. Phase 2 (drift detector) + cross-period featurization could disambiguate (1) vs (2).
+
+See `claudedocs/signal-evaluation-2026-05-04.md` for the full 35-row table.
+
 ## Phase 1 evaluation harness — first IC measurement (added 2026-05-04 evening)
 
 Spec 002 Phase 1 (evaluation harness MVP) shipped after Phase 0 backfill from 156 historical state logs across 10 tickers. First Spearman IC measurement on the framework:

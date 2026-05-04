@@ -20,7 +20,11 @@ from rich.console import Console
 from rich.table import Table
 
 from tradingagents.signals.cache import query_all
-from tradingagents.signals.evaluation import _evaluate_signal, render_report
+from tradingagents.signals.evaluation import (
+    _evaluate_signal,
+    _evaluate_signal_features,
+    render_report,
+)
 
 console = Console()
 app = typer.Typer(add_completion=False)
@@ -62,9 +66,15 @@ def main(
 
     console.print(f"Evaluating at {horizon_days}-day horizon...")
     evaluations: list[dict] = []
+    feature_evaluations: list[dict] = []
+    alpha_cache: dict[tuple[str, str], float | None] = {}
     for signal_id, rows in rows_by_signal.items():
         ev = _evaluate_signal(signal_id, rows, horizon_days)
         evaluations.append(ev)
+        # Phase 1.5: featurize prose signals into per-feature IC rows.
+        feature_evaluations.extend(
+            _evaluate_signal_features(signal_id, rows, horizon_days, alpha_cache)
+        )
 
     table = Table(title=f"Signal evaluation summary ({horizon_days}d horizon)")
     table.add_column("Signal", style="cyan")
@@ -88,13 +98,32 @@ def main(
         )
     console.print(table)
 
+    # Render the per-feature table to console too if any prose features
+    # were evaluated.
+    if feature_evaluations:
+        feat_table = Table(title="Phase 1.5: per-feature IC (prose signals)")
+        feat_table.add_column("Signal", style="cyan")
+        feat_table.add_column("Feature", style="magenta")
+        feat_table.add_column("n eval", justify="right")
+        feat_table.add_column("IC", justify="right")
+        feat_table.add_column("Hit rate", justify="right")
+        sorted_feat = sorted(
+            feature_evaluations,
+            key=lambda x: (x["ic"] is None, -abs(x["ic"]) if x["ic"] is not None else 0),
+        )
+        for ev in sorted_feat[:15]:  # top 15 by |IC| for console; full list in markdown
+            ic_str = f"{ev['ic']:+.3f}" if ev["ic"] is not None else "—"
+            hit_str = f"{ev['hit_rate']:.1%}" if ev["hit_rate"] is not None else "—"
+            feat_table.add_row(ev["signal_id"], ev["feature"], str(ev["n_eval"]), ic_str, hit_str)
+        console.print(feat_table)
+
     if out is None:
         out = (
             Path("claudedocs")
             / f"signal-evaluation-{datetime.now(timezone.utc).strftime('%Y-%m-%d')}.md"
         )
     out.parent.mkdir(parents=True, exist_ok=True)
-    report = render_report(rows_by_signal, evaluations, horizon_days)
+    report = render_report(rows_by_signal, evaluations, horizon_days, feature_evaluations)
     out.write_text(report, encoding="utf-8")
     console.print(f"\nWrote {out}")
 
