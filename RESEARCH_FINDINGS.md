@@ -185,15 +185,15 @@ Two Phase D experiments landed:
 
 **Experiment 003 (XLF + XLE Q1 2026, multi-sector)**: XLF 8 Hold + 2 UW + 0 OW; XLE 5 Hold + 2 OW + 3 UW (3 of 5 tiers used). **The XLK over-Hold finding does NOT uniformly generalize**. Per-sector commit profiles diverge: XLK 70% Hold, XLF 80% Hold, XLE 50% Hold. **Per-sector regime discrimination is intact on ETFs** (Scenario B from HYPOTHESIS) — the abstention bar is just elevated.
 
-**Bonus finding (unpredicted)**: bear-side UW commits on sector ETFs are 80% directionally correct (n=5, mean α -6.03%). This is much stronger than the cross-experiment single-stock UW pattern (~58% wrong-direction). XLE OW commits also strong: +11.65% n=2, 100% hit. **Sector ETFs may be a structurally better substrate for the framework's bear-side than single stocks.** Speculative mechanism: sector ETFs aggregate idiosyncratic noise (avoiding single-ticker tail events), sector news is more macro-themed, less mean-reversion at the index level.
+**Initial bonus finding (now retired)**: 003 produced bear-side UW commits on sector ETFs at 80% directionally correct (n=5, mean α -6.03%) — claimed sector ETFs as a structurally better substrate for the framework's bear-side. **Cross-period validation in 004 (XLE Q4 2025 micro) refuted this**: XLE Q4 2025 UW α = +11.77% n=3, 100% directionally WRONG. Combined cross-period XLE UW: n=6, +2.24% mean, 33% correct. Full cross-experiment ETF UW (XLF Q1 + XLE Q1 + XLE Q4): n=8, +0.65% mean, 62.5% correct — barely-positive aggregate, no special bear-side advantage. The 80% claim was small-sample artifact + favorable Q1 2026 energy regime. **Bayesian posterior on "ETF bear-side accuracy is real": ~0.55 → ~0.25.**
 
-**Architectural reframe v2 (post-multi-sector)**:
+**Architectural reframe v3 (post-XLE-Q4 retraction)**:
 - Architecture is portable ✓
-- Commit calibration is substrate-tuned but per-sector regime discrimination still works
-- Bear-side accuracy is HIGHER on sector ETFs than on single stocks
-- Scope claim: needs cross-period validation on sector-ETF bear side before relying on it
+- Per-sector regime discrimination intact on ETFs ✓
+- ~~Bear-side accuracy is higher on sector ETFs~~ → **No special bear-side advantage on ETFs; period-conditional like everything else**
+- Generalization lesson: this is the third instance of a single-experiment α finding failing to replicate cross-period (008 NVDA bull-side, 003 ETF bear-side initially looked great, 004 retracted it). **Constitution VII Cross-period scope clarification (v1.2.2) repeatedly validated.**
 
-**Next Phase D options**: (a) cross-period sector ETF test (XLE Q4 2025 micro, $3 T1) to test if bear-side accuracy replicates, (b) prompt re-tuning experiment to test if shifting the abstention bar without breaking discrimination is feasible, (c) different substrate type (commodity ETF, crypto pair) to test broader generalization.
+**Next Phase D options**: (a) XLF Q4 2025 micro to complete cross-period XLF picture, (b) prompt re-tuning experiment to test shifting the abstention bar, (c) different substrate type (commodity ETF, crypto pair) to test broader generalization. None of these are urgent; the architectural reframe is now stable enough that further Phase D testing has diminishing returns.
 
 ## Project status
 
