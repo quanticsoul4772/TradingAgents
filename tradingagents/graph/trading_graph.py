@@ -1,11 +1,15 @@
 # TradingAgents/graph/trading_graph.py
+# ruff: noqa: E402, F403, F405, B006
+# Pre-existing lint patterns (post-logger imports, star-import from agents,
+# mutable default arg in __init__) grandfathered per CLAUDE.md scaffolding
+# baseline policy. New code in this file follows the rules.
 
+import json
 import logging
 import os
-from pathlib import Path
-import json
 from datetime import datetime, timedelta
-from typing import Dict, Any, Tuple, List, Optional
+from pathlib import Path
+from typing import Any
 
 import yfinance as yf
 
@@ -13,42 +17,36 @@ logger = logging.getLogger(__name__)
 
 from langgraph.prebuilt import ToolNode
 
-from tradingagents.llm_clients import create_llm_client
-
 from tradingagents.agents import *
-from tradingagents.default_config import DEFAULT_CONFIG
-from tradingagents.agents.utils.memory import TradingMemoryLog
-from tradingagents.agents.utils.agent_states import (
-    AgentState,
-    InvestDebateState,
-    RiskDebateState,
-)
-from tradingagents.dataflows.config import set_config
 
 # Import the new abstract tool methods from agent_utils
 from tradingagents.agents.utils.agent_utils import (
-    get_stock_data,
-    get_indicators,
-    get_fundamentals,
     get_balance_sheet,
     get_cashflow,
+    get_fundamentals,
+    get_global_news,
     get_income_statement,
-    get_news,
+    get_indicators,
     get_insider_transactions,
-    get_global_news
+    get_news,
+    get_stock_data,
 )
+from tradingagents.agents.utils.memory import TradingMemoryLog
+from tradingagents.dataflows.config import set_config
+from tradingagents.default_config import DEFAULT_CONFIG
+from tradingagents.llm_clients import create_llm_client
 
 from .checkpointer import checkpoint_step, clear_checkpoint, get_checkpointer, thread_id
 from .conditional_logic import ConditionalLogic
-from .setup import GraphSetup
 from .propagation import Propagator
 from .reflection import Reflector
+from .setup import GraphSetup
 from .signal_processing import SignalProcessor
 
 
 def fetch_returns(
     ticker: str, trade_date: str, holding_days: int = 5
-) -> Tuple[Optional[float], Optional[float], Optional[int]]:
+) -> tuple[float | None, float | None, int | None]:
     """Fetch raw and alpha return for ticker over holding_days from trade_date.
 
     Returns (raw_return, alpha_return, actual_holding_days) or
@@ -68,19 +66,19 @@ def fetch_returns(
 
         actual_days = min(holding_days, len(stock) - 1, len(spy) - 1)
         raw = float(
-            (stock["Close"].iloc[actual_days] - stock["Close"].iloc[0])
-            / stock["Close"].iloc[0]
+            (stock["Close"].iloc[actual_days] - stock["Close"].iloc[0]) / stock["Close"].iloc[0]
         )
         spy_ret = float(
-            (spy["Close"].iloc[actual_days] - spy["Close"].iloc[0])
-            / spy["Close"].iloc[0]
+            (spy["Close"].iloc[actual_days] - spy["Close"].iloc[0]) / spy["Close"].iloc[0]
         )
         alpha = raw - spy_ret
         return raw, alpha, actual_days
     except Exception as e:
         logger.warning(
             "Could not resolve outcome for %s on %s (will retry next run): %s",
-            ticker, trade_date, e,
+            ticker,
+            trade_date,
+            e,
         )
         return None, None, None
 
@@ -92,8 +90,8 @@ class TradingAgentsGraph:
         self,
         selected_analysts=["market", "social", "news", "fundamentals"],
         debug=False,
-        config: Dict[str, Any] = None,
-        callbacks: Optional[List] = None,
+        config: dict[str, Any] = None,
+        callbacks: list | None = None,
     ):
         """Initialize the trading agents graph and components.
 
@@ -136,7 +134,7 @@ class TradingAgentsGraph:
 
         self.deep_thinking_llm = deep_client.get_llm()
         self.quick_thinking_llm = quick_client.get_llm()
-        
+
         self.memory_log = TradingMemoryLog(self.config)
 
         # Create tool nodes
@@ -168,7 +166,7 @@ class TradingAgentsGraph:
         self.graph = self.workflow.compile()
         self._checkpointer_ctx = None
 
-    def _get_provider_kwargs(self) -> Dict[str, Any]:
+    def _get_provider_kwargs(self) -> dict[str, Any]:
         """Get provider-specific kwargs for LLM client creation."""
         kwargs = {}
         provider = self.config.get("llm_provider", "").lower()
@@ -190,7 +188,7 @@ class TradingAgentsGraph:
 
         return kwargs
 
-    def _create_tool_nodes(self) -> Dict[str, ToolNode]:
+    def _create_tool_nodes(self) -> dict[str, ToolNode]:
         """Create tool nodes for different data sources using abstract methods."""
         return {
             "market": ToolNode(
@@ -228,7 +226,7 @@ class TradingAgentsGraph:
 
     def _fetch_returns(
         self, ticker: str, trade_date: str, holding_days: int = 5
-    ) -> Tuple[Optional[float], Optional[float], Optional[int]]:
+    ) -> tuple[float | None, float | None, int | None]:
         return fetch_returns(ticker, trade_date, holding_days)
 
     def _resolve_pending_entries(self, ticker: str) -> None:
@@ -255,14 +253,16 @@ class TradingAgentsGraph:
                 raw_return=raw,
                 alpha_return=alpha,
             )
-            updates.append({
-                "ticker": ticker,
-                "trade_date": entry["date"],
-                "raw_return": raw,
-                "alpha_return": alpha,
-                "holding_days": days,
-                "reflection": reflection,
-            })
+            updates.append(
+                {
+                    "ticker": ticker,
+                    "trade_date": entry["date"],
+                    "raw_return": raw,
+                    "alpha_return": alpha,
+                    "holding_days": days,
+                    "reflection": reflection,
+                }
+            )
 
         if updates:
             self.memory_log.batch_update_with_outcomes(updates)
@@ -273,32 +273,44 @@ class TradingAgentsGraph:
         When ``checkpoint_enabled`` is set in config, the graph is recompiled
         with a per-ticker SqliteSaver so a crashed run can resume from the last
         successful node on a subsequent invocation with the same ticker+date.
+
+        Spec 002 Phase 0: wraps execution in ``propagate_context(ticker, date)``
+        so every signal-tool call inside the pipeline transparently writes its
+        computed value to ``~/.tradingagents/signals/cache.db`` keyed by this
+        (ticker, date). The cache hook lives in ``route_to_vendor`` and is
+        a no-op when the context is unset (tools called outside a propagate).
         """
+        from tradingagents.signals.bootstrap import bootstrap_initial_signals
+        from tradingagents.signals.context import propagate_context
+
         self.ticker = company_name
+
+        # Spec 002 SC-001: ensure all 18 currently-wired signals are registered
+        # in the signal lifecycle registry. Idempotent — only writes new
+        # snapshots when a signal is missing or its metadata changed.
+        try:
+            bootstrap_initial_signals()
+        except Exception as exc:  # noqa: BLE001 — bootstrap must never block propagate
+            logger.warning("signals.bootstrap_initial_signals failed: %s", exc)
 
         # Resolve any pending memory-log entries for this ticker before the pipeline runs.
         self._resolve_pending_entries(company_name)
 
         # Recompile with a checkpointer if the user opted in.
         if self.config.get("checkpoint_enabled"):
-            self._checkpointer_ctx = get_checkpointer(
-                self.config["data_cache_dir"], company_name
-            )
+            self._checkpointer_ctx = get_checkpointer(self.config["data_cache_dir"], company_name)
             saver = self._checkpointer_ctx.__enter__()
             self.graph = self.workflow.compile(checkpointer=saver)
 
-            step = checkpoint_step(
-                self.config["data_cache_dir"], company_name, str(trade_date)
-            )
+            step = checkpoint_step(self.config["data_cache_dir"], company_name, str(trade_date))
             if step is not None:
-                logger.info(
-                    "Resuming from step %d for %s on %s", step, company_name, trade_date
-                )
+                logger.info("Resuming from step %d for %s on %s", step, company_name, trade_date)
             else:
                 logger.info("Starting fresh for %s on %s", company_name, trade_date)
 
         try:
-            return self._run_graph(company_name, trade_date)
+            with propagate_context(company_name, str(trade_date)):
+                return self._run_graph(company_name, trade_date)
         finally:
             if self._checkpointer_ctx is not None:
                 self._checkpointer_ctx.__exit__(None, None, None)
@@ -346,9 +358,7 @@ class TradingAgentsGraph:
 
         # Clear checkpoint on successful completion to avoid stale state.
         if self.config.get("checkpoint_enabled"):
-            clear_checkpoint(
-                self.config["data_cache_dir"], company_name, str(trade_date)
-            )
+            clear_checkpoint(self.config["data_cache_dir"], company_name, str(trade_date))
 
         return final_state, self.process_signal(final_state["final_trade_decision"])
 
@@ -365,12 +375,8 @@ class TradingAgentsGraph:
                 "bull_history": final_state["investment_debate_state"]["bull_history"],
                 "bear_history": final_state["investment_debate_state"]["bear_history"],
                 "history": final_state["investment_debate_state"]["history"],
-                "current_response": final_state["investment_debate_state"][
-                    "current_response"
-                ],
-                "judge_decision": final_state["investment_debate_state"][
-                    "judge_decision"
-                ],
+                "current_response": final_state["investment_debate_state"]["current_response"],
+                "judge_decision": final_state["investment_debate_state"]["judge_decision"],
             },
             "trader_investment_decision": final_state["trader_investment_plan"],
             "risk_debate_state": {

@@ -201,7 +201,14 @@ def get_vendor(category: str, method: str = None) -> str:
 
 
 def route_to_vendor(method: str, *args, **kwargs):
-    """Route method calls to appropriate vendor implementation with fallback support."""
+    """Route method calls to appropriate vendor implementation with fallback support.
+
+    Phase 0 of spec 002: when a propagate context is set, every successful
+    dispatch transparently writes the computed value to the signal cache
+    keyed by the context's (ticker, trade_date). Tools called outside a
+    propagate (unit tests, scripts) see no context and are not cached.
+    Cache failures are logged-and-swallowed so they cannot break the pipeline.
+    """
     category = get_category_for_method(method)
     vendor_config = get_vendor(category, method)
     primary_vendors = [v.strip() for v in vendor_config.split(",")]
@@ -224,8 +231,31 @@ def route_to_vendor(method: str, *args, **kwargs):
         impl_func = vendor_impl[0] if isinstance(vendor_impl, list) else vendor_impl
 
         try:
-            return impl_func(*args, **kwargs)
+            result = impl_func(*args, **kwargs)
         except AlphaVantageRateLimitError:
             continue  # Only rate limits trigger fallback
+
+        # Phase 0 cache hook: write to cache when a propagate context is set.
+        # Lazy import + isolated try/except so cache I/O never breaks dispatch.
+        try:
+            from tradingagents.signals.cache import record_value
+            from tradingagents.signals.context import get_propagate_context
+
+            ctx = get_propagate_context()
+            if ctx is not None:
+                record_value(
+                    signal_id=method,
+                    ticker=ctx["ticker"],
+                    date=ctx["trade_date"],
+                    value=result,
+                )
+        except Exception:  # noqa: BLE001 — cache writes must never break dispatch
+            import logging
+
+            logging.getLogger(__name__).debug(
+                "signals.cache write failed for %s; dispatch continues", method
+            )
+
+        return result
 
     raise RuntimeError(f"No available vendor for '{method}'")
