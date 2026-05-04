@@ -181,6 +181,33 @@ Implication for any UW user: only trust UW when the ticker has independent bear 
 
 **Synthesis**: build asymmetric handling — agreement boosts confidence/sizing, disagreement triggers human review (NOT algorithmic resolution). Build escape valves — system must degrade gracefully when reasoning_evidence fails. Implement time-boxed decision windows to prevent overthinking. **Verdict**: integration is worth building IF designed asymmetrically (agreement → augment, disagreement → flag for review), NOT as a calibration auto-correct.
 
+## Spec 001 Phase 1 — Shadow Aggregator: 42.3% direction match (FAILS SC-001 ≥80% target) (added 2026-05-04 late-evening)
+
+Spec 001 Phase 1 (Shadow Aggregator) shipped via "Approach A" — derive Signals from analyst prose using the Phase 1.5+ featurizers (no new LLM cost). Aggregator: weighted sum of (direction × magnitude) → 5-tier rating with `DEFAULT_WEIGHTS` (market 0.25, news 0.20, fundamentals 0.30, sentiment 0.10, investment_plan 0.15).
+
+Run against 156 historical state logs:
+
+| Metric | Value | SC-001 target |
+|---|---|---|
+| Exact rating match | 66 (42.3%) | — |
+| Within ±1 tier | 147 (**94.2%**) | — |
+| Direction match | 66 (42.3%) | ≥80% — **FAIL** |
+
+**SC-001 fails. Within-±1-tier passes at 94.2%.**
+
+Confusion matrix observation:
+- When actual=Hold (n=78), shadow goes OW (19), UW (18), or Hold (40), or even Buy (1) — shadow is more committed than the PM.
+- When actual=Overweight (n=52), shadow says Hold 30 of 52 times — shadow is less committed than the PM.
+- When actual=Underweight (n=25), shadow says Hold (14) or OW (5) instead of UW (6) — shadow disagrees on bear-side direction.
+
+**Interpretation**: the multi-agent debate + synthesis + risk-debate + PM stages do NOT collapse to a weighted aggregate of analyst-prose featurization. The PM is committing on OW signals that featurization reads as Hold-able, AND committing on Hold signals that featurization reads as committable. Direction-disagreement on bear-side suggests the prose-anti-prediction findings (Phase 1.5+) are being partially MITIGATED by the synthesis stages — the actual PM's UW commits don't simply mirror the bearish prose.
+
+This is consistent with the prior architectural finding: the framework's value is in the structured reasoning stages BEYOND the analyst prose. The prose carries some directional signal but the PM's eventual commit is shaped by debate dynamics, risk-debate moderation, and memory log context.
+
+**Phase 1 closes spec 001 → spec 002 loop**: the bots-architecture aggregator now has measurable agreement statistics against the PM, computed for free from the existing cache. Phase 2 (opt-in `framework_mode = "bots"`) would route actual decisions through the aggregator and let us A/B test it against the prose path on identical inputs. Phase 5 (weight tuning) would optimize WEIGHTS against the corpus to maximize agreement (or alpha).
+
+The 42.3% result motivates Phase 5 weight tuning more strongly than SC-001 anticipated — there's substantial room to bring the aggregator into closer alignment with the PM, OR to deliberately diverge it in ways that improve realized α.
+
 ## Phase 1.5+ structural featurizers — bear bigrams hit +0.457 IC at 90d (added 2026-05-04 late-evening)
 
 7 new structural featurizers added to FEATURIZERS (Phase 1.5+):
