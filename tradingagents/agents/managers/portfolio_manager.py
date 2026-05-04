@@ -16,6 +16,11 @@ from tradingagents.agents.utils.agent_utils import (
     get_language_instruction,
 )
 from tradingagents.agents.utils.momentum_filter import maybe_suppress_bear_rating
+from tradingagents.agents.utils.rating import parse_rating
+from tradingagents.agents.utils.second_opinion import (
+    annotate_decision,
+    evaluate_pm_decision,
+)
 from tradingagents.agents.utils.structured import (
     bind_structured,
     invoke_structured_or_freetext,
@@ -100,6 +105,46 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
                 threshold_pct=float(threshold),
                 lookback_days=int(lookback),
             )
+
+        # Phase C second-opinion: independent reviewer evaluates the framework's
+        # commit. Asymmetric handling (agreement augments, disagreement flags for
+        # review). Disabled by default — set `second_opinion_enabled = True` in
+        # config to enable. NEVER modifies the PM rating; advisory only.
+        if get_config().get("second_opinion_enabled", False):
+            try:
+                opinion = evaluate_pm_decision(
+                    pm_rating=parse_rating(final_trade_decision),
+                    market_report=state.get("market_report", ""),
+                    news_report=state.get("news_report", ""),
+                    fundamentals_report=state.get("fundamentals_report", ""),
+                    investment_plan=research_plan,
+                    risk_debate_history=history,
+                    ticker=state["company_of_interest"],
+                    trade_date=state["trade_date"],
+                    llm=llm,
+                )
+                if opinion is not None:
+                    final_trade_decision = annotate_decision(
+                        final_trade_decision,
+                        opinion,
+                        pm_rating=parse_rating(final_trade_decision),
+                        agree_threshold=float(
+                            get_config().get("second_opinion_agree_threshold", 0.6)
+                        ),
+                        disagree_threshold=float(
+                            get_config().get("second_opinion_disagree_threshold", 0.4)
+                        ),
+                    )
+            except Exception as exc:
+                # Never let second-opinion failure break the PM pipeline.
+                # The decision proceeds unannotated.
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    "second_opinion: unexpected failure in PM hook (%s); "
+                    "proceeding with unannotated decision",
+                    exc,
+                )
 
         new_risk_debate_state = {
             "judge_decision": final_trade_decision,

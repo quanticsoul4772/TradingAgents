@@ -59,6 +59,17 @@ DEFAULT_CONFIG = {
     # See claudedocs/uw-suppression-filter.md for in-sample evidence.
     "uw_momentum_filter_threshold": None,
     "uw_momentum_filter_lookback_days": 30,
+    # Phase C: independent second-opinion review of PM decisions. When True,
+    # an extra LLM call evaluates the framework's commit against the same
+    # evidence and annotates the decision markdown with agreement / neutral /
+    # review-flag based on asymmetric thresholds. Never modifies the PM rating.
+    # Adds ~$0.10/run forward cost when enabled. Default False = disabled.
+    # See tradingagents/agents/utils/second_opinion.py for the asymmetry rules
+    # and RESEARCH_FINDINGS Q5 for the reasoning_divergent synthesis that
+    # motivated the asymmetric design.
+    "second_opinion_enabled": False,
+    "second_opinion_agree_threshold": 0.6,
+    "second_opinion_disagree_threshold": 0.4,
     # Data vendor configuration
     # Category-level configuration (default for all tools in category)
     "data_vendors": {
