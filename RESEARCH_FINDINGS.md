@@ -181,6 +181,27 @@ Implication for any UW user: only trust UW when the ticker has independent bear 
 
 **Synthesis**: build asymmetric handling — agreement boosts confidence/sizing, disagreement triggers human review (NOT algorithmic resolution). Build escape valves — system must degrade gracefully when reasoning_evidence fails. Implement time-boxed decision windows to prevent overthinking. **Verdict**: integration is worth building IF designed asymmetrically (agreement → augment, disagreement → flag for review), NOT as a calibration auto-correct.
 
+## Spec 001 Phase 4 — Per-bot LLM model routing wired (added 2026-05-04 late-evening)
+
+Phase 4 ships `tradingagents/signals/role_models.py::BotLLMFactory` per spec User Story 4 / FR-007. Maps `config["bot_models"]: dict[bot_id → model_name]` to per-bot LLM clients, falling back to the framework default `quick_thinking_llm` / `deep_thinking_llm` for any bot not in the dict. Clients cached by `(provider, model)` so two bots sharing a model share one instance. Provider-specific kwargs (`anthropic_effort`, `openai_reasoning_effort`, `google_thinking_level`, `backend_url`) forwarded automatically.
+
+`GraphSetup` modified to accept an optional `bot_llm_factory`; when wired, every analyst/researcher/manager LLM lookup routes through `_llm_for(bot_id, role)`. When `bot_models = {}` (default), the factory transparently returns the framework defaults — **byte-identical behavior to pre-Phase-4 production** (FR-007 backwards-compat).
+
+`TradingAgentsGraph` always constructs a factory and passes it down; behavior change is opt-in via config:
+
+```python
+config["bot_models"] = {
+    "market": "claude-haiku-4-5",       # quick analyst → cheap model
+    "fundamentals": "claude-opus-4-7",  # heavy analyst → premium model
+    "research_manager": "claude-opus-4-7",  # synthesizer → premium
+    "portfolio_manager": "claude-opus-4-7", # final decision → premium
+}
+```
+
+18 unit tests cover: default-fallback (empty/missing/None bot_models), per-bot override builds new client, cache hits across bots on same model, separate clients for different models, fallback to default for unconfigured bot, provider-kwarg forwarding (anthropic/openai/google/backend_url), kwargs omitted when unset, `model_for_bot` reporting, and end-to-end `GraphSetup` integration with both factory-wired and factory-None paths.
+
+**Status**: wired, unit-tested, NOT yet validated against a live `propagate()` with mixed-model config. The Haiku-for-quick + Opus-for-deep cost-tier story is the obvious near-term operator use case (4 quick analysts at Haiku ≈ 70% cheaper than at Opus, with no expected quality drop on tool-using ReAct loops). Validation experiment deferred — needs separate budget approval and a hypothesis on which split would change rating distribution vs cost.
+
 ## Spec 001 Phase 3 — convergence shortcut doesn't fire on featurization-derived Signals (added 2026-05-04 late-evening)
 
 Phase 3 ships two deterministic decision modules:
@@ -199,7 +220,7 @@ Plus `scripts/forecast_shortcut_savings.py` to project token savings before wiri
 
 The deterministic shortcut + budget modules ship clean (25 unit tests + corpus forecast script) but don't change production behavior. They're pre-positioned for the future where Signals are LLM-emitted.
 
-**Phases 3.5 (production wiring) + Phase 4 (role-specialized models) deferred**. The Phase 3 forecast result removes the urgency from both — there's no token savings to capture until the Signal-quality bottleneck is fixed, and role specialization optimizes a path that Phase 5 already showed has weak generalizable signal.
+**Phase 3.5 (production wiring) deferred**. The Phase 3 forecast result removes the urgency — there's no token savings to capture until the Signal-quality bottleneck is fixed. **Phase 4 (per-bot LLM model routing) shipped separately as wired-but-not-default infrastructure** (see next section) — it doesn't depend on Signal quality, just on whether the operator wants to mix Haiku/Opus per bot for cost/quality tradeoffs.
 
 ## Spec 001 Phase 5 + Phase 2 — weight tuning overfits; bots-mode wired as opt-in (added 2026-05-04 late-evening)
 

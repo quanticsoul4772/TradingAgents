@@ -77,6 +77,14 @@ DEFAULT_CONFIG = {
     # rating regardless of this flag; Phase 2 uses this flag to override the
     # actual final_trade_decision when set to "bots".
     "framework_mode": "prose",
+    # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
+    # (str). When set, the framework instantiates a per-bot client for that
+    # model using the configured llm_provider; bots not in this dict use the
+    # role default (quick_think_llm or deep_think_llm). Default empty dict
+    # = uniform model behavior, no override (FR-007 backwards-compat).
+    # Example: {"market": "claude-haiku-4-5", "fundamentals": "claude-opus-4-7"}.
+    # Per spec FR-008, the chosen model is logged per bot for cost analysis.
+    "bot_models": {},
     # Data vendor configuration
     # Category-level configuration (default for all tools in category)
     "data_vendors": {

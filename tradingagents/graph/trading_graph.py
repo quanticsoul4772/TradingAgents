@@ -145,11 +145,23 @@ class TradingAgentsGraph:
             max_debate_rounds=self.config["max_debate_rounds"],
             max_risk_discuss_rounds=self.config["max_risk_discuss_rounds"],
         )
+        # Spec 001 Phase 4: per-bot LLM model routing. Constructed even when
+        # config["bot_models"] is empty (the factory transparently returns
+        # default LLMs in that case). FR-007 backwards-compat preserved.
+        from tradingagents.signals.role_models import BotLLMFactory
+
+        self.bot_llm_factory = BotLLMFactory(
+            self.config,
+            default_quick_llm=self.quick_thinking_llm,
+            default_deep_llm=self.deep_thinking_llm,
+        )
+
         self.graph_setup = GraphSetup(
             self.quick_thinking_llm,
             self.deep_thinking_llm,
             self.tool_nodes,
             self.conditional_logic,
+            bot_llm_factory=self.bot_llm_factory,
         )
 
         self.propagator = Propagator()

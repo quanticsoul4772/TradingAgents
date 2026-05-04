@@ -1,6 +1,8 @@
 # TradingAgents/graph/setup.py
+# ruff: noqa: F403, F405, B006
 
-from typing import Any, Dict
+from typing import Any
+
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 
@@ -17,18 +19,32 @@ class GraphSetup:
         self,
         quick_thinking_llm: Any,
         deep_thinking_llm: Any,
-        tool_nodes: Dict[str, ToolNode],
+        tool_nodes: dict[str, ToolNode],
         conditional_logic: ConditionalLogic,
+        bot_llm_factory: Any = None,
     ):
-        """Initialize with required components."""
+        """Initialize with required components.
+
+        ``bot_llm_factory`` (spec 001 Phase 4) is an optional
+        ``BotLLMFactory`` that routes per-bot LLM lookups when
+        ``config["bot_models"]`` is non-empty. When None (default), every
+        bot uses the framework's quick_thinking_llm / deep_thinking_llm
+        as before (FR-007 backwards-compat).
+        """
         self.quick_thinking_llm = quick_thinking_llm
         self.deep_thinking_llm = deep_thinking_llm
         self.tool_nodes = tool_nodes
         self.conditional_logic = conditional_logic
+        self.bot_llm_factory = bot_llm_factory
 
-    def setup_graph(
-        self, selected_analysts=["market", "social", "news", "fundamentals"]
-    ):
+    def _llm_for(self, bot_id: str, role: str = "quick") -> Any:
+        """Per-bot LLM lookup. When a factory is wired, defer to it;
+        otherwise return the role default."""
+        if self.bot_llm_factory is not None:
+            return self.bot_llm_factory.get_llm_for_bot(bot_id, role)
+        return self.deep_thinking_llm if role == "deep" else self.quick_thinking_llm
+
+    def setup_graph(self, selected_analysts=["market", "social", "news", "fundamentals"]):
         """Set up and compile the agent workflow graph.
 
         Args:
@@ -47,44 +63,42 @@ class GraphSetup:
         tool_nodes = {}
 
         if "market" in selected_analysts:
-            analyst_nodes["market"] = create_market_analyst(
-                self.quick_thinking_llm
-            )
+            analyst_nodes["market"] = create_market_analyst(self._llm_for("market"))
             delete_nodes["market"] = create_msg_delete()
             tool_nodes["market"] = self.tool_nodes["market"]
 
         if "social" in selected_analysts:
-            analyst_nodes["social"] = create_social_media_analyst(
-                self.quick_thinking_llm
-            )
+            analyst_nodes["social"] = create_social_media_analyst(self._llm_for("social"))
             delete_nodes["social"] = create_msg_delete()
             tool_nodes["social"] = self.tool_nodes["social"]
 
         if "news" in selected_analysts:
-            analyst_nodes["news"] = create_news_analyst(
-                self.quick_thinking_llm
-            )
+            analyst_nodes["news"] = create_news_analyst(self._llm_for("news"))
             delete_nodes["news"] = create_msg_delete()
             tool_nodes["news"] = self.tool_nodes["news"]
 
         if "fundamentals" in selected_analysts:
             analyst_nodes["fundamentals"] = create_fundamentals_analyst(
-                self.quick_thinking_llm
+                self._llm_for("fundamentals")
             )
             delete_nodes["fundamentals"] = create_msg_delete()
             tool_nodes["fundamentals"] = self.tool_nodes["fundamentals"]
 
-        # Create researcher and manager nodes
-        bull_researcher_node = create_bull_researcher(self.quick_thinking_llm)
-        bear_researcher_node = create_bear_researcher(self.quick_thinking_llm)
-        research_manager_node = create_research_manager(self.deep_thinking_llm)
-        trader_node = create_trader(self.quick_thinking_llm)
+        # Create researcher and manager nodes (per-bot routing for each)
+        bull_researcher_node = create_bull_researcher(self._llm_for("bull_researcher"))
+        bear_researcher_node = create_bear_researcher(self._llm_for("bear_researcher"))
+        research_manager_node = create_research_manager(
+            self._llm_for("research_manager", role="deep")
+        )
+        trader_node = create_trader(self._llm_for("trader"))
 
         # Create risk analysis nodes
-        aggressive_analyst = create_aggressive_debator(self.quick_thinking_llm)
-        neutral_analyst = create_neutral_debator(self.quick_thinking_llm)
-        conservative_analyst = create_conservative_debator(self.quick_thinking_llm)
-        portfolio_manager_node = create_portfolio_manager(self.deep_thinking_llm)
+        aggressive_analyst = create_aggressive_debator(self._llm_for("aggressive_debator"))
+        neutral_analyst = create_neutral_debator(self._llm_for("neutral_debator"))
+        conservative_analyst = create_conservative_debator(self._llm_for("conservative_debator"))
+        portfolio_manager_node = create_portfolio_manager(
+            self._llm_for("portfolio_manager", role="deep")
+        )
 
         # Create workflow
         workflow = StateGraph(AgentState)
@@ -92,9 +106,7 @@ class GraphSetup:
         # Add analyst nodes to the graph
         for analyst_type, node in analyst_nodes.items():
             workflow.add_node(f"{analyst_type.capitalize()} Analyst", node)
-            workflow.add_node(
-                f"Msg Clear {analyst_type.capitalize()}", delete_nodes[analyst_type]
-            )
+            workflow.add_node(f"Msg Clear {analyst_type.capitalize()}", delete_nodes[analyst_type])
             workflow.add_node(f"tools_{analyst_type}", tool_nodes[analyst_type])
 
         # Add other nodes
@@ -128,7 +140,7 @@ class GraphSetup:
 
             # Connect to next analyst or to Bull Researcher if this is the last analyst
             if i < len(selected_analysts) - 1:
-                next_analyst = f"{selected_analysts[i+1].capitalize()} Analyst"
+                next_analyst = f"{selected_analysts[i + 1].capitalize()} Analyst"
                 workflow.add_edge(current_clear, next_analyst)
             else:
                 workflow.add_edge(current_clear, "Bull Researcher")
