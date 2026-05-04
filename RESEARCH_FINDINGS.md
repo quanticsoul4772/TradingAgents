@@ -177,13 +177,23 @@ Implication for any UW user: only trust UW when the ticker has independent bear 
 
 **Synthesis**: build asymmetric handling — agreement boosts confidence/sizing, disagreement triggers human review (NOT algorithmic resolution). Build escape valves — system must degrade gracefully when reasoning_evidence fails. Implement time-boxed decision windows to prevent overthinking. **Verdict**: integration is worth building IF designed asymmetrically (agreement → augment, disagreement → flag for review), NOT as a calibration auto-correct.
 
-## Phase D substrate exploration (added 2026-05-04)
+## Phase D substrate exploration (added 2026-05-04, expanded post-multi-sector)
 
-First Phase D experiment landed: XLK (tech sector ETF) on the same Q1 2026 dates as 007's NVDA half. Distribution: 2 OW + 7 Hold + 1 UW vs NVDA's 6 OW + 4 Hold (per-date match rate 5/10). XLK was 30pp more Hold-heavy than the analogous single-stock substrate in the same period. All XLK buckets had positive realized 21d α (XLK was bullish in Q1 2026 forward windows): OW +1.51% n=2, Hold +2.82% n=6 (83% hit), UW +2.15% n=1 (wrong direction).
+Two Phase D experiments landed:
 
-**Finding**: framework's decision architecture is portable across substrates (it ran cleanly on a sector ETF with `--analysts market,news`), but commit calibration is **substrate-specific** — the prompts are single-stock-tuned and the framework reads sector-narrative evidence as more ambiguous → over-Hold. Architecture portability ✓; commit-rate portability ✗.
+**Experiment 002 (XLK Q1 2026, single sector)**: 2 OW + 7 Hold + 1 UW vs NVDA's 6 OW + 4 Hold (per-date match rate 5/10). XLK was 30pp more Hold-heavy than NVDA in the same period. All XLK buckets had positive realized α (XLK was bullish in window). Initial finding: "framework over-abstains on sector ETFs."
 
-**Next Phase D options**: (a) substrate-prompt-adapted XLK rerun to test whether re-tuning fixes the over-Hold, (b) different substrate type (commodity ETF, crypto pair) to test whether the over-Hold pattern generalizes beyond sector ETFs.
+**Experiment 003 (XLF + XLE Q1 2026, multi-sector)**: XLF 8 Hold + 2 UW + 0 OW; XLE 5 Hold + 2 OW + 3 UW (3 of 5 tiers used). **The XLK over-Hold finding does NOT uniformly generalize**. Per-sector commit profiles diverge: XLK 70% Hold, XLF 80% Hold, XLE 50% Hold. **Per-sector regime discrimination is intact on ETFs** (Scenario B from HYPOTHESIS) — the abstention bar is just elevated.
+
+**Bonus finding (unpredicted)**: bear-side UW commits on sector ETFs are 80% directionally correct (n=5, mean α -6.03%). This is much stronger than the cross-experiment single-stock UW pattern (~58% wrong-direction). XLE OW commits also strong: +11.65% n=2, 100% hit. **Sector ETFs may be a structurally better substrate for the framework's bear-side than single stocks.** Speculative mechanism: sector ETFs aggregate idiosyncratic noise (avoiding single-ticker tail events), sector news is more macro-themed, less mean-reversion at the index level.
+
+**Architectural reframe v2 (post-multi-sector)**:
+- Architecture is portable ✓
+- Commit calibration is substrate-tuned but per-sector regime discrimination still works
+- Bear-side accuracy is HIGHER on sector ETFs than on single stocks
+- Scope claim: needs cross-period validation on sector-ETF bear side before relying on it
+
+**Next Phase D options**: (a) cross-period sector ETF test (XLE Q4 2025 micro, $3 T1) to test if bear-side accuracy replicates, (b) prompt re-tuning experiment to test if shifting the abstention bar without breaking discrimination is feasible, (c) different substrate type (commodity ETF, crypto pair) to test broader generalization.
 
 ## Project status
 
