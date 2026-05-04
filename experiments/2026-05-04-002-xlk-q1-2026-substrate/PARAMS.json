@@ -1,0 +1,18 @@
+{
+  "config_overrides": {
+    "uw_momentum_filter_threshold": -5.0,
+    "deep_think_llm": "claude-opus-4-7",
+    "quick_think_llm": "claude-haiku-4-5",
+    "llm_provider": "anthropic"
+  },
+  "explicit_flags": {
+    "--debate-rounds": 1,
+    "--analysts": "market,news",
+    "--provider": "anthropic",
+    "--deep-model": "claude-opus-4-7",
+    "--quick-model": "claude-haiku-4-5",
+    "--news-vendor": "exa"
+  },
+  "baseline": "",
+  "notes": ""
+}
