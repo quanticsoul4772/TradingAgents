@@ -181,6 +181,28 @@ Implication for any UW user: only trust UW when the ticker has independent bear 
 
 **Synthesis**: build asymmetric handling — agreement boosts confidence/sizing, disagreement triggers human review (NOT algorithmic resolution). Build escape valves — system must degrade gracefully when reasoning_evidence fails. Implement time-boxed decision windows to prevent overthinking. **Verdict**: integration is worth building IF designed asymmetrically (agreement → augment, disagreement → flag for review), NOT as a calibration auto-correct.
 
+## Multi-horizon evaluation — horizon-dependent IC structure (added 2026-05-04 late-evening)
+
+After multi-horizon was added to the evaluation harness (5d / 10d / 21d / 90d in parallel), per-feature IC reveals dramatic horizon-dependent patterns. **Strongest IC in the project**: `fundamentals_report conviction_density` at 90d = **-0.407**.
+
+Horizon trajectories for top features:
+
+| (Signal, Feature) | 5d IC | 10d IC | 21d IC | 90d IC | Pattern |
+|---|---|---|---|---|---|
+| fundamentals_report conviction_density | -0.024 | -0.041 | -0.162 | **-0.407** | monotonic strengthening |
+| fundamentals_report bull_keyword_count | -0.081 | -0.117 | -0.132 | **-0.306** | monotonic strengthening |
+| fundamentals_report hedge_density | +0.157 | +0.113 | +0.154 | **+0.305** | strengthening (positive direction) |
+| fundamentals_report bear_keyword_count | +0.067 | +0.074 | +0.112 | +0.276 | monotonic strengthening |
+| final_trade_decision rating | -0.0X | -0.112 | -0.172 | **-0.238** | monotonic strengthening |
+| market_report sentiment_score | -0.036 | -0.165 | **-0.185** | -0.052 | peaks at 21d, fades at 90d |
+| investment_plan sentiment_score | -0.143 | **-0.213** | -0.079 | -0.129 | peaks at 10d, fades at 21d, returns at 90d |
+
+**Two distinct horizon-dependent patterns**:
+1. **Monotonic strengthening** (fundamentals_report features, final_trade_decision rating) — anti-correlation grows with horizon. Suggests the framework's bullish prose at the fundamentals + decision level is most-anti-predictive over multi-quarter periods.
+2. **Peaks-then-fades** (market_report, investment_plan, news_report sentiment) — anti-correlation peaks at 10-21d then weakens. Suggests medium-term reversal effect specific to the analyst-synthesis level.
+
+The monotonic-strengthening pattern in fundamentals_report is the strongest evidence yet for the **language-level anti-prediction hypothesis** from the previous Phase 1.5 finding. It also fits the corpus-known pattern: most state logs are Q1 2026 (bull-tailwind period), and the 90d horizon for those dates extends well into the Q1 2026 → Q2 2026 mean-reversion window where bullish framework calls underperformed.
+
 ## Phase 1.5 prose-signal featurization — language-level anti-prediction (added 2026-05-04 late-evening)
 
 After Phase 1.5 shipped, the evaluation harness produces IC for prose signals via 7 cheap featurizers (sentiment_score, bull/bear keyword counts, hedge density, conviction density, numeric mentions, value length). 5 prose signals × 7 features = 35 (signal, feature) IC values.

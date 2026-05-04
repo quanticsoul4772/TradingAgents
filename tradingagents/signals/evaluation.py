@@ -217,6 +217,252 @@ def _evaluate_signal_features(
     return out
 
 
+# -- Multi-horizon evaluation ------------------------------------------------
+#
+# Phase 1.5 extension: same pipeline, multiple horizons in parallel. Reuses
+# a single alpha cache keyed by (ticker, date, horizon) so each (ticker, date)
+# pair is fetched at most once per horizon.
+
+
+def evaluate_multi_horizon(
+    signal_id: str,
+    rows: list[dict],
+    horizons: list[int],
+    alpha_cache: dict[tuple[str, str, int], float | None] | None = None,
+) -> dict[int, dict]:
+    """Run ``_evaluate_signal`` at each horizon. Returns ``{horizon: eval_dict}``.
+
+    For final_trade_decision, populates IC + hit_rate per horizon. For other
+    signals, returns coverage-only at each horizon (n_eval = 0, ic = None).
+    """
+    if alpha_cache is None:
+        alpha_cache = {}
+
+    cov = _coverage_stats(rows)
+    out: dict[int, dict] = {}
+
+    for horizon in horizons:
+        if signal_id != "final_trade_decision":
+            out[horizon] = {
+                "signal_id": signal_id,
+                **cov,
+                "horizon": horizon,
+                "n_eval": 0,
+                "ic": None,
+                "hit_rate": None,
+            }
+            continue
+
+        pairs_ic: list[tuple[float, float]] = []
+        pairs_hit: list[tuple[int, float]] = []
+        for r in rows:
+            rating = parse_rating(r["value"] or "")
+            score = _RATING_SCORE.get(rating)
+            if score is None:
+                continue
+            key = (r["ticker"].upper(), r["date"], horizon)
+            if key not in alpha_cache:
+                alpha_cache[key] = _compute_alpha(r["ticker"], r["date"], horizon)
+            alpha = alpha_cache[key]
+            if alpha is None:
+                continue
+            pairs_ic.append((float(score), float(alpha)))
+            pairs_hit.append((score, alpha))
+
+        out[horizon] = {
+            "signal_id": signal_id,
+            **cov,
+            "horizon": horizon,
+            "n_eval": len(pairs_ic),
+            "ic": _spearman_ic(pairs_ic),
+            "hit_rate": _hit_rate(pairs_hit),
+        }
+    return out
+
+
+def evaluate_features_multi_horizon(
+    signal_id: str,
+    rows: list[dict],
+    horizons: list[int],
+    alpha_cache: dict[tuple[str, str, int], float | None] | None = None,
+) -> list[dict]:
+    """Per-(feature, horizon) IC + hit rate for prose signals. Returns rows
+    of ``{signal_id, feature, horizon, n_eval, ic, hit_rate, ...coverage}``.
+    Empty list for non-prose signals.
+    """
+    if signal_id not in PROSE_SIGNAL_IDS:
+        return []
+    if alpha_cache is None:
+        alpha_cache = {}
+
+    cov = _coverage_stats(rows)
+    out: list[dict] = []
+
+    # Pre-extract feature values for each row once (independent of horizon).
+    feature_values: dict[str, list[tuple[dict, float]]] = {}
+    for feature_name, extractor in FEATURIZERS:
+        per_row: list[tuple[dict, float]] = []
+        for r in rows:
+            value = r["value"] or ""
+            try:
+                feat = extractor(value)
+            except Exception:  # noqa: BLE001
+                continue
+            per_row.append((r, float(feat)))
+        feature_values[feature_name] = per_row
+
+    for feature_name, per_row in feature_values.items():
+        for horizon in horizons:
+            pairs_ic: list[tuple[float, float]] = []
+            pairs_hit: list[tuple[int, float]] = []
+            for r, feat in per_row:
+                key = (r["ticker"].upper(), r["date"], horizon)
+                if key not in alpha_cache:
+                    alpha_cache[key] = _compute_alpha(r["ticker"], r["date"], horizon)
+                alpha = alpha_cache[key]
+                if alpha is None:
+                    continue
+                pairs_ic.append((feat, float(alpha)))
+                if feat > 0:
+                    sig = 1
+                elif feat < 0:
+                    sig = -1
+                else:
+                    sig = 0
+                pairs_hit.append((sig, alpha))
+
+            out.append(
+                {
+                    "signal_id": signal_id,
+                    "feature": feature_name,
+                    "horizon": horizon,
+                    **cov,
+                    "n_eval": len(pairs_ic),
+                    "ic": _spearman_ic(pairs_ic),
+                    "hit_rate": _hit_rate(pairs_hit),
+                }
+            )
+    return out
+
+
+def render_multi_horizon_report(
+    rows_by_signal: dict[str, list[dict]],
+    multi_evaluations: dict[str, dict[int, dict]],
+    multi_feature_evaluations: list[dict],
+    horizons: list[int],
+) -> str:
+    """Multi-horizon evaluation markdown — IC + hit rate at each horizon."""
+    lines: list[str] = []
+    lines.append("# Signal Evaluation Report — multi-horizon (spec 002 Phase 1 + 1.5)")
+    lines.append("")
+    lines.append(f"_Generated {datetime.now(timezone.utc).isoformat(timespec='seconds')}._")
+    lines.append("")
+    lines.append(
+        f"Horizons: **{', '.join(f'{h}d' for h in horizons)}**. "
+        f"Total cached rows analyzed: **{sum(len(rs) for rs in rows_by_signal.values())}**. "
+        f"Signals: **{len(multi_evaluations)}**."
+    )
+    lines.append("")
+
+    # ---- Phase 1: per-signal IC at each horizon ----
+    lines.append("## Per-signal IC across horizons (Phase 1: numeric signals)")
+    lines.append("")
+    horizon_cols = " | ".join(f"IC@{h}d" for h in horizons)
+    horizon_align = " | ".join("---:" for _ in horizons)
+    lines.append(
+        f"| Signal | n cached | Tickers | Dates | n eval | {horizon_cols} | HR@{horizons[-1]}d |"
+    )
+    lines.append(f"|---|---:|---:|---:|---:| {horizon_align} | ---:|")
+    # Sort by n cached desc
+    by_n = sorted(multi_evaluations.items(), key=lambda kv: kv[1][horizons[0]]["n"], reverse=True)
+    for signal_id, by_horizon in by_n:
+        ref = by_horizon[horizons[0]]
+        ic_cells = []
+        for h in horizons:
+            ev = by_horizon[h]
+            ic_cells.append(f"{ev['ic']:+.3f}" if ev["ic"] is not None else "—")
+        last_h_eval = by_horizon[horizons[-1]]
+        hr_str = f"{last_h_eval['hit_rate']:.1%}" if last_h_eval["hit_rate"] is not None else "—"
+        # n_eval is per-horizon — use the last horizon's value in the n eval column
+        n_eval_str = str(last_h_eval["n_eval"])
+        ic_str = " | ".join(ic_cells)
+        lines.append(
+            f"| `{signal_id}` | {ref['n']} | {ref['tickers']} | {ref['dates']} | "
+            f"{n_eval_str} | {ic_str} | {hr_str} |"
+        )
+    lines.append("")
+
+    # ---- Phase 1.5: per-(signal, feature) IC at each horizon ----
+    if multi_feature_evaluations:
+        lines.append("## Per-(signal, feature) IC across horizons (Phase 1.5: prose signals)")
+        lines.append("")
+        lines.append(
+            "Sorted by max |IC| across horizons descending — strongest "
+            "horizon-stable correlations first."
+        )
+        lines.append("")
+        lines.append(f"| Signal | Feature | n eval | {horizon_cols} | HR@{horizons[-1]}d |")
+        lines.append(f"|---|---|---:| {horizon_align} | ---:|")
+
+        # Group by (signal, feature); each group has one entry per horizon
+        groups: dict[tuple[str, str], dict[int, dict]] = {}
+        for ev in multi_feature_evaluations:
+            groups.setdefault((ev["signal_id"], ev["feature"]), {})[ev["horizon"]] = ev
+
+        # Sort by max |IC| across horizons
+        def _max_abs_ic(g: dict[int, dict]) -> float:
+            ics = [g[h]["ic"] for h in horizons if g[h]["ic"] is not None]
+            return max((abs(x) for x in ics), default=-1.0)
+
+        sorted_groups = sorted(groups.items(), key=lambda kv: -_max_abs_ic(kv[1]))
+        for (signal_id, feature), by_h in sorted_groups:
+            ic_cells = []
+            for h in horizons:
+                ev = by_h.get(h)
+                if ev is None or ev["ic"] is None:
+                    ic_cells.append("—")
+                else:
+                    ic_cells.append(f"{ev['ic']:+.3f}")
+            last_ev = by_h.get(horizons[-1])
+            hr_str = (
+                f"{last_ev['hit_rate']:.1%}" if last_ev and last_ev["hit_rate"] is not None else "—"
+            )
+            n_eval_str = str(last_ev["n_eval"]) if last_ev else "0"
+            ic_str = " | ".join(ic_cells)
+            lines.append(f"| `{signal_id}` | `{feature}` | {n_eval_str} | {ic_str} | {hr_str} |")
+        lines.append("")
+
+    lines.append("## Notes")
+    lines.append("")
+    lines.append(
+        "- **n eval** is the count of (ticker, date) pairs at the LAST horizon "
+        "where both a numeric value AND a realized forward alpha are available. "
+        "Earlier horizons typically have higher n eval (more dates have closed)."
+    )
+    lines.append(
+        "- **IC** = Spearman rank correlation between the signal/feature value "
+        "and realized α at that horizon."
+    )
+    lines.append(
+        "- Negative IC = the higher the signal value, the lower the realized α (anti-predictive)."
+    )
+    lines.append(
+        "- **HR** = directional hit rate at the longest horizon. Hold (signal sign 0) "
+        "counts as hit when |α| < 0.5%."
+    )
+    lines.append("")
+    lines.append("## Source data")
+    lines.append("")
+    lines.append(
+        f"- Cache: `~/.tradingagents/signals/cache.db` "
+        f"({sum(len(rs) for rs in rows_by_signal.values())} rows)\n"
+        f"- Registry: `~/.tradingagents/signals/registry.jsonl` "
+        f"({len(load_registry())} signals)"
+    )
+    lines.append("")
+    return "\n".join(lines)
+
+
 def render_report(
     rows_by_signal: dict[str, list[dict]],
     evaluations: list[dict],

@@ -256,3 +256,94 @@ def test_evaluate_signal_features_skips_pairs_with_no_alpha(monkeypatch):
     for ev in out:
         assert ev["n_eval"] == 0
         assert ev["ic"] is None
+
+
+# ---- multi-horizon evaluation ---------------------------------------------
+
+
+def test_evaluate_multi_horizon_returns_one_row_per_horizon(monkeypatch):
+    from tradingagents.signals.evaluation import evaluate_multi_horizon
+
+    monkeypatch.setattr(
+        "tradingagents.signals.evaluation.fetch_returns",
+        lambda *a, **kw: (None, 1.5, None),
+    )
+    rows = [
+        {"ticker": "NVDA", "date": "2026-01-30", "value": "**Rating: Buy**"},
+        {"ticker": "AAPL", "date": "2026-01-30", "value": "**Rating: Hold**"},
+        {"ticker": "INTC", "date": "2026-01-30", "value": "**Rating: Sell**"},
+    ]
+    out = evaluate_multi_horizon("final_trade_decision", rows, [5, 10, 21, 90])
+    assert set(out.keys()) == {5, 10, 21, 90}
+    for h, ev in out.items():
+        assert ev["horizon"] == h
+        assert ev["signal_id"] == "final_trade_decision"
+        # 3 rows with non-None alpha => n_eval=3
+        assert ev["n_eval"] == 3
+
+
+def test_evaluate_multi_horizon_alpha_cache_keyed_by_horizon(monkeypatch):
+    """Each (ticker, date, horizon) should be fetched once across calls."""
+    from tradingagents.signals.evaluation import evaluate_multi_horizon
+
+    call_count = {"n": 0}
+
+    def fake(ticker, date, holding_days):
+        call_count["n"] += 1
+        return (None, 1.0, None)
+
+    monkeypatch.setattr("tradingagents.signals.evaluation.fetch_returns", fake)
+
+    rows = [{"ticker": "NVDA", "date": "2026-01-30", "value": "**Rating: Buy**"}]
+    cache: dict = {}
+    evaluate_multi_horizon("final_trade_decision", rows, [5, 10, 21], cache)
+    # 1 row × 3 horizons → 3 unique (ticker, date, horizon) keys → 3 fetches
+    assert call_count["n"] == 3
+    # Re-running should hit cache, no new fetches
+    evaluate_multi_horizon("final_trade_decision", rows, [5, 10, 21], cache)
+    assert call_count["n"] == 3
+
+
+def test_evaluate_multi_horizon_non_numeric_signal_returns_coverage_only(monkeypatch):
+    from tradingagents.signals.evaluation import evaluate_multi_horizon
+
+    monkeypatch.setattr(
+        "tradingagents.signals.evaluation.fetch_returns",
+        lambda *a, **kw: (None, 1.0, None),
+    )
+    rows = [{"ticker": "NVDA", "date": "2026-01-30", "value": "prose"}]
+    out = evaluate_multi_horizon("market_report", rows, [5, 21])
+    assert set(out.keys()) == {5, 21}
+    for _h, ev in out.items():
+        assert ev["n_eval"] == 0
+        assert ev["ic"] is None
+
+
+def test_evaluate_features_multi_horizon_returns_per_feature_per_horizon(monkeypatch):
+    from tradingagents.signals.evaluation import evaluate_features_multi_horizon
+    from tradingagents.signals.featurization import FEATURIZERS
+
+    monkeypatch.setattr(
+        "tradingagents.signals.evaluation.fetch_returns",
+        lambda *a, **kw: (None, 1.0, None),
+    )
+    rows = [{"ticker": "NVDA", "date": "2026-01-30", "value": "bullish strong upgrade"}]
+    horizons = [5, 21, 90]
+    out = evaluate_features_multi_horizon("market_report", rows, horizons)
+    # Should have len(FEATURIZERS) × len(horizons) rows
+    assert len(out) == len(FEATURIZERS) * len(horizons)
+    # Each row has feature + horizon set
+    for ev in out:
+        assert ev["feature"] in {f[0] for f in FEATURIZERS}
+        assert ev["horizon"] in horizons
+
+
+def test_evaluate_features_multi_horizon_skips_non_prose():
+    from tradingagents.signals.evaluation import evaluate_features_multi_horizon
+
+    out = evaluate_features_multi_horizon(
+        "final_trade_decision",
+        [{"ticker": "NVDA", "date": "2026-01-30", "value": "**Rating: Buy**"}],
+        [5, 21],
+    )
+    assert out == []
