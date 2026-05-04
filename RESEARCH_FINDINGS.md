@@ -181,6 +181,26 @@ Implication for any UW user: only trust UW when the ticker has independent bear 
 
 **Synthesis**: build asymmetric handling — agreement boosts confidence/sizing, disagreement triggers human review (NOT algorithmic resolution). Build escape valves — system must degrade gracefully when reasoning_evidence fails. Implement time-boxed decision windows to prevent overthinking. **Verdict**: integration is worth building IF designed asymmetrically (agreement → augment, disagreement → flag for review), NOT as a calibration auto-correct.
 
+## Spec 001 Phase 3 — convergence shortcut doesn't fire on featurization-derived Signals (added 2026-05-04 late-evening)
+
+Phase 3 ships two deterministic decision modules:
+- `tradingagents/signals/shortcut.py` — `should_skip_debate(signals)` boolean per spec FR-006 (skip when 3+ Signals share a direction with magnitude > 0.7)
+- `tradingagents/signals/budget.py` — `BotBudget` class with reservation + record + remaining + summary helpers per spec FR-005
+
+Plus `scripts/forecast_shortcut_savings.py` to project token savings before wiring into production.
+
+**KEY EMPIRICAL RESULT**: across the historical 156-propagate corpus, **0% of propagates would trigger the shortcut at the spec's defaults** (3+ bots, magnitude > 0.7). At loose thresholds (2+ bots, magnitude > 0.2): 17.3% skip rate → 5.2% projected savings — still below SC-004's ≥15% target.
+
+**Why it doesn't fire**: the featurization-based `derive_signal_from_prose` produces magnitudes typically in [0.1, 0.5] (heuristic blend of evidence density + conviction density - hedging penalty, with conservative caps). Crossing >0.7 is essentially unreachable from prose alone. The same shape as Phase 1 SC-001: the featurization-based aggregator is less decisive than the actual PM.
+
+**Implication**: Phase 3 production-pipeline wiring (skip-debate routing in `conditional_logic.py` + per-bot LLM-call budget instrumentation) is **moot on this corpus until Signals come from a different source**. Two paths forward:
+1. LLM-emitted Signals (each analyst's `with_structured_output(Signal)` call replaces or augments the prose) — would have proper magnitude calibration from the LLM itself
+2. Re-tune `derive_signal_from_prose` to produce higher magnitudes — but Phase 5 weight tuning showed featurization has a low IC ceiling, so cranking magnitude won't add real signal
+
+The deterministic shortcut + budget modules ship clean (25 unit tests + corpus forecast script) but don't change production behavior. They're pre-positioned for the future where Signals are LLM-emitted.
+
+**Phases 3.5 (production wiring) + Phase 4 (role-specialized models) deferred**. The Phase 3 forecast result removes the urgency from both — there's no token savings to capture until the Signal-quality bottleneck is fixed, and role specialization optimizes a path that Phase 5 already showed has weak generalizable signal.
+
 ## Spec 001 Phase 5 + Phase 2 — weight tuning overfits; bots-mode wired as opt-in (added 2026-05-04 late-evening)
 
 **Phase 5 (weight tuning, analytical)**: grid search over WEIGHTS to maximize aggregator IC vs realized α. Train/test date-ordered 70/30 split (n=109/47).
