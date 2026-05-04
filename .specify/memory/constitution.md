@@ -2,9 +2,9 @@
 
 **Project**: Personal experimental fork of TradingAgents — a research playground for studying multi-agent LLM debate dynamics, using equity-decision-making as the substrate because it has cheap, objective ground truth.
 
-**Version**: 1.2.1
+**Version**: 1.2.2
 **Adopted**: 2026-05-01
-**Last amended**: 2026-05-03 evening (Principle VII: appended Replicability scope clarification after experiment 007 005-vs-007 NVDA non-replication finding)
+**Last amended**: 2026-05-03 late-evening (Principle VII: appended Cross-period scope clarification after experiment 008 — Q4 2025 OW α flipped sign vs Q1 2026 same-config; Bayesian posterior on stable-cross-period-signal hypothesis dropped 0.64 → 0.52)
 
 This constitution governs how this project evolves. The commitments below are intentionally short and few. They are constraints, not aspirations — when in conflict with convenience, they win.
 
@@ -100,6 +100,8 @@ The framework's mode collapse to Hold ratings is empirically calibrated abstenti
 
 **Replicability scope (added 2026-05-03 post-experiment-007)**: Claims derived from any single experiment must distinguish bucket-level from date-level evidence. Bucket-level claims ("Opus on NVDA-bull regime → ≥60% OW commits") are replicable across reruns; date-level claims ("Opus on NVDA 2026-02-06 → OW") are single observations. Empirical basis: experiment 005 produced 10/10 OW on Opus NVDA × 10 dates; experiment 007 produced 6/10 OW + 4 Hold on the SAME 10 NVDA dates with the same Opus model. Run-to-run variance is real because (a) exa news API returns different snippet sets per call, (b) per-experiment fresh memory logs evolve through the run. ANALYSIS.md write-ups must report bucket ratios as claims and per-date commits as observations.
 
+**Cross-period scope (added 2026-05-03 evening post-experiment-008)**: Claims about realized α (not just commit-rate distribution) must be treated as period-conditional unless validated across multiple calendar periods. Empirical basis: experiment 007 (Opus 30-pair, Q1 2026 dates) produced 21d OW α = +3.05% n=8 with hit-rate climb 56→67→75%; experiment 008 (same config, Q4 2025 dates) produced -1.81% n=11 with hit-rate pattern 55→27→45%. Same model, prompt, A3 filter, news vendor, and tickers — only calendar period changed. The discrimination behavior (per-ticker bucket distribution) replicated cleanly cross-period; the realized-α direction did not. Reasoning_evidence Bayesian update: prior 0.64 (single-period n=50 milestone) → posterior 0.52 (roughly even odds the signal is stable cross-period vs period-favored). **Operationally**: any HYPOTHESIS asserting a realized-α property at the cross-experiment level must explicitly state (a) the calendar periods covered, (b) whether the property is claimed as period-stable or period-conditional, (c) the additional cross-period evidence required to upgrade the claim. ANALYSIS.md write-ups citing "the +X% OW α at n=N" as load-bearing must state the period composition of the n=N cohort and the cross-period replication status of the claim.
+
 ---
 
 ## Quality Gates
@@ -150,8 +152,9 @@ This constitution is amendable. Amendments follow the spec-kit constitution flow
 
 The principles above are themselves up for amendment if they prove ceremonial rather than load-bearing. The test: after one month of use, are we honoring this principle because it's helping or because it's written down? If the latter, amend or remove.
 
-**Version**: 1.2.1
-**Last amended**: 2026-05-03 evening — Principle VII appended Replicability-scope clarification: claims must distinguish bucket-level (replicable) from date-level (single observation) evidence. Empirical trigger: experiment 007 produced 6/10 OW on Opus NVDA × the same 10 dates that 005 produced 10/10 OW on. Run-to-run variance from stochastic news API + evolving memory log is real; ANALYSIS.md must report bucket ratios as claims, per-date commits as observations.
+**Version**: 1.2.2
+**Last amended**: 2026-05-03 late-evening — Principle VII appended Cross-period scope clarification: realized-α claims (not commit-rate claims) must be treated as period-conditional unless validated across multiple periods. Empirical trigger: experiment 008 (same config as 007, Q4 2025 dates instead of Q1 2026) produced OW 21d α = -1.81% vs 007's +3.05%. Bayesian posterior on stable-cross-period-signal hypothesis dropped 0.64 → 0.52. ANALYSIS.md write-ups must state the period composition of any n=N cohort and the cross-period replication status of the claim.
+**Prior version**: 1.2.1 — Principle VII appended Replicability-scope clarification: bucket-level (replicable) vs date-level (single observation) evidence. Trigger: 005-vs-007 NVDA non-replication on the same dates.
 **Prior version**: 1.2.0 — Principle III restructured from single $30 ceiling to 4-tier ladder (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 $100+) reflecting Opus pricing + accumulated re-analysis tooling; added Principle VII (Calibrated Abstention is a Valid Output); sharpened Principle IV with empirical backing.
 **Prior version**: 1.1.0 — added Principle VII + sharpened IV (2026-05-03 earlier in the day)
 **Prior version**: 1.0.0 — initial adoption 2026-05-01

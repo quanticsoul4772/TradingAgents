@@ -1,22 +1,29 @@
 # RESEARCH_FINDINGS — TradingAgents-lab milestone
 
-_Aggregated 2026-05-03 across 14 experiments + cross-experiment horizon sweep + counterfactual analysis on Hold extremes + A3 momentum-filter forensics. For per-experiment summaries see `findings.md`. Latest experiment: `experiments/2026-05-03-007-opus47-30pair-mixed/` (Opus 30-pair NVDA + AAPL + INTC at 21d horizon, A3 filter on)._
+_Aggregated 2026-05-03 across 15 experiments + cross-experiment horizon sweep + counterfactual analysis on Hold extremes + A3 momentum-filter forensics + reasoning_evidence Bayesian update post-008. For per-experiment summaries see `findings.md`. Latest experiments: `experiments/2026-05-03-007-opus47-30pair-mixed/` (Opus 30-pair Q1 2026) and `experiments/2026-05-03-008-opus47-cross-period/` (same config, Q4 2025 — cross-period validation)._
 
-## Headline
+## Headline (revised after 008 cross-period validation)
 
-**At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls (Buy/OW/UW/Sell) are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) are directionally correct and produce +1.99% mean alpha across n=50 cross-experiment commits (65% hit rate).** Bearish commits are mixed: anti-calibrated in aggregate at +1.56% mean (n=22 Sonnet), but per-ticker analysis shows the failure mode is regime-concentrated rather than structural — UW commits on bear-correct tickers (AAPL, INTC excl. tail events) ARE directionally appropriate; UW commits on bull-regime tickers (NVDA, MSFT) drive the aggregate anti-calibration. Hold ≈ 0% median at every horizon (consistent with "tracks SPY"). The framework's mode collapse to Hold is calibrated abstention; its bullish commits are a real 21-day signal; its bearish commits are an asymmetric signal that works on bear-correct tickers and fails on bull-regime tickers.
+**At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls (Buy/OW/UW/Sell) are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) produce +1.30% mean alpha across n=61 cross-experiment commits (~61% hit rate) — POSITIVE BUT PERIOD-CONDITIONAL.** The 005-007 chain on Q1 2026 dates produced +1.99% n=50, 65% hit; the 008 cross-period replication on Q4 2025 dates produced -1.81% n=11, 45% hit. **Reasoning_evidence Bayesian update: posterior on "the OW signal is stable cross-period" moved from 0.64 → 0.52** — roughly even odds. The honest framing: the framework's *discrimination behavior* (per-ticker bucket distribution) replicates cleanly cross-period; the *realized α direction* does not. Q1 2026 was a bull-tailwind period that rewarded bull commits; Q4 2025 was not.
+
+Bearish commits are regime-asymmetric, not uniformly anti-calibrated: UW commits on bear-correct tickers (AAPL, INTC excl. tail events) ARE directionally appropriate; UW commits on bull-regime tickers (NVDA, MSFT) drive the aggregate anti-calibration. Hold ≈ 0% median at every horizon (consistent with "tracks SPY"). The framework's mode collapse to Hold is calibrated abstention; its bullish commits are a *period-conditional* signal at 21d; its bearish commits are an asymmetric signal that works on bear-correct tickers and fails on bull-regime tickers.
 
 ## Empirical core (cross-experiment summary, 5/10/21-day forward α vs SPY)
 
 | Rating | 5d α (Σn) | 10d α (Σn) | **21d α (Σn)** |
 |---|---|---|---|
 | Buy | -1.27% (n=8, 25% hit) | -0.55% (38%) | **+1.16% (n=7, 71%) ✓** |
-| Overweight | -0.59% (n=42, 44%) | +0.16% (47%) | **+1.99% (n=50, 65%) ✓✓** |
-| Hold | +0.55% (n=47, 56%) | +0.61% (45%) | +1.05% (n=46, 57%) |
-| Underweight | +1.04% (n=32, 60%) | +1.41% (n=32, 56%) | +3.05% (n=27, 56%) |
+| Overweight | -0.51% (n=53, 44%) | -0.05% (n=53, 43%) | **+1.30% (n=61, ~61%) ✓ — period-conditional** |
+| Hold | +0.42% (n=62, 51%) | +0.36% (n=62, 44%) | +1.85% (n=61, 58%) |
+| Underweight | +2.10% (n=36, 64%) | +2.21% (n=36, 56%) | +4.59% (n=31, 58%) |
 | Sell | +1.22% (n=1) | +3.73% (n=1) | -1.38% (n=1) |
 
-(OW row updated post-007: prior +1.59% n=30 + Opus 005-007 +2.93% n=20 → +1.99% n=50, 65% hit. UW row updated to incl. Opus 007 INTC commits — note +3.05% mean is dragged by single 03-20 INTC outlier; median-style evidence remains weakly anti-calibrated. Hold row mean inflated by INTC tail in 007; median ≈ +0.15%.)
+(OW row updated post-008: pre-008 +1.99% n=50 + 008's -1.81% n=11 → +1.30% n=61, ~61% hit. The drop reflects 008's Q4 2025 OW α flipping sign vs 007's Q1 2026 +3.05%. Same model, prompt, A3 filter, news vendor — only calendar period changed. UW row updated to incl. 008's 4 commits — INTC bounces continue to drag the mean. Hold row inflated by INTC bouncing through both periods while framework abstains.)
+
+**Period composition** (added per Constitution VII Cross-period scope clarification):
+- Q1 2026 cohort (005-007 dates 2026-01-30 → 2026-04-03): n=50 OW commits, +1.99% mean, 65% hit
+- Q4 2025 cohort (008 dates 2025-11-07 → 2026-01-09): n=11 OW commits, -1.81% mean, 45% hit
+- Combined n=61 cohort spans 2 calendar periods only. Cross-period replication status: **disputed** — Bayesian posterior 0.52.
 
 90-day window unresolved — extends past today's data. n=1 Sell rows are noise.
 
@@ -26,7 +33,7 @@ Convention: bullish ratings (Buy/OW) directionally correct when α>0; bearish (U
 
 1. **5-day strong calls are noise.** Buy α=-1.27% (25% hit), OW α=-0.59% (44%) — bull commits underperform on the realized 5-day window. UW α=+1.04% (60% positive) — bear commits also underperform their direction. **007 single-experiment OW hit rate climb 56→67→75% across 5d→10d→21d** is the cleanest single-experiment evidence yet for horizon-dependent signal emergence.
 
-2. **21-day bull commits have signal at scale.** OW α=+1.99% across n=50 with 65% hit rate. Buy α=+1.16% across n=7 with 71% hit rate. **Single-call baseline does NOT show this 21-day lift** (NVDA single-call UW at 21d = +6.35% directionally wrong; AAPL single-call OW at 21d = -2.57% wrong) — the lift is framework-specific, not LLM-general. **Q1 (n=100+ scaling) partially answered**: load-bearing claim now sits at n=50, +1.99%, 65% hit; signal sturdier than at the n=30 milestone.
+2. **21-day bull commits have a period-conditional signal.** Cross-experiment OW α now +1.30% across n=61 with ~61% hit rate. **The signal split by calendar period**: Q1 2026 cohort = +1.99% n=50, 65% hit; Q4 2025 cohort = -1.81% n=11, 45% hit. Same model + prompt + A3 filter + news vendor + tickers in both cohorts; only calendar period differed. Buy α=+1.16% across n=7 with 71% hit rate (Q1 2026 only). **Single-call baseline does NOT show the 21-day Q1 2026 lift** (NVDA single-call UW at 21d = +6.35% directionally wrong; AAPL single-call OW at 21d = -2.57% wrong) — when the lift exists, it is framework-specific, not LLM-general. **Q1 (n=100+ scaling) partially answered**: cohort now at n=61 with cross-period evidence showing the signal is period-conditional, not stable. Reasoning_evidence Bayesian update: posterior on stable-cross-period-signal hypothesis dropped 0.64 → 0.52 (roughly even odds).
 
 3. **Bear commits are regime-asymmetric, not uniformly anti-calibrated.** Per `bear_side_per_ticker.py` + 007 INTC forensics (`claudedocs/a3-filter-forensics-007.md`): UW commits on bear-correct tickers (AAPL n=14 α=-0.18% 43% wrong; INTC n=4 α=-1.73% excl. one 03-20 outlier) ARE directionally appropriate. UW commits on bull-regime tickers (NVDA n=4 α=+6.35% 100% wrong; MSFT n=5 α=+2.03% 80% wrong) drive the aggregate anti-calibration. **The bear-side failure mode is "framework chose UW on a bull-regime ticker," NOT "the UW signal itself is broken."** The A3 momentum filter (-5%/30d) targets a different failure (mean-reversion bounces) and is correctly inert on this regime-mismatch failure.
 
@@ -113,7 +120,9 @@ Each open question above was put through `mcp-reasoning` for an independent reas
 
 Posterior **0.64** (prior 0.4, Bayes factor 2.67). Tool synthesis: "Moderately strong support that bull-side alpha would persist at scale, though scaling risks remain. Sensitivity moderate — with a more pessimistic prior (0.2) posterior would still reach ~0.5; with optimistic (0.6+) would exceed 0.75." **Verdict**: scaling is worth funding (~$30, ~14h overnight); evidence supports the hypothesis but doesn't dominate it.
 
-**Empirical answer (2026-05-03 post-007, n=50 milestone)**: load-bearing claim now n=50, +1.99% mean, 65% hit. The reasoning-tool prior was conservative — the n=30 → n=50 jump did NOT erode the signal. Single-experiment 007 hit-rate climb 56→67→75% across 5d/10d/21d is the cleanest single-run horizon-emergence evidence in the corpus. **Q1 partial-resolved positive.** Full answer requires n=100+ which is the next planned step (B-priority 2 cross-period validation, T3 $30).
+**Empirical answer post-007 (2026-05-03 evening, n=50 milestone)**: load-bearing claim sat at n=50, +1.99% mean, 65% hit. The reasoning-tool prior was conservative — the n=30 → n=50 jump did NOT erode the signal at that point. Single-experiment 007 hit-rate climb 56→67→75% across 5d/10d/21d was the cleanest single-run horizon-emergence evidence in the corpus.
+
+**Empirical answer post-008 (2026-05-03 late-evening, n=61 with cross-period)**: 008 (same config as 007, Q4 2025 dates) produced OW 21d α = -1.81% (n=11, 45% hit) — sign-flipped from 007's +3.05%. Cross-experiment OW α: +1.99% n=50 → +1.30% n=61, hit 65% → ~61%. **Reasoning_evidence Bayesian posterior on "stable cross-period signal" dropped 0.64 → 0.52** (likelihood ratio 0.6). **Q1 partial-resolved with caveat**: realized-α signal is positive in aggregate but period-conditional. Full resolution now requires a third cross-period (e.g., Q3 2025) at smaller scale (T2 ~$10) to disambiguate which period — Q1 2026 or Q4 2025 — is the outlier. Constitution VII amended to v1.2.2 with Cross-period scope clarification.
 
 ### Q2 — Bear-side anti-calibration at 90d
 
@@ -164,6 +173,6 @@ Implication for any UW user: only trust UW when the ticker has independent bear 
 
 ## Project status
 
-Updated post-007 (2026-05-03 evening). The architectural reframe (calibrated abstention + asymmetric 21-day bull-side signal + regime-asymmetric bear-side) is the load-bearing finding. Q1 (n=100+ scaling) is partially answered positive at the n=50 milestone; full resolution requires the next planned cross-period validation (B-priority 2, T3 $30 under Principle III v1.2.0). Q3 (model-specificity) is answered: signal is regime-conditional, not model-wide; Opus discriminates per-ticker but with run-to-run date-level variance. Q4 (UW concentration) is answered: regime-concentrated + tail-distorted. Q2 (90d bear fix) reasoning-confidence-rejected (posterior 0.10) — do not pursue. Q5 (reasoning_evidence in PM) is unbuilt; reasoning identified real failure modes needing explicit guards (asymmetric handling: agreement augments, disagreement flags for review).
+Updated post-008 (2026-05-03 late-evening). The architectural reframe needs amendment: **calibrated abstention + period-conditional 21-day bull-side signal + regime-asymmetric bear-side**. The previous "stable signal" framing was Q1-2026-anchored and over-stated retrospectively. Q1 (n=100+ scaling) is partial-resolved with caveat — at n=61 the signal is positive in aggregate but period-conditional; full resolution requires a third cross-period (Q3 2025 at T2 ~$10) to disambiguate which period is the outlier. Q3 (model-specificity) is answered: signal is regime-conditional + period-conditional, not model-wide; Opus discriminates per-ticker with run-to-run date-level variance + period-level realized-α variance. Q4 (UW concentration) is answered: regime-concentrated + tail-distorted. Q2 (90d bear fix) reasoning-confidence-rejected (posterior 0.10) — do not pursue. Q5 (reasoning_evidence in PM) is unbuilt; reasoning identified real failure modes needing explicit guards.
 
-Next planned: B-priority 2 cross-period validation (NVDA + AAPL + INTC at SHIFTED date range, T3 $30, ~4h, exercises new Cost-Justification scaffold from v1.2.0). Two specs sit unimplemented: 001-bots-architecture (battlecode-style refactor) and 002-signal-lifecycle (discover/evaluate/promote/retire/learn pipeline) — both no-LLM-cost large builds, sequenced after cross-period validation lands.
+Next planned: **third cross-period validation** (Q3 2025, T2 ~$10) to produce Q3'25 vs Q4'25 vs Q1'26 three-way comparison. If Q1 2026 is the outlier, the load-bearing claim further weakens. If Q4 2025 is the outlier, the load-bearing claim recovers. If both Q3 + Q4 2025 show the same pattern as Q4 2025, the framework's realized-α signal is essentially absent — calibrated abstention remains the load-bearing principle but commit-direction skill does not. Two specs sit unimplemented: 001-bots-architecture (battlecode-style refactor) and 002-signal-lifecycle (discover/evaluate/promote/retire/learn pipeline) — both no-LLM-cost large builds, sequenced after the third cross-period lands.
