@@ -351,7 +351,7 @@ This is consistent with the prior architectural finding: the framework's value i
 
 The 42.3% result motivates Phase 5 weight tuning more strongly than SC-001 anticipated — there's substantial room to bring the aggregator into closer alignment with the PM, OR to deliberately diverge it in ways that improve realized α.
 
-## Phase 1.5+ structural featurizers — bear bigrams hit +0.457 IC at 90d (added 2026-05-04 late-evening)
+## Phase 1.5+ structural featurizers — bear bigrams hit +0.457 IC at 90d (added 2026-05-04 late-evening; **artifact-checked 2026-05-05, restated**)
 
 7 new structural featurizers added to FEATURIZERS (Phase 1.5+):
 - `bull_bigram_count` / `bear_bigram_count` — curated 2-word phrase counts
@@ -360,18 +360,28 @@ The 42.3% result motivates Phase 5 weight tuning more strongly than SC-001 antic
 - `percent_mention_count` / `dollar_mention_count` — split numeric mentions
 - `bull_bear_keyword_ratio` — [0, 1] probability-style scaling
 
-**NEW STRONGEST IC IN PROJECT**: `fundamentals_report bear_bigram_count` at 90d = **+0.457** (n=113). Surpasses the previous champion `fundamentals_report conviction_density -0.407`. The bear-side mirror confirms the language-level anti-prediction is bidirectional — bearish bigrams in fundamentals prose predict MORE positive forward α just as bullish words predict MORE negative α.
+**Initial finding**: `fundamentals_report bear_bigram_count` at 90d showed IC = **+0.457** (n=113), the strongest single IC in the corpus.
 
-| Featurizer family | Best IC at 90d | Signal |
+**Artifact check** (`claudedocs/bear-bigram-artifact-check-2026-05-04.md`, run 2026-05-05): the IC is **statistically real** (permutation p<2e-4 over 5000 shuffles, bootstrap 95% CI [+0.30, +0.60] excludes zero, passes Bonferroni at α=0.05/280) but **mechanistically misleading and not a publishable predictor**:
+
+1. **The "90d horizon" label is wrong** — `fetch_returns(holding_days=90)` uses a `+7 calendar day` buffer, fitting only ~50 trading days into the window (median actual = 50, max = 67). The IC is over ~50 trading days, not 90. Bug in `fetch_returns`, not in the featurizer or eval.
+2. **Per-ticker IC is near zero or negative** (AAPL +0.07, GOOGL +0.09, INTC -0.00, JPM -0.28, MSFT +0.34, NVDA -0.16). The aggregated +0.457 is driven by *between-ticker* variance, not within-ticker prediction. Knowing the bear_bigram_count tells you almost nothing about a single ticker's date-level α.
+3. **Top-count rows are INTC bear prose in Q4 2025 / Q1 2026 with α between +31% and +85%** — the fundamentals analyst correctly identified bearish factors and was directionally wrong because INTC was in a bull regime. This is the same regime-asymmetry as the main UW-on-bull-regime-tickers finding, expressed at the prose-feature level.
+
+Plus: the dominant bigram `("market", "share")` (115/315 occurrences = 36% of all fired bigrams) is semantically ambiguous — "expanding market share" is bullish, "losing market share" is bearish. The featurizer isn't measuring what its name implies.
+
+**Restated finding**: the bigram featurizer's headline IC is **a third line of evidence for the regime-asymmetric bearish-commit story** (already documented at the rating + per-ticker levels), not an independent predictive signal. The "language-level anti-prediction is bidirectional" framing in the original write-up was wrong — it's the same anti-prediction, propagated from rating to prose because the bear-rated tickers in this corpus happened to be the bull-regime tickers that ripped.
+
+| Featurizer family | Best IC at "90d" (~50 trading days actual) | Status after artifact check |
 |---|---|---|
-| Bigram (Phase 1.5+) | +0.457 (`bear_bigram_count` fundamentals) | structurally richer than unigrams |
-| Conviction density (Phase 1.5) | -0.407 (`conviction_density` fundamentals) | unigram-level still strong |
-| Hedge density (Phase 1.5) | +0.305 (`hedge_density` fundamentals) | uncertainty markers correlate positively |
-| Bull unigram count (Phase 1.5) | -0.306 (`bull_keyword_count` fundamentals) | bullish unigrams predict negative |
-| Sentiment score (Phase 1.5) | -0.266 (`sentiment_score` fundamentals) | population-level summary |
+| Bigram (Phase 1.5+) | +0.457 `bear_bigram_count` fundamentals | **between-ticker artifact** — same anti-calibration as rating-level UW-on-bull-regime; not within-ticker predictive |
+| Conviction density (Phase 1.5) | -0.407 `conviction_density` fundamentals | not yet artifact-checked; per-ticker breakdown likely shows similar pattern |
+| Hedge density (Phase 1.5) | +0.305 `hedge_density` fundamentals | not yet artifact-checked |
+| Bull unigram count (Phase 1.5) | -0.306 `bull_keyword_count` fundamentals | not yet artifact-checked |
+| Sentiment score (Phase 1.5) | -0.266 `sentiment_score` fundamentals | not yet artifact-checked |
 | Negation-aware sentiment | -0.266 (same as plain sentiment_score) | negation patterns rare in corpus |
 
-Bigrams add **structurally different** IC: +0.276 (unigram bear keywords) → +0.457 (bigrams) is a meaningful jump, suggesting curated 2-word phrases capture richer information than single-word counts. The negation-aware variant is statistically equivalent to plain sentiment_score in this corpus — consistent with: state logs are formal analyst prose, not casual speech with frequent negations.
+**Implication for the synthesis essay**: the "three publishable secondary findings" enumerated in the synthesis (calibrated abstention, replicability scope, substrate-specific calibration) stand. The bigram IC is NOT a fourth — it's a re-statement of the bearish-asymmetry finding through a different lens. To-do: re-run the artifact check on the next 3-4 strongest ICs (conviction_density, hedge_density, bull_keyword_count) to determine whether any of them are within-ticker predictive or all are similarly between-ticker artifacts. If all are artifacts, the featurization-based-aggregator approach has even less ceiling than Phase 5 weight tuning suggested.
 
 `bull_bear_keyword_ratio` mirrors `sentiment_score` exactly (mathematically equivalent up to scaling). Documented but redundant.
 
