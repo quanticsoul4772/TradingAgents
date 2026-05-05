@@ -45,12 +45,21 @@ The primary question was: *what structural conditions cause role-based multi-age
 
 3. **Decision architecture portable, commit calibration substrate-specific**. Phase D XLK Q1 2026 same-date test: framework went 30pp more Hold-heavy on the sector ETF than on the constituent NVDA. All XLK buckets had positive realized α; framework over-abstained on the substrate. Implies the framework's prompt is single-stock-tuned; portability of the *architecture* (analysts → debate → PM) is separate from portability of the *calibration*.
 
+### Negative result added 2026-05-05 — featurization-based aggregator has no within-ticker predictive ceiling
+
+Artifact-checked the top 4 ICs from the eval report (`bear_bigram_count` +0.457, `conviction_density` -0.407, `hedge_density` +0.305, `bull_keyword_count` -0.306, all on `fundamentals_report`). All 4 aggregate ICs are statistically real (permutation p < 0.002, bootstrap CI excludes zero) but **all 4 are between-ticker artifacts**. Within-ticker IC is weak, noisy, and direction-inconsistent for every feature. `hedge_density` is the most striking — aggregate +0.305 but **within-ticker IC negative on 4 of 6 tickers** (Simpson's paradox).
+
+This **fully mechanically explains** Spec 001 Phase 1 failure (42.3% direction match) and Phase 5 failure (weight tuning overfits): the featurized prose carries between-ticker information ("which ticker has more bear language") but not within-ticker information ("which date for THIS ticker is a stronger commit"). The aggregator was trying to extract signal that wasn't there. See `claudedocs/featurizer-artifact-check-2026-05-04.md` for full per-ticker tables.
+
+This is a useful prior for anyone considering "replace LLM PM with deterministic aggregator over featurized prose" approaches: the corpus-composition effect (ticker-class identification) will produce significant aggregate ICs regardless, and they won't transfer to per-(ticker, date) prediction.
+
 ### What got ruled out (negative findings as positive evidence)
 
 - **Single-call architectural baseline (experiments 003, 004)**: replacing the 12-bot debate with one Claude call on the 3 analyst reports produced similar rating quality. Multi-agent debate doesn't dominate the single-call baseline on this substrate. The bull/bear stage adds prose volume, not predictive signal.
-- **Featurization can't replace LLM synthesis (Spec 001 Phase 1)**: 42.3% direction match → the prose signals carry information the LLM PM uses but the heuristic featurizers can't extract.
-- **Weight tuning overfits (Spec 001 Phase 5)**: 100% weight on `investment_plan` (the bridge synthesis) won train but test IC stayed -0.062. The corpus is too small / the signal-to-noise too low for grid-search weight tuning to generalize.
+- **Featurization can't replace LLM synthesis (Spec 001 Phase 1)**: 42.3% direction match → the prose signals carry information the LLM PM uses but the heuristic featurizers can't extract. **Mechanism now characterized (2026-05-05)**: featurizers carry between-ticker information, not within-ticker; aggregator can't extract signal that isn't there.
+- **Weight tuning overfits (Spec 001 Phase 5)**: 100% weight on `investment_plan` (the bridge synthesis) won train but test IC stayed -0.062. The corpus is too small / the signal-to-noise too low for grid-search weight tuning to generalize. **Mechanism now characterized (2026-05-05)**: same as above — between-ticker information doesn't generalize across train/test folds when both folds contain the same tickers.
 - **Convergence shortcut needs different inputs (Spec 001 Phase 3)**: 0% fires at spec defaults — the featurization-derived magnitudes don't reach the >0.7 threshold.
+- **All 4 strongest featurizer ICs are between-ticker artifacts (2026-05-05)**: bear_bigram, conviction_density, hedge_density, bull_keyword_count. Within-ticker IC near zero or sign-inconsistent across tickers.
 
 ### What's still open (and what each would resolve)
 
@@ -381,7 +390,24 @@ Plus: the dominant bigram `("market", "share")` (115/315 occurrences = 36% of al
 | Sentiment score (Phase 1.5) | -0.266 `sentiment_score` fundamentals | not yet artifact-checked |
 | Negation-aware sentiment | -0.266 (same as plain sentiment_score) | negation patterns rare in corpus |
 
-**Implication for the synthesis essay**: the "three publishable secondary findings" enumerated in the synthesis (calibrated abstention, replicability scope, substrate-specific calibration) stand. The bigram IC is NOT a fourth — it's a re-statement of the bearish-asymmetry finding through a different lens. To-do: re-run the artifact check on the next 3-4 strongest ICs (conviction_density, hedge_density, bull_keyword_count) to determine whether any of them are within-ticker predictive or all are similarly between-ticker artifacts. If all are artifacts, the featurization-based-aggregator approach has even less ceiling than Phase 5 weight tuning suggested.
+**Implication for the synthesis essay**: the "three publishable secondary findings" enumerated in the synthesis (calibrated abstention, replicability scope, substrate-specific calibration) stand. The bigram IC is NOT a fourth — it's a re-statement of the bearish-asymmetry finding through a different lens.
+
+**Followup completed (2026-05-05, `claudedocs/featurizer-artifact-check-2026-05-04.md`)**: artifact-checked the next 3 strongest ICs (`conviction_density` -0.407, `hedge_density` +0.305, `bull_keyword_count` -0.306). **All 4 features show the same between-ticker-artifact pattern**. None are within-ticker predictive:
+
+| Feature | Within-ticker sign agreement | Within-ticker median IC |
+|---|---|---|
+| `bear_bigram_count` | 3+, 3- | +0.03 |
+| `conviction_density` | 3+, 3- | +0.09 |
+| `hedge_density` | **4-, 2+** (aggregate +0.305 — Simpson's paradox) | **-0.16** |
+| `bull_keyword_count` | 2+, 4- | -0.05 |
+
+`hedge_density` is the most striking: aggregate IC is **+0.305** but within-ticker IC is **negative on 4 of 6 tickers**. The "more hedging language → higher α" relationship reverses inside every individual ticker. Pure between-ticker artifact.
+
+**Generalized claim**: featurization-based-aggregators on prose signals will not work on this corpus until either (a) the prose itself starts carrying within-ticker information that distinguishes good-commit dates from bad-commit dates within the same ticker — not currently happening at signal-detectable magnitude — or (b) the aggregator architecture learns ticker-specific means and only predicts deviations (mixed-effects / per-ticker fixed effects on top of the featurizer; would need its own validation).
+
+This **fully mechanically explains** Spec 001 Phase 1 (shadow aggregator 42.3% direction match) and Phase 5 (weight tuning overfits, train +0.079 → test -0.062). The featurizers carry between-ticker information; the aggregator was trying to use them to make per-(ticker, date) predictions; the information just isn't there.
+
+**Methodology fix needed**: `scripts/evaluate_signals.py` should compute within-ticker IC alongside aggregate IC. The difference between the two columns is the artifact magnitude. A future signal-evaluation report can then flag any feature where aggregate-vs-within sign-flips (Simpson's paradox) or magnitudes diverge (between-ticker dominates).
 
 `bull_bear_keyword_ratio` mirrors `sentiment_score` exactly (mathematically equivalent up to scaling). Documented but redundant.
 
