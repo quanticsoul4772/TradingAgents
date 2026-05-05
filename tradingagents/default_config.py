@@ -77,6 +77,20 @@ DEFAULT_CONFIG = {
     # rating regardless of this flag; Phase 2 uses this flag to override the
     # actual final_trade_decision when set to "bots".
     "framework_mode": "prose",
+    # Spec 003: analyst-stage contrarian gate. Empirically motivated by
+    # RESEARCH_FINDINGS finding #4 (within-ticker IC -0.489 for
+    # market_report bull_keyword_count vs 90d α). Gate measures the
+    # current propagate's bull_keyword_count percentile against the most
+    # recent N=20 cached values for THIS ticker; in active mode, when
+    # percentile >= threshold AND PM rating is Buy/Overweight, the rating
+    # is downgraded to Hold (or Underweight per target).
+    # Default mode "off" = backwards-compat per spec 003 FR-007.
+    # See .specify/specs/003-analyst-contrarian-gate/spec.md.
+    "contrarian_gate_mode": "off",  # "off" | "shadow" | "active"
+    "contrarian_gate_threshold": 80,  # percentile threshold
+    "contrarian_gate_target": "hold",  # "hold" | "underweight"
+    "contrarian_gate_signal": "market_report",  # pluggable per spec User Story 4
+    "contrarian_gate_feature": "bull_keyword_count",  # pluggable per spec User Story 4
     # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
     # (str). When set, the framework instantiates a per-bot client for that
     # model using the configured llm_provider; bots not in this dict use the

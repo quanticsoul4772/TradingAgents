@@ -146,6 +146,42 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
                     exc,
                 )
 
+        # Spec 003: analyst-stage contrarian gate. When active, downgrades
+        # Buy/Overweight commits to Hold (or UW per target) if the market
+        # analyst's bull_keyword_count percentile crosses the threshold.
+        # Default "off" => no annotation, no override. See
+        # .specify/specs/003-analyst-contrarian-gate/spec.md.
+        contrarian_gate_dict: dict | None = None
+        try:
+            from tradingagents.signals.contrarian_gate import ContrarianGate
+
+            gate = ContrarianGate(get_config())
+            pre_gate_rating = parse_rating(final_trade_decision)
+            annotation = gate.compute_annotation(
+                ticker=state["company_of_interest"],
+                market_report_text=state.get("market_report", ""),
+                pm_rating=pre_gate_rating,
+            )
+            modified_decision, gate_fired = gate.maybe_override_decision(
+                final_trade_decision, annotation
+            )
+            final_trade_decision = modified_decision
+            post_gate_rating = parse_rating(final_trade_decision)
+            contrarian_gate_dict = annotation.to_dict() | {
+                "gate_fired": gate_fired,
+                "pm_rating_pre_gate": pre_gate_rating,
+                "pm_rating_post_gate": post_gate_rating,
+            }
+        except Exception as exc:
+            # Never let gate failure break the PM pipeline.
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "contrarian_gate: unexpected failure in PM hook (%s); "
+                "proceeding with unmodified decision",
+                exc,
+            )
+
         new_risk_debate_state = {
             "judge_decision": final_trade_decision,
             "history": risk_debate_state["history"],
@@ -159,9 +195,12 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
             "count": risk_debate_state["count"],
         }
 
-        return {
+        result: dict = {
             "risk_debate_state": new_risk_debate_state,
             "final_trade_decision": final_trade_decision,
         }
+        if contrarian_gate_dict is not None:
+            result["contrarian_gate"] = contrarian_gate_dict
+        return result
 
     return portfolio_manager_node
