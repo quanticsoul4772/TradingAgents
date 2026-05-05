@@ -1,6 +1,6 @@
 # Scaffolding plan for tradingagents-lab
 
-**Status**: INSTALLED 2026-05-01 → 2026-05-03 evening (cost-tier scaffolding added) → 2026-05-04 (Spec 001 Phases 1-5 + Spec 002 Phases 0-2.5 implemented; live-validated). spec-kit at `.specify/`, ruff + mypy + pre-commit all wired, 785 tests passing, Constitution v1.2.2.
+**Status**: INSTALLED 2026-05-01 → 2026-05-03 (cost-tier ladder) → 2026-05-04 (Spec 001 Phases 1-5 + Spec 002 Phases 0-2.5 implemented + live-validated) → 2026-05-05 (Spec 003 contrarian gate Phases 1+2 + SC-001 + SC-002 validated; finding #4 four-line-evidence convergence). spec-kit at `.specify/`, ruff + mypy + pre-commit all wired, 825 tests passing, Constitution v1.2.2.
 **Date**: 2026-05-01 (original); see CHANGELOG.md for installation history
 **Companion docs**: `EXPERIMENT.md` (what we're building toward), `MULTI_AGENT_DEBATE_RESEARCH.md` (strategic context, superseded by `ROADMAP.md`)
 

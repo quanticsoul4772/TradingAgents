@@ -194,7 +194,7 @@ Get a key from https://dashboard.exa.ai/api-keys. Free tier is ~1000 calls/month
 
 **Tests** —
 ```bash
-pytest                                  # full suite (placeholder API keys auto-injected) — currently 785 passing
+pytest                                  # full suite (placeholder API keys auto-injected) — currently 825 passing
 pytest -m unit                          # fast subset
 pytest tests/test_checkpoint_resume.py  # one file
 ```

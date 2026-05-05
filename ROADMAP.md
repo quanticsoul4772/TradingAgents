@@ -1,6 +1,6 @@
 # ROADMAP — TradingAgents-lab
 
-_Forward-looking exploration map. Updated 2026-05-04 late-evening (post-Spec 001 Phase 4 live-validation, post-3-period NVDA cross-validation, post-Phase D substrate exploration)._
+_Forward-looking exploration map. Updated 2026-05-05 (post-Spec 003 contrarian gate Phases 1+2 + SC-001 + SC-002 validation, post-finding-#4 four-line-evidence convergence, post-counterfactual-auto-analysis wiring)._
 
 This is a research playground, not a product. The roadmap is directions for exploration, not delivery milestones. Per Constitution Principle V ("Steal Liberally"), cross-pollination from sibling projects in the portfolio is a primary driver — many ideas listed here originate elsewhere.
 
@@ -8,30 +8,40 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 
 ---
 
-## Current state (2026-05-04 late-evening)
+## Current state (2026-05-05)
 
-- **22 completed experiments** + cross-experiment horizon sweep + 3-period NVDA cross-validation + per-ticker breakdown + A1/A3 diagnostics + A3 forensics + Phase D substrate exploration + Phase C reasoning_evidence wiring + Spec 002 signal-lifecycle (Phases 0-2.5) + Spec 001 bots-architecture (Phases 1-5)
-- A3 mean-reversion suppression filter productionized (`tradingagents/agents/utils/momentum_filter.py`, gated by `config["uw_momentum_filter_threshold"]`); validated as correctly inert on regime-mismatch failures (007 INTC half)
-- Constitution **v1.2.2** with Principle VII (Calibrated Abstention is a Valid Output) + Replicability-scope (bucket vs date) + Cross-period-scope (realized α is period-conditional unless multi-period validated) clarifications
-- Cost-tier ladder shipped (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100); end-to-end exercised on 008
-- **785 tests passing** (was 501) — Spec 002 signal-lifecycle + Spec 001 Phases 1-5 added; routing-mismatch regression test still in place
-- **Load-bearing claim recovered post-NVDA-Q3**: framework's Buy/OW commits at 21d show **+1.23% α (n=71, ~61% hit)** — POSITIVE AT MODERATE CONFIDENCE. Three-period NVDA: Q3 2025 +0.80% (60% hit), Q4 2025 -0.47% (22% hit), Q1 2026 ~+3.5% (~80% hit). 2 of 3 periods positive. Reasoning_evidence Bayesian posterior trajectory: 0.64 → 0.52 → **0.63** (recovered)
-- UW failure mode is **regime-asymmetric, not uniformly anti-calibrated** — UW on bear-correct tickers directionally appropriate; UW on bull-regime tickers drives aggregate anti-calibration
-- **Phase D substrate finding**: framework went 30pp more Hold-heavy on XLK vs same-date NVDA — decision architecture portable across substrates; commit calibration single-stock-prompt-tuned
-- **Spec 001 Phase 4 live-validated**: `bot_models = {bot_id: model_name}` per-bot LLM routing works end-to-end against real Anthropic; wrapper-vs-LLM bug caught by integration tests before live propagate spent money
-- **No experiments running** — most recent: experiment 007 Phase 4 smoke (Scenario A clean)
+- **24 completed experiments** + cross-experiment horizon sweep + 3-period NVDA cross-validation + per-ticker breakdown + A1/A3 diagnostics + A3 forensics + Phase D substrate exploration + Phase C reasoning_evidence wiring + Spec 002 signal-lifecycle (Phases 0-2.5) + Spec 001 bots-architecture (Phases 1-5) + **Spec 003 contrarian gate (Phases 1+2 + SC-001 + SC-002 validated)**
+- A3 mean-reversion suppression filter productionized; validated as correctly inert on regime-mismatch failures (007 INTC half)
+- **Spec 003 contrarian gate productionized** (`tradingagents/signals/contrarian_gate.py`, default `contrarian_gate_mode = "off"`); SC-001 + SC-002 validated; combined fire rate 7.7% across 26 N≥20-eligible propagates from retrospective + SC-002 fresh data
+- Constitution **v1.2.2** with Principle VII (Calibrated Abstention is a Valid Output) + Replicability-scope + Cross-period-scope clarifications
+- Cost-tier ladder shipped; end-to-end exercised on 008
+- **825 tests passing** (was 501 → 785 → 825) — added Spec 003 (30 tests) + within-ticker IC methodology (8 tests) + counterfactual-integration contract (2 tests)
+- **Load-bearing claim recovered post-NVDA-Q3**: framework's Buy/OW commits at 21d show **+1.23% α (n=71, ~61% hit)** — POSITIVE AT MODERATE CONFIDENCE. Bayesian posterior 0.64 → 0.52 → **0.63** (recovered after Q3 2-of-3 periods positive)
+- UW failure mode is **regime-asymmetric, not uniformly anti-calibrated**
+- **Phase D substrate finding**: decision architecture portable across substrates; commit calibration single-stock-prompt-tuned
+- **Finding #4 four-line-evidence convergence**: market_report bull_keyword_count anti-predicts within-ticker α at 90d. (a) corpus IC -0.49, (b) strict-prior IC -0.49 (look-ahead ruled out), (c) within-bullish-subset IC -0.42, (d) SC-002 fresh-data reproduction -0.30. **First validated within-ticker predictor in the corpus.**
+- **No experiments running** — most recent: experiment `2026-05-05-002-spec003-sc002` (25 propagates, SC-002 borderline-validated)
 
 ---
 
-## Active branch — Spec 001 Phase 4 landed, infrastructure complete (2026-05-04 late-evening)
+## Active branch — Spec 003 contrarian gate validated (2026-05-05)
 
-**Most recent shipping work**:
-- **Spec 001 Phase 4 (per-bot LLM model routing)**: `BotLLMFactory` shipped + wrapper-vs-LLM bug caught by integration tests + live-validated by experiment `2026-05-04-007-phase4-bot-models-smoke` (NVDA Q1 2026, market analyst on Sonnet, all other bots on defaults; clean Scenario A). Operator can now mix models per bot via `config["bot_models"]`.
-- **Spec 001 Phases 1, 2, 3, 5**: Shadow aggregator (42.3% direction match — fails SC-001), weight tuning (overfits, train +0.079 → test -0.062), convergence shortcut (0% fires at spec defaults), opt-in bots-mode wired. Honest "this approach has limited ceiling" findings logged.
-- **Spec 002 Phases 0-2.5**: signal registry + SQLite cache + 14 featurizers (sentiment, bull/bear keywords + bigrams, hedge density, conviction, numeric mentions, percent/dollar mentions, etc.) + drift detection + counterfactual analysis + multi-horizon evaluation (5d/10d/21d/90d). 740 backfilled cache rows from existing state logs.
-- **Phase D substrate exploration**: XLK Q1 2026 (Scenario B — substrate-different commit behavior), multi-sector Phase D, XLE Q4 2025 micro. Decision architecture portable; commit calibration substrate-specific.
-- **Phase C reasoning_evidence wiring**: `tradingagents/agents/utils/second_opinion.py` ships with asymmetric handling per Q5 (agreement → augment, disagreement → flag for review). Default disabled; ~$0.10/run forward when enabled.
-- **NVDA Q3 2025 cross-period micro** (experiment 001): Scenario A — posterior recovers from 0.52 to 0.63 after 2-of-3 periods positive.
+**Most recent shipping work (2026-05-05 day-long burst)**:
+- **Spec 003 contrarian gate (analyst-stage contrarian gate, Phases 1+2 implemented + SC-001 + SC-002 validated)**:
+  - Empirically motivated by finding #4 (market_report bull_keyword_count anti-predicts within-ticker α at 90d)
+  - `tradingagents/signals/contrarian_gate.py`: per-ticker percentile baseline + active-mode rating override (Buy/OW → Hold)
+  - 30 unit tests + experiment 001 SC-001 smoke (NVDA 2026-01-30, gate annotation captured cleanly) + experiment 002 SC-002 (25 propagates × 5 tickers, median bullish-subset IC -0.301 met threshold)
+  - Combined fire rate 7.7% across 26 N≥20-eligible propagates from retrospective + SC-002. Gate is selective by design.
+- **Finding #4 mechanism + caveats fully resolved**:
+  - Mechanism: recency + mean-reversion (analyst's bullish prose tracks recent strength, which mean-reverts)
+  - Look-ahead bias ruled out (strict-prior IC = -0.49 ≈ original -0.49)
+  - Within-bullish-subset transfer confirmed (IC = -0.42)
+  - SC-002 fresh-data reproduction at -0.301 (4 of 5 tickers direction-agree)
+  - XLF/XLK identified as degenerate-window (sector ETFs with low-N + low-prior-α-variance); excluded from validation grid
+- **Methodology contributions**:
+  - Within-ticker IC column wired into `scripts/evaluate_signals.py` with auto-flagged Simpson's-paradox marker
+  - Counterfactual auto-analysis wired into `scripts/analyze_backtest.py` (per spec 002 Phase 2)
+  - `fetch_returns` calendar-buffer fix (`int(holding_days * 1.5) + 7`) — old `holding_days + 7` truncated 90d windows to ~50 trading days
 
 **No experiment currently selected**. Possible next directions per the open questions table below.
 

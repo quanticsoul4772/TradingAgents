@@ -4,7 +4,7 @@ Personal copy of [TauricResearch/TradingAgents](https://github.com/TauricResearc
 
 ## Headline finding
 
-After 22 experiments + cross-experiment horizon sweep + per-ticker breakdown + Opus 4.7 model swap (NVDA + AAPL) + Opus 30-pair mixed basket (Q1 2026) + 3-period NVDA cross-validation (Q1 2026 + Q4 2025 + Q3 2025) + Phase D substrate exploration (XLK + multi-sector + XLE) + A3 filter forensics + Spec 002 signal-lifecycle pipeline + Spec 001 bots-architecture (Phases 1-5):
+After 24 experiments + cross-experiment horizon sweep + per-ticker breakdown + Opus 4.7 model swap (NVDA + AAPL) + Opus 30-pair mixed basket (Q1 2026) + 3-period NVDA cross-validation (Q1 2026 + Q4 2025 + Q3 2025) + Phase D substrate exploration (XLK + multi-sector + XLE) + A3 filter forensics + Spec 002 signal-lifecycle pipeline + Spec 001 bots-architecture (Phases 1-5) + Spec 003 analyst-stage contrarian gate (Phases 1+2 implemented + SC-001 + SC-002 validated):
 
 **At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) produce +1.23% mean alpha across n=71 commits (~61% hit rate) — POSITIVE AT MODERATE CONFIDENCE.** Three-period NVDA cross-validation: Q3 2025 +0.80% (n=10, 60% hit), Q4 2025 -0.47% (n=9, 22% hit), Q1 2026 ~+3.5% blended (n=15, ~80% hit). Two of three periods positive — **Q4 2025 is the negative outlier, not Q1 2026 as 008 alone suggested**. **Reasoning_evidence Bayesian posterior on "stable cross-period signal" trajectory: 0.64 → 0.52 → 0.63** (recovered after Q3 evidence). Bearish commits are **regime-asymmetric, not uniformly anti-calibrated**: UW on bear-correct tickers are directionally appropriate; UW on bull-regime tickers drive the aggregate anti-calibration. Hold ≈ 0% median at every horizon. **Mode-collapse direction is a function of (model × ticker × regime × prompt)**: Sonnet over-abstains on bull tickers + over-commits-bearish on bear tickers; Opus discriminates per-ticker. **Bucket-level claims replicate; date-level and realized-α claims do not.** Phase D substrate test: framework went 30pp more Hold-heavy on XLK vs same-date NVDA — **decision architecture is portable across substrates; commit calibration is substrate-specific (single-stock-prompt-tuned)**.
 
@@ -13,8 +13,8 @@ Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadma
 ## What's local
 
 **Research substrate**
-- `experiments/<YYYY-MM-DD>-NNN-<slug>/` — 22 experiments with HYPOTHESIS / ANALYSIS / PARAMS.json / run.sh (latest: 2026-05-04-007 Phase 4 bot_models live-validation, Scenario A clean smoke)
-- `tradingagents/signals/` — Spec 002 signal-lifecycle pipeline (registry + cache + featurization + drift + counterfactual + multi-horizon evaluation) + Spec 001 bots-architecture (Signal schema, deterministic aggregator, shadow mode, weight tuning, convergence shortcut, per-bot LLM routing). Phases shipped 2026-05-04.
+- `experiments/<YYYY-MM-DD>-NNN-<slug>/` — 24 experiments with HYPOTHESIS / ANALYSIS / PARAMS.json / run.sh (latest: 2026-05-05-002 Spec 003 SC-002 — 25 propagates × 5 tickers, borderline-validated mechanism reproduction)
+- `tradingagents/signals/` — Spec 002 signal-lifecycle pipeline (registry + cache + featurization + drift + counterfactual + multi-horizon evaluation + within-ticker IC) + Spec 001 bots-architecture (Signal schema, deterministic aggregator, shadow mode, weight tuning, convergence shortcut, per-bot LLM routing) + Spec 003 contrarian gate (analyst-stage bullish-suppression filter). All shipped 2026-05-04 / 2026-05-05.
 - `findings.md` — auto-generated per-experiment one-paragraph summaries
 - `RESEARCH_FINDINGS.md` — project-level synthesis across all experiments
 - `ROADMAP.md` — sequenced phases of exploration + cross-pollination ideas
@@ -94,7 +94,7 @@ Seven principles in [`.specify/memory/constitution.md`](.specify/memory/constitu
 
 ## Tests
 
-785 tests, 81%+ coverage as of 2026-05-04. Spec 002 signal-lifecycle (registry + cache + featurization + drift + counterfactual + multi-horizon eval) + Spec 001 bots-architecture (Phases 1-5, including Phase 4 BotLLMFactory live-validated end-to-end).
+825 tests, 81%+ coverage as of 2026-05-05. Spec 002 signal-lifecycle (registry + cache + featurization + drift + counterfactual + multi-horizon eval + within-ticker IC) + Spec 001 bots-architecture (Phases 1-5, Phase 4 BotLLMFactory live-validated) + Spec 003 contrarian gate (Phases 1+2, SC-001 + SC-002 validated).
 
 ```bash
 pytest                # full suite
