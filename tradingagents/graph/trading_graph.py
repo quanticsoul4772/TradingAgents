@@ -49,13 +49,22 @@ def fetch_returns(
 ) -> tuple[float | None, float | None, int | None]:
     """Fetch raw and alpha return for ticker over holding_days from trade_date.
 
+    ``holding_days`` is interpreted as **trading days**. The calendar window
+    fetched from yfinance is ``int(holding_days * 1.5) + 7`` days — the 1.5
+    multiplier accounts for the trading-to-calendar ratio (~252/365 ≈ 1.45)
+    and the +7 covers weekend/holiday edges. The previous ``holding_days + 7``
+    buffer was correct for short windows (5d → 12 calendar days fits 5
+    trading days) but truncated long windows (90d → 97 calendar days only
+    fits ~50 trading days), which materially distorted any IC measurement
+    using ``holding_days >= 30`` — see ``claudedocs/featurizer-artifact-check-2026-05-04.md``.
+
     Returns (raw_return, alpha_return, actual_holding_days) or
     (None, None, None) if price data is unavailable (too recent, delisted,
     or network error).
     """
     try:
         start = datetime.strptime(trade_date, "%Y-%m-%d")
-        end = start + timedelta(days=holding_days + 7)  # buffer for weekends/holidays
+        end = start + timedelta(days=int(holding_days * 1.5) + 7)
         end_str = end.strftime("%Y-%m-%d")
 
         stock = yf.Ticker(ticker).history(start=trade_date, end=end_str)

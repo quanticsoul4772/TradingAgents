@@ -2,6 +2,8 @@
 
 _Generated 2026-05-04T23:08:07+00:00._
 
+> ⚠️ **Superseded by `claudedocs/signal-evaluation-2026-05-05-buffer-fix.md`** (2026-05-05). The "90d horizon" column in this report was actually computed over ~50 trading days due to a `fetch_returns` buffer bug (`holding_days+7` calendar-day window only fits ~50 trading days at the 90d setting). Fixed in commit pending; rerun report at true 90 trading days has the correct numbers. Top-4 IC patterns + signs are robust to the fix; magnitudes shifted by <0.03. See `claudedocs/buffer-fix-comparison-2026-05-05.md` for the delta analysis.
+
 Horizons: **5d, 10d, 21d, 90d**. Total cached rows analyzed: **749**. Signals: **14**.
 
 ## Per-signal IC across horizons (Phase 1: numeric signals)
