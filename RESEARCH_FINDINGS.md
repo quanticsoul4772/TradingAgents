@@ -1,6 +1,6 @@
 # RESEARCH_FINDINGS — TradingAgents-lab milestone
 
-_Aggregated 2026-05-04 across 17 experiments + cross-experiment horizon sweep + counterfactual analysis + A3 forensics + 2 reasoning_evidence Bayesian updates + Phase D substrate exploration. For per-experiment summaries see `findings.md`. Latest experiments: `experiments/2026-05-04-001-nvda-q3-2025-micro/` (NVDA Q3 2025 cross-period micro-pilot — Scenario A, posterior recovers) and `experiments/2026-05-04-002-xlk-q1-2026-substrate/` (Phase D sector-ETF substrate test — Scenario B, substrate-different commit behavior)._
+_Aggregated 2026-05-04 across 22 experiments + cross-experiment horizon sweep + counterfactual analysis + A3 forensics + 3 reasoning_evidence Bayesian updates + Phase D substrate exploration + Spec 002 signal-lifecycle Phases 0-2.5 + Spec 001 bots-architecture Phases 1-5 (including Phase 4 live-validated). For per-experiment summaries see `findings.md`. Latest experiments: `experiments/2026-05-04-001-nvda-q3-2025-micro/` (NVDA Q3 2025 cross-period micro-pilot — Scenario A, posterior recovers), `experiments/2026-05-04-002-xlk-q1-2026-substrate/` (Phase D sector-ETF substrate test — Scenario B), and `experiments/2026-05-04-007-phase4-bot-models-smoke/` (Spec 001 Phase 4 live propagate validation — Scenario A)._
 
 ## Headline (revised after 3-period NVDA cross-validation + Phase D substrate test)
 

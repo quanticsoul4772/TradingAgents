@@ -1,6 +1,6 @@
 # ROADMAP — TradingAgents-lab
 
-_Forward-looking exploration map. Updated 2026-05-03 late-evening (post-008 — Scenario C, signal period-conditional)._
+_Forward-looking exploration map. Updated 2026-05-04 late-evening (post-Spec 001 Phase 4 live-validation, post-3-period NVDA cross-validation, post-Phase D substrate exploration)._
 
 This is a research playground, not a product. The roadmap is directions for exploration, not delivery milestones. Per Constitution Principle V ("Steal Liberally"), cross-pollination from sibling projects in the portfolio is a primary driver — many ideas listed here originate elsewhere.
 
@@ -8,66 +8,56 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 
 ---
 
-## Current state (2026-05-03 late-evening)
+## Current state (2026-05-04 late-evening)
 
-- **15 completed experiments** + cross-experiment horizon sweep + Q4 per-ticker breakdown + A1 debate-quality diagnostic + A3 retrospective filter + A3 forensics on 007 + reasoning_evidence Bayesian update post-008
+- **22 completed experiments** + cross-experiment horizon sweep + 3-period NVDA cross-validation + per-ticker breakdown + A1/A3 diagnostics + A3 forensics + Phase D substrate exploration + Phase C reasoning_evidence wiring + Spec 002 signal-lifecycle (Phases 0-2.5) + Spec 001 bots-architecture (Phases 1-5)
 - A3 mean-reversion suppression filter productionized (`tradingagents/agents/utils/momentum_filter.py`, gated by `config["uw_momentum_filter_threshold"]`); validated as correctly inert on regime-mismatch failures (007 INTC half)
 - Constitution **v1.2.2** with Principle VII (Calibrated Abstention is a Valid Output) + Replicability-scope (bucket vs date) + Cross-period-scope (realized α is period-conditional unless multi-period validated) clarifications
 - Cost-tier ladder shipped (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100); end-to-end exercised on 008
-- 501 tests passing (was 466) — includes regression guard for the routing-mismatch class of bug exposed by 008 v1
-- **Load-bearing claim revised post-008**: framework's Buy/OW commits at 21d show **+1.30% α (n=61, ~61% hit)** — POSITIVE BUT PERIOD-CONDITIONAL. Q1 2026 cohort (n=50) showed +1.99%; Q4 2025 cohort (n=11) showed -1.81%. Reasoning_evidence Bayesian posterior on stable-cross-period-signal: 0.64 → 0.52
+- **785 tests passing** (was 501) — Spec 002 signal-lifecycle + Spec 001 Phases 1-5 added; routing-mismatch regression test still in place
+- **Load-bearing claim recovered post-NVDA-Q3**: framework's Buy/OW commits at 21d show **+1.23% α (n=71, ~61% hit)** — POSITIVE AT MODERATE CONFIDENCE. Three-period NVDA: Q3 2025 +0.80% (60% hit), Q4 2025 -0.47% (22% hit), Q1 2026 ~+3.5% (~80% hit). 2 of 3 periods positive. Reasoning_evidence Bayesian posterior trajectory: 0.64 → 0.52 → **0.63** (recovered)
 - UW failure mode is **regime-asymmetric, not uniformly anti-calibrated** — UW on bear-correct tickers directionally appropriate; UW on bull-regime tickers drives aggregate anti-calibration
-- **No experiments running** — 008 landed at 30/30 0 errors
+- **Phase D substrate finding**: framework went 30pp more Hold-heavy on XLK vs same-date NVDA — decision architecture portable across substrates; commit calibration single-stock-prompt-tuned
+- **Spec 001 Phase 4 live-validated**: `bot_models = {bot_id: model_name}` per-bot LLM routing works end-to-end against real Anthropic; wrapper-vs-LLM bug caught by integration tests before live propagate spent money
+- **No experiments running** — most recent: experiment 007 Phase 4 smoke (Scenario A clean)
 
 ---
 
-## Active branch — 008 landed, Scenario C reframe (2026-05-03 late-evening)
+## Active branch — Spec 001 Phase 4 landed, infrastructure complete (2026-05-04 late-evening)
 
-**008 (Opus cross-period validation Q4 2025)** — landed:
-- 30/30, 0 errors, 252.6 min, $30 (Principle III T3 ceiling)
-- Distribution: 11 OW + 15 Hold + 4 UW. Per-ticker 9/1/0 (NVDA), 2/7/1 (AAPL), 0/7/3 (INTC)
-- **Bull signal flipped sign cross-period**: OW 21d α = -1.81% n=11, 45% hit (vs 007's +3.05% n=8, 75% hit). Per-ticker: NVDA OW -0.47%, AAPL OW -7.81%
-- **No horizon emergence** — OW hit pattern 5d/10d/21d = 55→27→45% (vs 007's 56→67→75% climb)
-- What replicates: per-ticker bucket distribution (NVDA 90% vs 60% OW, both >50%; AAPL 70% Hold = 70% Hold)
-- What does NOT replicate: realized α direction. INTC pattern shifted (30% UW vs 60%) because Q4 2025 INTC wasn't bear-leaning
-- **Decision: Scenario C** per HYPOTHESIS tree — major reframe applied:
-  - RESEARCH_FINDINGS softened ("period-conditional" not "stable")
-  - Empirical core table updated: OW 21d n=50 +1.99% → n=61 +1.30%
-  - Constitution v1.2.1 → v1.2.2 with Cross-period scope clarification
-  - Project status reframed: discrimination behavior robust; realized-α period-conditional
-- Reasoning_evidence Bayesian update on "stable cross-period signal": prior 0.64, likelihood ratio 0.6, posterior 0.52 — roughly even odds
+**Most recent shipping work**:
+- **Spec 001 Phase 4 (per-bot LLM model routing)**: `BotLLMFactory` shipped + wrapper-vs-LLM bug caught by integration tests + live-validated by experiment `2026-05-04-007-phase4-bot-models-smoke` (NVDA Q1 2026, market analyst on Sonnet, all other bots on defaults; clean Scenario A). Operator can now mix models per bot via `config["bot_models"]`.
+- **Spec 001 Phases 1, 2, 3, 5**: Shadow aggregator (42.3% direction match — fails SC-001), weight tuning (overfits, train +0.079 → test -0.062), convergence shortcut (0% fires at spec defaults), opt-in bots-mode wired. Honest "this approach has limited ceiling" findings logged.
+- **Spec 002 Phases 0-2.5**: signal registry + SQLite cache + 14 featurizers (sentiment, bull/bear keywords + bigrams, hedge density, conviction, numeric mentions, percent/dollar mentions, etc.) + drift detection + counterfactual analysis + multi-horizon evaluation (5d/10d/21d/90d). 740 backfilled cache rows from existing state logs.
+- **Phase D substrate exploration**: XLK Q1 2026 (Scenario B — substrate-different commit behavior), multi-sector Phase D, XLE Q4 2025 micro. Decision architecture portable; commit calibration substrate-specific.
+- **Phase C reasoning_evidence wiring**: `tradingagents/agents/utils/second_opinion.py` ships with asymmetric handling per Q5 (agreement → augment, disagreement → flag for review). Default disabled; ~$0.10/run forward when enabled.
+- **NVDA Q3 2025 cross-period micro** (experiment 001): Scenario A — posterior recovers from 0.52 to 0.63 after 2-of-3 periods positive.
 
-**Next experiment selected**: third cross-period at **smaller scale (T2 ~$10)** to disambiguate which of Q1 2026 / Q4 2025 is the outlier.
-- Same NVDA + AAPL + INTC × 10 weekly Fridays grid
-- Q3 2025 dates (e.g., 2025-08-01 → 2025-10-10)
-- Same config as 007 + 008 (Opus + Haiku + A3 + exa + 3 analysts + 1 round)
-- T2 (~$10), no Cost-Justification scaffold required
-- **If Q3 2025 OW α positive**: Q4 2025 was the outlier; load-bearing claim recovers; posterior climbs back toward 0.64
-- **If Q3 2025 OW α negative**: Q1 2026 was the outlier; load-bearing claim further weakens; framework's commit-direction skill is essentially absent (calibrated abstention remains the load-bearing principle)
-- **If Q3 2025 OW α near zero**: signal is genuinely period-randomly-distributed around ~0; signal claim should be retired
+**No experiment currently selected**. Possible next directions per the open questions table below.
 
 ---
 
 ## Sequenced phases of exploration (post-Opus)
 
-### Phase B — out-of-sample validation (priorities reordered post-008)
+### Phase B — out-of-sample validation (priorities reordered post-Q3-recovery)
 
-After 008 the load-bearing claim is reframed as period-conditional. Phase B priorities now:
+After NVDA Q3 2025 the load-bearing claim recovers (2 of 3 periods positive; posterior 0.52 → 0.63). Phase B priorities now:
 
 - **B-priority 1 — A3 filter forensics**: **DONE** (`claudedocs/a3-filter-forensics-007.md`). Filter validated as correctly inert on the regime-mismatch failure mode; no tuning needed from 007 evidence.
 - **B-priority 2 — cross-period validation**: **DONE as experiment 008**. Result: Scenario C (signal collapses on shifted period). Bayesian posterior 0.64 → 0.52. Reframe applied to RESEARCH_FINDINGS + Constitution v1.2.2.
-- **B-priority 2b — third cross-period (Q3 2025) at T2 ~$10**: **PROMOTED to next**. Disambiguates which of Q1 2026 / Q4 2025 is the outlier. Three-way comparison Q3'25 vs Q4'25 vs Q1'26 produces the cleanest update yet on the period-conditional claim.
+- **B-priority 2b — third cross-period (Q3 2025) at T2 ~$10**: **DONE as experiment `2026-05-04-001-nvda-q3-2025-micro`**. Result: Scenario A — posterior climbs back to 0.63. Q4 2025 confirmed as the outlier; Q1 2026 is consistent with Q3 2025.
 - **B-priority 3 — bear-correct ticker pilot (XOM, PFE)**: lower priority. Adds fresh bear-side data points but doesn't directly address the load-bearing period-conditional question. ($15, ~12h, T2)
 - **B-priority 4 — same-date rerun-variance quantification**: 005-vs-007 NVDA non-replication suggests rerun variance is non-trivial. n=3 reps on the same 10 NVDA dates with current config would quantify the bucket-ratio variance bands. ($15, ~12h, T2 — would be the formal evidence backing Constitution VII Replicability-scope clarification)
-- **B-priority 5 — model-swap matrix**: Sonnet vs Opus vs GPT-5.4 vs Gemini 3.x on the same grid. Tests whether the period-conditional realized α is a model property or a substrate property (does Sonnet show the same Q1-vs-Q4 sign flip?). ($20-40, T2/T3)
+- **B-priority 5 — model-swap matrix**: Sonnet vs Opus vs GPT-5.4 vs Gemini 3.x on the same grid. Tests whether the period-conditional realized α is a model property or a substrate property (does Sonnet show the same Q1-vs-Q4 sign flip?). Now also enabled by Spec 001 Phase 4 per-bot routing — could mix models within a single grid. ($20-40, T2/T3)
+- **B-priority 6 (new) — Phase 4 cost-tier validation**: matched-baseline n=10+ run with `bot_models` set to bump `fundamentals` (heaviest analyst) → Opus while keeping the rest on Haiku. Tests whether per-bot model swaps shift rating distribution beyond known mode-collapse behavior. Phase 4 is wired and live-validated at n=1; the cost-savings story needs n≥10 to characterize. ($5-10, T2)
 
 ### Phase C — operational integration
 
 The framework currently outputs ratings. With the A3 filter wired in, it could output more:
 
-- **`reasoning_evidence` second-opinion in PortfolioManager** with asymmetric handling per Q5 (agreement → augment confidence, disagreement → flag for review). Per the divergent analysis, must be designed to fail gracefully when the reasoning service is down. (4-6h, $0.10/run forward)
+- **`reasoning_evidence` second-opinion in PortfolioManager** with asymmetric handling per Q5 (agreement → augment confidence, disagreement → flag for review). **DONE as `tradingagents/agents/utils/second_opinion.py`** + 29 unit tests + Phase C smoke test (`experiments/2026-05-04-005-phase-c-smoke-test/`). Default disabled; opt-in via `config["second_opinion_enabled"] = True`. ~$0.10/run forward when enabled.
 - **Bias auditor** running `reasoning_detect` over saved bull/bear debates — produces a per-experiment bias profile (confirmation, anchoring, recency, overconfidence). Validates A1's hedge-words finding programmatically. (2-4h)
-- **Counterfactual analyzer** running `reasoning_counterfactual` on Hold-α extreme dates as part of every analysis pass — auto-builds the "what if framework had committed?" narrative for FINDINGS. (1-2h)
+- **Counterfactual analyzer** running `reasoning_counterfactual` on Hold-α extreme dates as part of every analysis pass — auto-builds the "what if framework had committed?" narrative for FINDINGS. **PARTIAL** — `tradingagents/signals/counterfactual.py` (Spec 002 Phase 2) ships `run_counterfactual` + `hold_all_uw` / `hold_all_ow` / `invert_all_commits` but is not yet wired into per-experiment auto-analysis. (1-2h to wire)
 
 ### Phase D — substrate exploration (different problems, same framework)
 
@@ -139,15 +129,16 @@ These need new experiments to answer; no amount of analysis on existing CSVs wil
 
 | Question | Proposed experiment | Cost | Status |
 |---|---|---|---|
-| Does the 21d bull lift hold at n=100+? | Q3 2025 third cross-period (T2 $10) → if positive, posterior recovers; one more pass = n=80+ | $30 | **partial — n=61 cross-period evidence; signal +1.30% but period-conditional** |
-| Is the lift period-specific or persistent across calendar windows? | 008 done: Q1 2026 + Q4 2025 cohorts split sign. Q3 2025 third pass would disambiguate. | $10 | **partial-resolved** — 008 says period-conditional; need 3rd period to confirm |
-| Is the lift ticker-class specific (mega-cap tech vs others)? | Sector-stratified pilot | $20 | open |
+| Does the 21d bull lift hold at n=100+? | Q3 2025 third cross-period (T2 $10) → if positive, posterior recovers | $30 | **partial-resolved — n=71 cross-period evidence; +1.23% mean α; 2-of-3 periods positive; posterior 0.63** |
+| Is the lift period-specific or persistent across calendar windows? | 008 + Q3 micro done: Q1 2026 + Q3 2025 positive, Q4 2025 negative outlier. | $10 + $5 | **resolved (3-period)** — moderately period-stable; Q4 2025 is the outlier |
+| Is the lift ticker-class specific (mega-cap tech vs others)? | Sector-stratified pilot — Phase D XLK + multi-sector + XLE done | $20 | **partial** — Phase D shows decision architecture portable, calibration substrate-specific |
 | Does the A3 filter generalize off-sample? | Already validated by 007 forensics for regime-mismatch case; off-sample mean-reversion test still open | $10 | **partial** |
-| Does Opus / GPT-5.4 / Gemini 3.x show the same 21d shape? | Model-swap matrix | $20-40 | partial — Sonnet + Opus done, others open |
+| Does Opus / GPT-5.4 / Gemini 3.x show the same 21d shape? | Model-swap matrix — now enabled by Spec 001 Phase 4 per-bot routing | $20-40 | partial — Sonnet + Opus done, others open |
 | Is the bear-correct-ticker UW signal robust beyond AAPL + INTC? | XOM or PFE 10-date pilot | $15 | open (B-priority 3) |
-| Does the framework predict longer horizons (60/90d) where 5d failed and 21d worked? | Re-aggregate current data + extend window with future price data (60-day wait) | $0 + time | open |
+| Does the framework predict longer horizons (60/90d) where 5d failed and 21d worked? | Re-aggregate current data + extend window with future price data (60-day wait) | $0 + time | **partial** — Spec 002 Phase 1.5+ multi-horizon eval (5d/10d/21d/90d) shipped; bear_bigram_count IC = +0.457 at 90d |
 | Does same-prompt rerun-variance dominate the signal at the date level? | n=3 reps on the existing 10 NVDA dates with current config — formalizes the 005-vs-007 finding | $15 | open (B-priority 4) |
-| Does spec 002 (signal-lifecycle) IC measurement reveal which signals are noise? | Build signal-lifecycle pipeline + run on saved state logs | $0 build + $0 run | open (~1 week build) |
+| Does spec 002 (signal-lifecycle) IC measurement reveal which signals are noise? | Build signal-lifecycle pipeline + run on saved state logs | $0 build + $0 run | **resolved** — Spec 002 Phases 0-2.5 shipped; first IC measurement: final_trade_decision IC = -0.172 at 21d, n=153; strongest IC: bear_bigram_count = +0.457 at 90d |
+| Does per-bot LLM model routing (Spec 001 Phase 4) shift rating distribution beyond mode-collapse? | n=10+ matched-baseline run with `bot_models = {"fundamentals": "claude-opus-4-7"}` | $5-10 | open (B-priority 6, new) |
 
 ---
 
