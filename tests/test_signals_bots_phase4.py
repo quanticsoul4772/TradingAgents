@@ -66,9 +66,13 @@ def test_factory_handles_none_bot_models():
 
 
 def test_factory_builds_client_when_bot_has_override():
-    """A bot with an entry in bot_models gets a custom client built."""
+    """A bot with an entry in bot_models gets a custom client built;
+    the factory returns the unwrapped LangChain LLM (the result of
+    ``.get_llm()``), not the BaseLLMClient wrapper."""
     quick = MagicMock(name="default_quick")
+    fake_llm = MagicMock(name="fake_haiku_llm")
     fake_client = MagicMock(name="fake_client_haiku")
+    fake_client.get_llm.return_value = fake_llm
     factory = BotLLMFactory(
         config={
             "bot_models": {"market": "claude-haiku-4-5"},
@@ -82,7 +86,8 @@ def test_factory_builds_client_when_bot_has_override():
         return_value=fake_client,
     ) as mock_create:
         result = factory.get_llm_for_bot("market")
-    assert result is fake_client
+    assert result is fake_llm  # unwrapped LangChain LLM, not the wrapper
+    fake_client.get_llm.assert_called_once()
     mock_create.assert_called_once()
     # Ensure the right (provider, model) were passed
     args, kwargs = mock_create.call_args
@@ -103,17 +108,22 @@ def test_factory_caches_clients_across_bots():
         default_quick_llm=MagicMock(),
         default_deep_llm=MagicMock(),
     )
-    fake_client = MagicMock(name="haiku")
+    fake_llm = MagicMock(name="haiku_llm")
+    fake_client = MagicMock(name="haiku_client")
+    fake_client.get_llm.return_value = fake_llm
     with patch(
         "tradingagents.signals.role_models.create_llm_client",
         return_value=fake_client,
     ) as mock_create:
         client_market = factory.get_llm_for_bot("market")
         client_news = factory.get_llm_for_bot("news")
-    # Same client instance (cache hit)
+    # Same LLM instance (cache hit)
     assert client_market is client_news
+    assert client_market is fake_llm
     # create_llm_client called only ONCE (cached)
     assert mock_create.call_count == 1
+    # And get_llm() was only invoked once on the wrapper (cache works at LLM level)
+    assert fake_client.get_llm.call_count == 1
 
 
 def test_factory_builds_separate_clients_for_different_models():
@@ -128,11 +138,13 @@ def test_factory_builds_separate_clients_for_different_models():
         default_quick_llm=MagicMock(),
         default_deep_llm=MagicMock(),
     )
-    haiku = MagicMock(name="haiku")
-    opus = MagicMock(name="opus")
+    haiku_llm = MagicMock(name="haiku_llm")
+    opus_llm = MagicMock(name="opus_llm")
 
     def fake_create(provider, model, **kwargs):
-        return haiku if "haiku" in model else opus
+        client = MagicMock(name=f"client_{model}")
+        client.get_llm.return_value = haiku_llm if "haiku" in model else opus_llm
+        return client
 
     with patch(
         "tradingagents.signals.role_models.create_llm_client",
@@ -140,8 +152,8 @@ def test_factory_builds_separate_clients_for_different_models():
     ) as mock_create:
         client_market = factory.get_llm_for_bot("market")
         client_fund = factory.get_llm_for_bot("fundamentals")
-    assert client_market is haiku
-    assert client_fund is opus
+    assert client_market is haiku_llm
+    assert client_fund is opus_llm
     assert mock_create.call_count == 2
 
 
@@ -318,7 +330,9 @@ def test_graph_setup_uses_factory_when_provided():
 
     quick = MagicMock(name="default_quick")
     deep = MagicMock(name="default_deep")
-    fake_haiku = MagicMock(name="haiku")
+    fake_haiku_llm = MagicMock(name="haiku_llm")
+    fake_haiku_client = MagicMock(name="haiku_client")
+    fake_haiku_client.get_llm.return_value = fake_haiku_llm
 
     factory = BotLLMFactory(
         config={
@@ -339,13 +353,13 @@ def test_graph_setup_uses_factory_when_provided():
 
     with patch(
         "tradingagents.signals.role_models.create_llm_client",
-        return_value=fake_haiku,
+        return_value=fake_haiku_client,
     ):
         market_llm = setup._llm_for("market")
         news_llm = setup._llm_for("news")
         pm_llm = setup._llm_for("portfolio_manager", role="deep")
 
-    assert market_llm is fake_haiku  # override
+    assert market_llm is fake_haiku_llm  # override (unwrapped)
     assert news_llm is quick  # default
     assert pm_llm is deep  # default deep
 
@@ -367,3 +381,68 @@ def test_graph_setup_uses_defaults_when_factory_none():
     )
     assert setup._llm_for("market") is quick
     assert setup._llm_for("portfolio_manager", role="deep") is deep
+
+
+# ---- Live integration: real create_llm_client (no mocks) -----------------
+#
+# Caught a real wiring bug: prior to this test the factory returned the
+# BaseLLMClient WRAPPER, but analysts call ``llm.bind_tools(tools)`` —
+# a LangChain BaseChatModel API that the wrapper doesn't expose. The
+# unit tests above mocked ``create_llm_client`` and asserted identity
+# against the patched return value, so they passed despite the bug.
+# These integration tests instantiate real provider clients (placeholder
+# API keys from conftest; no network call during construction) and
+# verify the factory returns a usable LangChain LLM.
+
+
+def test_factory_returns_langchain_llm_for_anthropic_real_construction():
+    """Integration: real create_llm_client → real ChatAnthropic exposed."""
+    factory = BotLLMFactory(
+        config={
+            "bot_models": {"market": "claude-haiku-4-5"},
+            "llm_provider": "anthropic",
+        },
+        default_quick_llm=MagicMock(),
+        default_deep_llm=MagicMock(),
+    )
+    llm = factory.get_llm_for_bot("market")
+    # The unwrapped LangChain LLM exposes bind_tools (BaseChatModel API);
+    # the BaseLLMClient wrapper does NOT — this catches the wrapper bug.
+    assert hasattr(llm, "bind_tools"), (
+        f"Factory must return a LangChain ChatModel, got {type(llm).__name__}"
+    )
+    assert hasattr(llm, "invoke")
+
+
+def test_factory_caches_real_anthropic_llm_across_calls():
+    """Integration: same model returned across two get_llm_for_bot calls."""
+    factory = BotLLMFactory(
+        config={
+            "bot_models": {
+                "market": "claude-haiku-4-5",
+                "news": "claude-haiku-4-5",
+            },
+            "llm_provider": "anthropic",
+        },
+        default_quick_llm=MagicMock(),
+        default_deep_llm=MagicMock(),
+    )
+    llm1 = factory.get_llm_for_bot("market")
+    llm2 = factory.get_llm_for_bot("news")
+    assert llm1 is llm2  # cached, single instance shared by both bots
+
+
+def test_factory_returns_langchain_llm_for_openai_real_construction():
+    """Integration: openai provider also returns unwrapped LangChain LLM."""
+    factory = BotLLMFactory(
+        config={
+            "bot_models": {"market": "gpt-5.4-mini"},
+            "llm_provider": "openai",
+        },
+        default_quick_llm=MagicMock(),
+        default_deep_llm=MagicMock(),
+    )
+    llm = factory.get_llm_for_bot("market")
+    assert hasattr(llm, "bind_tools"), (
+        f"Factory must return a LangChain ChatModel, got {type(llm).__name__}"
+    )

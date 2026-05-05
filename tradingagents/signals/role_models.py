@@ -64,8 +64,15 @@ class BotLLMFactory:
         return self._get_or_create_client(model)
 
     def _get_or_create_client(self, model: str) -> Any:
-        """Build (or fetch from cache) an LLM client for ``model`` using the
-        framework's configured provider + endpoint.
+        """Build (or fetch from cache) the unwrapped LangChain LLM for ``model``
+        using the framework's configured provider + endpoint.
+
+        Returns the result of ``BaseLLMClient.get_llm()`` (e.g. a
+        ``ChatAnthropic`` instance) — NOT the ``BaseLLMClient`` wrapper —
+        so callers can invoke LangChain APIs like ``llm.bind_tools(...)``
+        directly. ``TradingAgentsGraph`` follows the same convention for
+        the default quick/deep LLMs (calls ``.get_llm()`` on the default
+        clients before passing them in), so the factory mirrors that.
         """
         provider = self.config.get("llm_provider", "openai")
         key = (provider, model)
@@ -87,7 +94,7 @@ class BotLLMFactory:
                 effort = self.config.get("anthropic_effort")
                 if effort:
                     kwargs["effort"] = effort
-            self._cache[key] = create_llm_client(provider, model, **kwargs)
+            self._cache[key] = create_llm_client(provider, model, **kwargs).get_llm()
             logger.info("BotLLMFactory: instantiated %s/%s for per-bot routing", provider, model)
         return self._cache[key]
 
