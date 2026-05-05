@@ -137,6 +137,17 @@ python scripts/analyze_backtest.py <csv> --holding-days 21 \
 #   no extra yfinance fetches. The --counterfactual-md flag writes
 #   per-rule changed-pairs tables for paste-into-ANALYSIS.md use.
 #   Disable with --skip-counterfactual.
+
+python scripts/daily_signals.py --tickers tickers.txt
+# → Operator-facing daily signals product (2026-05-05 onwards).
+#   Runs propagate(ticker, today) over the watchlist with all empirical
+#   filters ACTIVE by default (A3 momentum filter ON, Spec 003
+#   contrarian gate active mode), writes a markdown digest filtered to
+#   actionable 21d-horizon bullish recommendations. Hold suppressed by
+#   default (calibrated abstention per Constitution VII); pass
+#   --include-all to show Hold/UW/Sell. Pass --shadow-gates to run
+#   gates in observation-only mode. Estimated cost ~$0.40 per ticker
+#   (Opus + Haiku); 5-10 ticker watchlist ≈ $2-4/day.
 ```
 
 **News vendor** (per `--news-vendor`):
