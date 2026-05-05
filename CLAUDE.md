@@ -127,6 +127,16 @@ python scripts/diagnose_uw_quality.py
 python scripts/uw_suppression_filter.py
 # → A3 retrospective: simulates the mean-reversion suppression filter
 #   on historical UW commits. Operates on existing CSVs; $0.
+
+python scripts/analyze_backtest.py <csv> --holding-days 21 \
+    --counterfactual-md <out.md>
+# → Standard analyzer + counterfactual auto-analysis (spec 002 Phase 2
+#   wired into ANALYSIS.md generation). Adds 3 standard counterfactuals
+#   (hold-all-uw, hold-all-ow, invert-all) showing alpha delta vs
+#   actual. Reuses the alpha cache the analyzer already populated;
+#   no extra yfinance fetches. The --counterfactual-md flag writes
+#   per-rule changed-pairs tables for paste-into-ANALYSIS.md use.
+#   Disable with --skip-counterfactual.
 ```
 
 **News vendor** (per `--news-vendor`):

@@ -529,3 +529,52 @@ def test_run_counterfactual_aggregate_stats(monkeypatch):
     assert report.n_changed == 3
     assert report.total_alpha_delta == pytest.approx(5.0 - 3.0 + 2.0)
     assert report.mean_alpha_delta == pytest.approx((5.0 - 3.0 + 2.0) / 3)
+
+
+# ---- analyze_backtest counterfactual integration contract --------------
+
+
+def test_analyzer_row_shape_contract_round_trips_all_5_ratings():
+    """analyze_backtest builds counterfactual rows as `{ticker, date,
+    value: "**Rating**: <rating>"}`. Confirm parse_rating extracts each
+    of the 5 canonical ratings from this exact format — locks in the
+    contract that scripts/analyze_backtest.py depends on."""
+    from tradingagents.agents.utils.rating import parse_rating
+
+    for rating in ["Buy", "Overweight", "Hold", "Underweight", "Sell"]:
+        synthetic = f"**Rating**: {rating}"
+        assert parse_rating(synthetic) == rating, (
+            f"analyze_backtest row-shape contract broke: parse_rating({synthetic!r}) != {rating!r}"
+        )
+
+
+def test_analyzer_counterfactual_uses_pre_seeded_alpha_cache(monkeypatch):
+    """When analyze_backtest pre-populates the alpha cache from its
+    enriched DataFrame, run_counterfactual must not call _compute_alpha
+    again (would re-fetch from yfinance, defeats the cache reuse)."""
+    from tradingagents.signals.counterfactual import hold_all_ow, run_counterfactual
+
+    fetch_count = {"n": 0}
+
+    def _fail_if_fetched(ticker, date, holding_days):
+        fetch_count["n"] += 1
+        return None
+
+    monkeypatch.setattr(
+        "tradingagents.signals.counterfactual._compute_alpha",
+        _fail_if_fetched,
+    )
+
+    rows = [
+        {"ticker": "NVDA", "date": "2026-01-30", "value": "**Rating**: Overweight"},
+        {"ticker": "AAPL", "date": "2026-02-06", "value": "**Rating**: Buy"},
+    ]
+    pre_cache: dict[tuple[str, str, int], float | None] = {
+        ("NVDA", "2026-01-30", 21): 0.05,
+        ("AAPL", "2026-02-06", 21): -0.03,
+    }
+    report = run_counterfactual(rows, hold_all_ow, horizon_days=21, alpha_cache=pre_cache)
+    # No fetches should have happened — both alphas were pre-cached
+    assert fetch_count["n"] == 0
+    # Both rows changed (Overweight → Hold, Buy → Hold)
+    assert report.n_changed == 2
