@@ -42,8 +42,16 @@ from tradingagents.graph.trading_graph import fetch_returns
 from tradingagents.signals.cache import query_all
 from tradingagents.signals.evaluation import _spearman_ic
 from tradingagents.signals.featurization import (
+    bear_bigram_count,
+    bear_keyword_count,
+    bull_bear_keyword_ratio,
+    bull_bigram_count,
     bull_keyword_count,
     hedge_density,
+    negation_aware_sentiment_score,
+    percent_mention_count,
+    question_density,
+    sentiment_score,
 )
 
 HORIZON_DAYS = 90
@@ -52,7 +60,7 @@ N_PERMUTATIONS = 5000
 N_BOOTSTRAPS = 5000
 RANDOM_SEED = 20260505
 
-OUT_PATH = Path("claudedocs/within-ticker-artifact-check-2026-05-05.md")
+OUT_PATH = Path("claudedocs/within-ticker-full-artifact-check-2026-05-05.md")
 
 
 @dataclass(frozen=True)
@@ -65,9 +73,41 @@ class Candidate:
 
 
 CANDIDATES: list[Candidate] = [
+    # Original 3 (already validated 2026-05-05 morning) — kept for re-runs
     Candidate("market_report", "bull_keyword_count", bull_keyword_count, -0.489, (0, 9)),
     Candidate("investment_plan", "bull_keyword_count", bull_keyword_count, -0.295, (1, 8)),
     Candidate("investment_plan", "hedge_density", hedge_density, -0.189, (2, 7)),
+    # 8 new candidates (2026-05-05 evening) — remaining flagged candidates
+    # from claudedocs/signal-evaluation-2026-05-05-within-ticker.md.
+    # Mix of (a) classical Simpson's-paradox cases (aggregate sign disagrees
+    # with within-ticker median sign) and (b) inverse-pattern cases (within-
+    # ticker signal stronger than aggregate suggested).
+    Candidate("fundamentals_report", "sentiment_score", sentiment_score, +0.166, (4, 1)),
+    Candidate(
+        "fundamentals_report",
+        "negation_aware_sentiment_score",
+        negation_aware_sentiment_score,
+        +0.167,
+        (5, 1),
+    ),
+    Candidate(
+        "fundamentals_report",
+        "bull_bear_keyword_ratio",
+        bull_bear_keyword_ratio,
+        +0.166,
+        (4, 1),
+    ),
+    Candidate("fundamentals_report", "bear_keyword_count", bear_keyword_count, -0.014, (3, 3)),
+    Candidate(
+        "fundamentals_report",
+        "percent_mention_count",
+        percent_mention_count,
+        +0.010,
+        (3, 3),
+    ),
+    Candidate("market_report", "question_density", question_density, -0.027, (1, 3)),
+    Candidate("news_report", "bull_bigram_count", bull_bigram_count, -0.269, (2, 7)),
+    Candidate("investment_plan", "bear_bigram_count", bear_bigram_count, -0.262, (2, 7)),
 ]
 
 
