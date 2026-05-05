@@ -506,3 +506,156 @@ def test_evaluate_features_multi_horizon_skips_non_prose():
         [5, 21],
     )
     assert out == []
+
+
+# ---- within-ticker IC summary (artifact-check methodology) ----------------
+
+
+def test_within_ticker_ic_summary_returns_none_when_no_ticker_meets_threshold():
+    from tradingagents.signals.evaluation import _within_ticker_ic_summary
+
+    pairs_by_ticker = {
+        "NVDA": [(1.0, 0.1), (2.0, 0.2)],  # n=2, below default min_n=5
+        "AAPL": [(1.0, 0.05)],  # n=1
+    }
+    assert _within_ticker_ic_summary(pairs_by_ticker) is None
+
+
+def test_within_ticker_ic_summary_computes_median_and_counts():
+    from tradingagents.signals.evaluation import _within_ticker_ic_summary
+
+    # 3 tickers with n>=5; constructed so per-ticker ICs are roughly +1, -1, 0
+    pairs_by_ticker = {
+        "POS": [(i, i + 0.1) for i in range(5)],  # perfectly positive
+        "NEG": [(i, -i + 0.1) for i in range(5)],  # perfectly negative
+        "MIX": [(1, 0.5), (2, 0.3), (3, 0.4), (4, 0.2), (5, 0.6)],  # mostly noise
+    }
+    summary = _within_ticker_ic_summary(pairs_by_ticker)
+    assert summary is not None
+    assert summary["n_tickers_evaluated"] == 3
+    # Median of {+1, -1, ~0} ≈ 0
+    assert -0.5 < summary["median_ic"] < 0.5
+    assert summary["n_positive"] >= 1
+    assert summary["n_negative"] >= 1
+    assert summary["max_abs_ic"] == pytest.approx(1.0, abs=0.01)
+    assert len(summary["per_ticker"]) == 3
+
+
+def test_within_ticker_ic_summary_skips_below_threshold_but_includes_others():
+    from tradingagents.signals.evaluation import _within_ticker_ic_summary
+
+    pairs_by_ticker = {
+        "BIG": [(i, i) for i in range(8)],  # n=8, perfectly correlated
+        "SMALL": [(1, 1)],  # n=1, below threshold
+    }
+    summary = _within_ticker_ic_summary(pairs_by_ticker)
+    assert summary is not None
+    assert summary["n_tickers_evaluated"] == 1
+    assert summary["median_ic"] == pytest.approx(1.0)
+    # SMALL still appears in per_ticker but with ic=None
+    by_ticker = {row["ticker"]: row for row in summary["per_ticker"]}
+    assert by_ticker["SMALL"]["ic"] is None
+    assert by_ticker["BIG"]["ic"] == pytest.approx(1.0)
+
+
+def test_evaluate_multi_horizon_populates_within_ticker_for_final_trade_decision(monkeypatch):
+    """Each horizon should carry a within_ticker summary."""
+    from tradingagents.signals.evaluation import evaluate_multi_horizon
+
+    # Make alpha depend on (ticker, date) so per-ticker IC is non-degenerate
+    def fake_fetch(ticker, date, holding_days):
+        # NVDA gets +α aligned with rating; AAPL gets -α (anti-aligned)
+        # so the within-ticker breakdown shows mixed signs.
+        return (None, 0.05 if ticker.startswith("NV") else -0.05, None)
+
+    monkeypatch.setattr("tradingagents.signals.evaluation.fetch_returns", fake_fetch)
+
+    rows = []
+    # 6 dates per ticker × 2 tickers = 12 rows
+    for i in range(6):
+        rows.append({"ticker": "NVDA", "date": f"2026-01-{i + 1:02d}", "value": "**Rating: Buy**"})
+        rows.append({"ticker": "AAPL", "date": f"2026-01-{i + 1:02d}", "value": "**Rating: Sell**"})
+    out = evaluate_multi_horizon("final_trade_decision", rows, [21])
+    ev = out[21]
+    assert "within_ticker" in ev
+    # All alphas constant per ticker → within-ticker IC is undefined (no
+    # variance) → summary returns None
+    assert ev["within_ticker"] is None
+
+
+def test_evaluate_features_multi_horizon_populates_within_ticker(monkeypatch):
+    from tradingagents.signals.evaluation import evaluate_features_multi_horizon
+
+    # Vary alpha per (ticker, date) so within-ticker IC can be computed
+    def fake_fetch(ticker, date, holding_days):
+        # Decode the date suffix as a small float to give variance
+        idx = int(date.split("-")[-1])
+        return (None, idx * 0.01 if ticker == "NVDA" else -idx * 0.01, None)
+
+    monkeypatch.setattr("tradingagents.signals.evaluation.fetch_returns", fake_fetch)
+
+    rows = []
+    # Vary keyword density per row so featurizer values vary within each ticker
+    bull_words = ["bullish growth strong upgrade beat", "growth upgrade", "bullish", "", "", ""]
+    bear_words = ["", "", "", "downside risk", "downside risk decline", "decline weak miss"]
+    for i in range(6):
+        text = f"{bull_words[i]} something neutral {bear_words[i]}"
+        rows.append({"ticker": "NVDA", "date": f"2026-01-{i + 1:02d}", "value": text})
+        rows.append({"ticker": "AAPL", "date": f"2026-01-{i + 1:02d}", "value": text})
+
+    out = evaluate_features_multi_horizon("market_report", rows, [21])
+    # Each (feature, horizon) row should have within_ticker in its keys
+    assert all("within_ticker" in ev for ev in out)
+    # At least one feature should have a within-ticker summary populated
+    summaries = [ev["within_ticker"] for ev in out if ev["within_ticker"] is not None]
+    assert summaries, "expected at least one within_ticker summary"
+    # Each summary has the expected keys
+    for s in summaries:
+        assert {"median_ic", "n_tickers_evaluated", "n_positive", "n_negative"} <= s.keys()
+
+
+def test_format_within_cell_flags_simpsons_paradox():
+    """When aggregate IC sign disagrees with within-ticker median sign,
+    the cell should include the ⚠️ Simpson's-paradox marker."""
+    from tradingagents.signals.evaluation import _format_within_cell
+
+    # Aggregate is positive, within-ticker median is negative → flag
+    cell = _format_within_cell(
+        +0.30,
+        {
+            "median_ic": -0.16,
+            "n_tickers_evaluated": 6,
+            "n_positive": 2,
+            "n_negative": 4,
+            "max_abs_ic": 0.50,
+            "per_ticker": [],
+        },
+    )
+    assert "⚠️" in cell
+    assert "-0.160" in cell
+    assert "(6t: 2+/4−)" in cell
+
+
+def test_format_within_cell_no_flag_when_signs_agree():
+    from tradingagents.signals.evaluation import _format_within_cell
+
+    cell = _format_within_cell(
+        -0.40,
+        {
+            "median_ic": -0.16,
+            "n_tickers_evaluated": 6,
+            "n_positive": 2,
+            "n_negative": 4,
+            "max_abs_ic": 0.50,
+            "per_ticker": [],
+        },
+    )
+    assert "⚠️" not in cell
+    assert "-0.160" in cell
+
+
+def test_format_within_cell_handles_none():
+    from tradingagents.signals.evaluation import _format_within_cell
+
+    assert _format_within_cell(None, None) == "—"
+    assert _format_within_cell(0.5, None) == "—"

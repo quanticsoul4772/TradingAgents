@@ -74,6 +74,49 @@ def _spearman_ic(pairs: list[tuple[float, float]]) -> float | None:
     return num / (den_x * den_y)
 
 
+def _within_ticker_ic_summary(
+    pairs_by_ticker: dict[str, list[tuple[float, float]]],
+    min_n: int = 5,
+) -> dict | None:
+    """Compute IC within each ticker and summarize.
+
+    Per-ticker IC is computed only for tickers with ``len(pairs) >= min_n``
+    (default 5; consistent with the bigram/featurizer artifact-check scripts).
+    Returns ``None`` if no ticker meets the threshold.
+
+    Returns ``{"median_ic": float, "n_tickers_evaluated": int, "n_positive":
+    int, "n_negative": int, "max_abs_ic": float, "per_ticker": [{ticker, n, ic}]}``.
+
+    The aggregate IC reported elsewhere is computed over ALL pairs across
+    tickers; this helper is the *within-ticker* counterpart. When the aggregate
+    sign and the within-ticker median sign disagree, the aggregate is a
+    Simpson's-paradox / between-ticker artifact (see
+    ``claudedocs/featurizer-artifact-check-2026-05-04.md``).
+    """
+    per_ticker_rows: list[dict] = []
+    ics: list[float] = []
+    for ticker, pairs in sorted(pairs_by_ticker.items()):
+        if len(pairs) < min_n:
+            per_ticker_rows.append({"ticker": ticker, "n": len(pairs), "ic": None})
+            continue
+        ic = _spearman_ic(pairs)
+        per_ticker_rows.append({"ticker": ticker, "n": len(pairs), "ic": ic})
+        if ic is not None:
+            ics.append(ic)
+
+    if not ics:
+        return None
+
+    return {
+        "median_ic": statistics.median(ics),
+        "n_tickers_evaluated": len(ics),
+        "n_positive": sum(1 for ic in ics if ic > 0),
+        "n_negative": sum(1 for ic in ics if ic < 0),
+        "max_abs_ic": max(abs(ic) for ic in ics),
+        "per_ticker": per_ticker_rows,
+    }
+
+
 def _hit_rate(pairs: list[tuple[int, float]]) -> float | None:
     """Fraction of (signed_signal, alpha) pairs where direction agrees.
 
@@ -250,11 +293,13 @@ def evaluate_multi_horizon(
                 "n_eval": 0,
                 "ic": None,
                 "hit_rate": None,
+                "within_ticker": None,
             }
             continue
 
         pairs_ic: list[tuple[float, float]] = []
         pairs_hit: list[tuple[int, float]] = []
+        pairs_by_ticker: dict[str, list[tuple[float, float]]] = {}
         for r in rows:
             rating = parse_rating(r["value"] or "")
             score = _RATING_SCORE.get(rating)
@@ -268,6 +313,7 @@ def evaluate_multi_horizon(
                 continue
             pairs_ic.append((float(score), float(alpha)))
             pairs_hit.append((score, alpha))
+            pairs_by_ticker.setdefault(r["ticker"].upper(), []).append((float(score), float(alpha)))
 
         out[horizon] = {
             "signal_id": signal_id,
@@ -276,6 +322,7 @@ def evaluate_multi_horizon(
             "n_eval": len(pairs_ic),
             "ic": _spearman_ic(pairs_ic),
             "hit_rate": _hit_rate(pairs_hit),
+            "within_ticker": _within_ticker_ic_summary(pairs_by_ticker),
         }
     return out
 
@@ -315,6 +362,7 @@ def evaluate_features_multi_horizon(
         for horizon in horizons:
             pairs_ic: list[tuple[float, float]] = []
             pairs_hit: list[tuple[int, float]] = []
+            pairs_by_ticker: dict[str, list[tuple[float, float]]] = {}
             for r, feat in per_row:
                 key = (r["ticker"].upper(), r["date"], horizon)
                 if key not in alpha_cache:
@@ -330,6 +378,7 @@ def evaluate_features_multi_horizon(
                 else:
                     sig = 0
                 pairs_hit.append((sig, alpha))
+                pairs_by_ticker.setdefault(r["ticker"].upper(), []).append((feat, float(alpha)))
 
             out.append(
                 {
@@ -340,9 +389,33 @@ def evaluate_features_multi_horizon(
                     "n_eval": len(pairs_ic),
                     "ic": _spearman_ic(pairs_ic),
                     "hit_rate": _hit_rate(pairs_hit),
+                    "within_ticker": _within_ticker_ic_summary(pairs_by_ticker),
                 }
             )
     return out
+
+
+def _format_within_cell(aggregate_ic: float | None, within: dict | None) -> str:
+    """Render the Within-IC cell for the multi-horizon report.
+
+    Format: ``<median>±<sign-flip flag> (k/n+, n−)``
+    - median: median IC across tickers with n≥5
+    - flag: ⚠️ when aggregate sign and within-ticker median sign disagree
+            (Simpson's-paradox indicator)
+    - k: total tickers evaluated; n+/n− are positive/negative IC counts
+    - "—" when the within-ticker summary couldn't be computed
+    """
+    if within is None:
+        return "—"
+    median = within["median_ic"]
+    n_eval = within["n_tickers_evaluated"]
+    n_pos = within["n_positive"]
+    n_neg = within["n_negative"]
+    flag = ""
+    if aggregate_ic is not None and median != 0 and aggregate_ic != 0:
+        if (aggregate_ic > 0 and median < 0) or (aggregate_ic < 0 and median > 0):
+            flag = " ⚠️"
+    return f"{median:+.3f}{flag} ({n_eval}t: {n_pos}+/{n_neg}−)"
 
 
 def render_multi_horizon_report(
@@ -370,9 +443,10 @@ def render_multi_horizon_report(
     horizon_cols = " | ".join(f"IC@{h}d" for h in horizons)
     horizon_align = " | ".join("---:" for _ in horizons)
     lines.append(
-        f"| Signal | n cached | Tickers | Dates | n eval | {horizon_cols} | HR@{horizons[-1]}d |"
+        f"| Signal | n cached | Tickers | Dates | n eval | {horizon_cols} | "
+        f"Within-IC@{horizons[-1]}d | HR@{horizons[-1]}d |"
     )
-    lines.append(f"|---|---:|---:|---:|---:| {horizon_align} | ---:|")
+    lines.append(f"|---|---:|---:|---:|---:| {horizon_align} | ---: | ---:|")
     # Sort by n cached desc
     by_n = sorted(multi_evaluations.items(), key=lambda kv: kv[1][horizons[0]]["n"], reverse=True)
     for signal_id, by_horizon in by_n:
@@ -383,12 +457,12 @@ def render_multi_horizon_report(
             ic_cells.append(f"{ev['ic']:+.3f}" if ev["ic"] is not None else "—")
         last_h_eval = by_horizon[horizons[-1]]
         hr_str = f"{last_h_eval['hit_rate']:.1%}" if last_h_eval["hit_rate"] is not None else "—"
-        # n_eval is per-horizon — use the last horizon's value in the n eval column
         n_eval_str = str(last_h_eval["n_eval"])
         ic_str = " | ".join(ic_cells)
+        within_str = _format_within_cell(last_h_eval.get("ic"), last_h_eval.get("within_ticker"))
         lines.append(
             f"| `{signal_id}` | {ref['n']} | {ref['tickers']} | {ref['dates']} | "
-            f"{n_eval_str} | {ic_str} | {hr_str} |"
+            f"{n_eval_str} | {ic_str} | {within_str} | {hr_str} |"
         )
     lines.append("")
 
@@ -401,8 +475,11 @@ def render_multi_horizon_report(
             "horizon-stable correlations first."
         )
         lines.append("")
-        lines.append(f"| Signal | Feature | n eval | {horizon_cols} | HR@{horizons[-1]}d |")
-        lines.append(f"|---|---|---:| {horizon_align} | ---:|")
+        lines.append(
+            f"| Signal | Feature | n eval | {horizon_cols} | "
+            f"Within-IC@{horizons[-1]}d | HR@{horizons[-1]}d |"
+        )
+        lines.append(f"|---|---|---:| {horizon_align} | ---: | ---:|")
 
         # Group by (signal, feature); each group has one entry per horizon
         groups: dict[tuple[str, str], dict[int, dict]] = {}
@@ -429,7 +506,14 @@ def render_multi_horizon_report(
             )
             n_eval_str = str(last_ev["n_eval"]) if last_ev else "0"
             ic_str = " | ".join(ic_cells)
-            lines.append(f"| `{signal_id}` | `{feature}` | {n_eval_str} | {ic_str} | {hr_str} |")
+            within_str = _format_within_cell(
+                last_ev["ic"] if last_ev else None,
+                last_ev.get("within_ticker") if last_ev else None,
+            )
+            lines.append(
+                f"| `{signal_id}` | `{feature}` | {n_eval_str} | {ic_str} | "
+                f"{within_str} | {hr_str} |"
+            )
         lines.append("")
 
     lines.append("## Notes")
@@ -441,7 +525,18 @@ def render_multi_horizon_report(
     )
     lines.append(
         "- **IC** = Spearman rank correlation between the signal/feature value "
-        "and realized α at that horizon."
+        "and realized α at that horizon, computed across ALL (ticker, date) pairs."
+    )
+    lines.append(
+        "- **Within-IC@<longest>** = MEDIAN of per-ticker ICs at the longest horizon. "
+        "Per-ticker IC is computed only for tickers with n ≥ 5 obs. The trailing "
+        "`(Nt: P+/Q−)` reads as: N tickers evaluated, P with positive IC, Q with "
+        "negative IC. **A ⚠️ flag fires when the aggregate IC sign disagrees with "
+        "the within-ticker median sign — that's a Simpson's-paradox / between-ticker "
+        "artifact** (the aggregate is driven by ticker-class identification, not "
+        "within-ticker prediction). See `claudedocs/featurizer-artifact-check-2026-05-04.md` "
+        "for the methodology this surfaces. Without this column, between-ticker artifacts "
+        "look like real predictive signal in the aggregate IC table."
     )
     lines.append(
         "- Negative IC = the higher the signal value, the lower the realized α (anti-predictive)."
