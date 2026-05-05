@@ -1,0 +1,17 @@
+{
+  "config_overrides": {
+    "contrarian_gate_mode": "shadow",
+    "deep_think_llm": "claude-opus-4-7",
+    "quick_think_llm": "claude-haiku-4-5",
+    "llm_provider": "anthropic"
+  },
+  "explicit_flags": {
+    "--tickers": "AAPL,GOOGL,INTC,JPM,MSFT",
+    "--dates": "2026-03-04,2026-03-11,2026-03-18,2026-03-25,2026-04-01",
+    "--debate-rounds": 1,
+    "--analysts": "market,news,fundamentals",
+    "--news-vendor": "exa"
+  },
+  "baseline": "experiments/2026-05-05-001-spec003-sc001-shadow-smoke/results.csv (NVDA 2026-01-30 SC-001 smoke)",
+  "notes": "Spec 003 SC-002. 5 tickers × 5 mid-week dates = 25 propagates. Mid-week to avoid existing weekly-Friday cache. All dates have full 21d forward α as of 2026-05-05. AAPL/INTC are at the N>=20 floor and should produce gate fires; GOOGL/JPM/MSFT below floor (cache-growth use case)."
+}
