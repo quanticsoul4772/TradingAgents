@@ -12,7 +12,7 @@ Bearish commits remain regime-asymmetric, not uniformly anti-calibrated: UW comm
 
 ## Portfolio synthesis — where the project stands at 22 experiments + 2 specs (added 2026-05-04 late-evening)
 
-**Verdict: useful research yield achieved. The corpus answers the primary question at moderate confidence and documents three publishable secondary findings. Continued spend should be justified against specific open questions, not exploratory drift.**
+**Verdict: useful research yield achieved. The corpus answers the primary question at moderate confidence and documents four publishable secondary findings (one added 2026-05-05 after the within-ticker IC methodology fix surfaced a validated within-ticker predictor). Continued spend should be justified against specific open questions, not exploratory drift.**
 
 ### What got built
 
@@ -37,7 +37,7 @@ The primary question was: *what structural conditions cause role-based multi-age
 - **A3 mean-reversion suppression filter for UW commits**: works as designed but inert on the failure mode that actually matters (regime-mismatch UW commits don't enter the suppression zone). Per-row forensics in `claudedocs/a3-filter-forensics-007.md`.
 - **Phase C reasoning_evidence second-opinion**: wired with asymmetric handling per Q5 reasoning_divergent analysis. Default disabled. Empirical effect on rating distribution untested at n>1.
 
-### Three publishable secondary findings
+### Four publishable secondary findings
 
 1. **Calibrated abstention as the load-bearing skill, not commits**. Five-tier rating frameworks evaluated naively look like mode-collapse failures (because Hold ≈ 50-70% of decisions). Evaluated against forward returns, Hold is the *calibrated* output — the framework is correctly abstaining. The interesting evaluation metric is conditional-on-commit α, not commit rate. This reframe is encoded in Constitution Principle VII and was the trigger for the 2026-05-03 cross-period reframe.
 
@@ -45,9 +45,13 @@ The primary question was: *what structural conditions cause role-based multi-age
 
 3. **Decision architecture portable, commit calibration substrate-specific**. Phase D XLK Q1 2026 same-date test: framework went 30pp more Hold-heavy on the sector ETF than on the constituent NVDA. All XLK buckets had positive realized α; framework over-abstained on the substrate. Implies the framework's prompt is single-stock-tuned; portability of the *architecture* (analysts → debate → PM) is separate from portability of the *calibration*.
 
-### Negative result added 2026-05-05 — featurization-based aggregator has no within-ticker predictive ceiling
+4. **Market analyst bull-keyword density anti-predicts within-ticker α at 90d** (added 2026-05-05). `market_report bull_keyword_count` shows aggregate IC near zero (-0.011) but within-ticker median IC = -0.489 with **9 of 9 tickers negative** — the only feature in the corpus where every ticker shows direction agreement. Within-ticker permutation test: p<2e-4 (passes Bonferroni for 280 tests); unanimous-direction permutation: p=0.0058. Period-stable across Q4 2025 + Q1 2026 (4/4 and 9/9 negative). Per-ticker bootstrap CIs exclude zero for 6 of 9 tickers individually. **First validated within-ticker predictor in the corpus.** Mechanism candidates (not adjudicated): mean-reversion, confirmation-bias-driven recency, or selection on recently-strong tickers. The framework's market analyst is most bullish at locally-bullish moments that mean-revert over 90d. Full validation in `claudedocs/within-ticker-artifact-check-2026-05-05.md`. This finding was invisible before the within-ticker IC methodology fix (commit 3c2d0c2) — the column surfaced it; the artifact check confirmed it.
+
+### Negative result added 2026-05-05 — most fundamentals-report features are between-ticker artifacts (refined 2026-05-05 evening — see candidate-4 above)
 
 Artifact-checked the top 4 ICs from the eval report (`bear_bigram_count` +0.457, `conviction_density` -0.407, `hedge_density` +0.305, `bull_keyword_count` -0.306, all on `fundamentals_report`). All 4 aggregate ICs are statistically real (permutation p < 0.002, bootstrap CI excludes zero) but **all 4 are between-ticker artifacts**. Within-ticker IC is weak, noisy, and direction-inconsistent for every feature. `hedge_density` is the most striking — aggregate +0.305 but **within-ticker IC negative on 4 of 6 tickers** (Simpson's paradox).
+
+**Important nuance (added 2026-05-05 evening)**: this negative result generalizes to "most featurizers don't carry within-ticker signal", NOT "no featurizer does." The within-ticker IC methodology fix surfaced `market_report bull_keyword_count` as a validated within-ticker predictor (publishable secondary finding #4 above). The negative result holds for the four `fundamentals_report` features tested; it does not hold for at least one `market_report` feature. A targeted aggregator on validated within-ticker features (the new candidate-4 plus possibly `investment_plan bull_keyword_count`, marginal at p=0.008) could outperform the fundamentals-based aggregator that Phase 1 + 5 tested.
 
 **Bug fix follow-up (2026-05-05)**: the artifact-check uncovered a `fetch_returns` buffer bug — the "90d horizon" measurements were actually computed over ~50 trading days because the calendar buffer (`holding_days + 7`) was too tight. Fixed by widening to `int(holding_days * 1.5) + 7`. Re-ran the eval pipeline at true 90 trading days; **the artifact-check verdict is robust to the fix** — top-4 IC magnitudes shifted by <0.03 in absolute value, signs unchanged, between-vs-within-ticker pattern preserved. See `claudedocs/buffer-fix-comparison-2026-05-05.md` for the delta. Side effect: the 21d IC for `final_trade_decision` shifted from -0.172 to -0.103 (sub-horizon-shift effect from SPY edge cases at the old narrower buffer); the headline OW α claim could shift by ~0.07pp on rerun, but the moderate-confidence verdict stands.
 
