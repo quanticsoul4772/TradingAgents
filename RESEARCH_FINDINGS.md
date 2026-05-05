@@ -10,6 +10,74 @@ Phase D substrate test (XLK Q1 2026 vs NVDA Q1 2026 same dates): framework went 
 
 Bearish commits remain regime-asymmetric, not uniformly anti-calibrated: UW commits on bear-correct tickers (AAPL, INTC excl. tail events) ARE directionally appropriate; UW commits on bull-regime tickers (NVDA, MSFT) drive the aggregate anti-calibration. Hold ≈ 0% median at every horizon. The framework's mode collapse to Hold is calibrated abstention; its bullish commits are a moderately-confident 3-period-validated signal at 21d; its bearish commits are an asymmetric signal that works on bear-correct tickers and fails on bull-regime tickers.
 
+## Portfolio synthesis — where the project stands at 22 experiments + 2 specs (added 2026-05-04 late-evening)
+
+**Verdict: useful research yield achieved. The corpus answers the primary question at moderate confidence and documents three publishable secondary findings. Continued spend should be justified against specific open questions, not exploratory drift.**
+
+### What got built
+
+- **22 experiments** (`experiments/2026-05-02-001-*` through `experiments/2026-05-04-007-*`) covering: 8 prompt/structure interventions (MR-1 through WC-12 variants, EH-2, brave/exa news), 4 single-call architectural baselines, 4 Opus-vs-Sonnet model swaps, 3 cross-period validations (Q1 2026 / Q4 2025 / Q3 2025), 3 Phase D substrate tests (XLK / multi-sector / XLE), 1 Phase C reasoning_evidence smoke, 1 Spec 002 cache smoke, 1 Spec 001 Phase 4 live-validation. Total LLM spend across the corpus ≈ $250-300.
+- **Two complete specs implemented**: Spec 002 signal-lifecycle (Phases 0-2.5: registry + cache + 14 featurizers + drift + counterfactual + multi-horizon eval) and Spec 001 bots-architecture (Phases 1-5: Signal schema + deterministic aggregator + shadow mode + bots-mode + convergence shortcut + bot budgets + weight tuning + per-bot LLM routing live-validated).
+- **One opt-in production augmentation**: A3 mean-reversion suppression filter (`tradingagents/agents/utils/momentum_filter.py`), validated as correctly inert on regime-mismatch failures.
+- **One advisory hook**: Phase C reasoning_evidence second-opinion (`tradingagents/agents/utils/second_opinion.py`), default disabled, asymmetric design per Q5.
+- **785 unit + integration tests** (was 501 at scaffolding install), 81%+ coverage, pre-commit gates passing.
+- **Constitution v1.2.2** with seven principles including the load-bearing **Principle VII (Calibrated Abstention)** added 2026-05-03 and re-amended after experiment 006 + cross-period clarification.
+
+### What the corpus actually shows (primary research question)
+
+The primary question was: *what structural conditions cause role-based multi-agent LLM debate to collapse to moderate ratings, and what enforcement mechanisms (or alternative architectures) would prevent that collapse?*
+
+**Answer (moderate confidence)**: mode-collapse direction is a function of **(model × ticker × regime × prompt)**, not a uniform property of multi-agent debate. Sonnet over-abstains on bull tickers AND over-commits-bearish on bear tickers. Opus discriminates per-ticker. The same architecture on the same prompt produces different commit distributions across calendar periods (Q4 2025 outlier vs Q1 2026 + Q3 2025 stable) and across substrates (single stocks vs sector ETFs — XLK 70% Hold vs NVDA 40% Hold same dates).
+
+**The "collapse" framing was wrong**. Hold ≈ 0% median forward α at every horizon — Hold isn't a mode-collapse failure; it's calibrated abstention. The framework correctly does nothing when evidence is weak. The interesting question shifted from "why does it collapse to Hold?" to "when it does commit, what's the realized α?" — and the answer there is: **+1.23% at 21d for bullish commits (n=71, 61% hit rate, 2 of 3 periods positive, Bayesian posterior 0.63 on stable cross-period signal)**.
+
+**Enforcement mechanisms tested**:
+- **Replace LLM PM with deterministic aggregator over featurized prose signals (Spec 001 Phases 1+5)**: FAILS. Shadow aggregator 42.3% direction match (vs 80% target). Weight tuning overfits (train +0.079 → test -0.062). The featurized-prose Signals don't carry sufficient signal to support a deterministic replacement.
+- **Convergence shortcut to skip debate when analysts agree (Spec 001 Phase 3)**: 0% fires at spec defaults on the historical corpus. Featurization-derived magnitudes top out around 0.5; the >0.7 threshold is unreachable from prose alone. Would require LLM-emitted Signals to fire.
+- **A3 mean-reversion suppression filter for UW commits**: works as designed but inert on the failure mode that actually matters (regime-mismatch UW commits don't enter the suppression zone). Per-row forensics in `claudedocs/a3-filter-forensics-007.md`.
+- **Phase C reasoning_evidence second-opinion**: wired with asymmetric handling per Q5 reasoning_divergent analysis. Default disabled. Empirical effect on rating distribution untested at n>1.
+
+### Three publishable secondary findings
+
+1. **Calibrated abstention as the load-bearing skill, not commits**. Five-tier rating frameworks evaluated naively look like mode-collapse failures (because Hold ≈ 50-70% of decisions). Evaluated against forward returns, Hold is the *calibrated* output — the framework is correctly abstaining. The interesting evaluation metric is conditional-on-commit α, not commit rate. This reframe is encoded in Constitution Principle VII and was the trigger for the 2026-05-03 cross-period reframe.
+
+2. **Replicability scope: bucket-level claims replicate, date-level and realized-α claims do not**. Same Opus model on the same 10 NVDA dates produces 10/10 OW one run and 6/10 OW + 4 Hold the next; per-ticker bucket *ratios* hold (NVDA 90% vs 60% OW, both >50%) but specific commit dates and realized α do not. This means evaluation methodology matters: aggregate hit-rate / mean-α claims are valid; individual-decision causal attributions ("the framework correctly called X on date Y") are noise.
+
+3. **Decision architecture portable, commit calibration substrate-specific**. Phase D XLK Q1 2026 same-date test: framework went 30pp more Hold-heavy on the sector ETF than on the constituent NVDA. All XLK buckets had positive realized α; framework over-abstained on the substrate. Implies the framework's prompt is single-stock-tuned; portability of the *architecture* (analysts → debate → PM) is separate from portability of the *calibration*.
+
+### What got ruled out (negative findings as positive evidence)
+
+- **Single-call architectural baseline (experiments 003, 004)**: replacing the 12-bot debate with one Claude call on the 3 analyst reports produced similar rating quality. Multi-agent debate doesn't dominate the single-call baseline on this substrate. The bull/bear stage adds prose volume, not predictive signal.
+- **Featurization can't replace LLM synthesis (Spec 001 Phase 1)**: 42.3% direction match → the prose signals carry information the LLM PM uses but the heuristic featurizers can't extract.
+- **Weight tuning overfits (Spec 001 Phase 5)**: 100% weight on `investment_plan` (the bridge synthesis) won train but test IC stayed -0.062. The corpus is too small / the signal-to-noise too low for grid-search weight tuning to generalize.
+- **Convergence shortcut needs different inputs (Spec 001 Phase 3)**: 0% fires at spec defaults — the featurization-derived magnitudes don't reach the >0.7 threshold.
+
+### What's still open (and what each would resolve)
+
+| Open question | What it'd resolve | Cost |
+|---|---|---|
+| Same-date rerun-variance: how much of date-level non-replication is stochastic LLM variance? | Whether Replicability-scope clarification is fundamental or fixable with more reps. If most variance is stochastic, the bucket-level signal is the load-bearing claim and date-level analysis should be retired. | $15 (T2) |
+| Model-swap matrix (GPT-5.4 vs Anthropic on same grid): is period-conditional realized α a model property? | Would tell us whether the Q1 2026 / Q4 2025 sign flip is Anthropic-specific or general. Spec 001 Phase 4 enables mix-and-match testing without rebuilding infrastructure. | $40 (T3) |
+| Bear-correct ticker generalization (XOM, PFE): does the bear-side regime-asymmetry hold beyond AAPL + INTC? | n=2 ticker base for the bear-asymmetry claim is thin. XOM + PFE adds 20 commit points in true bear regimes. | $15 (T2) |
+| Phase 4 cost-tier validation (n≥10 with bot_models override): do per-bot model swaps shift rating distribution beyond mode-collapse? | Empirical validation of the Haiku-for-quick + Opus-for-deep cost-savings story. Phase 4 wired + live-validated at n=1; the operator-facing claim needs distribution evidence. | $10 (T2) |
+| `bear_bigram_count` IC = +0.457 at 90d artifact check: real signal or small-n correlation? | Strongest single IC in the corpus. Either a genuine 90d predictor or a multiple-comparisons artifact. Cheap to investigate. | $0 (~2h work) |
+
+### Research yield assessment
+
+**The project IS** (per CLAUDE.md): "a personal experimental fork repurposed as a research playground for studying multi-agent LLM debate dynamics. Equity-decision-making is the substrate (cheap objective ground truth), not the goal."
+
+Against this stated purpose:
+- ✅ **Primary question answered at moderate confidence** with 3-period evidence and explicit Bayesian posterior trajectory
+- ✅ **Three secondary findings** that are non-obvious and publish-worthy (calibrated abstention reframe; replicability scope; substrate-specific calibration)
+- ✅ **Negative findings on Spec 001 Phases 1/3/5** documenting the ceiling of "replace LLM with deterministic aggregator" approach — useful prior for anyone considering this direction
+- ✅ **Infrastructure self-contained**: any of the open questions above can be answered with the current scaffolding; no new tooling required
+- ⚠️ **Diminishing returns from here**: the 5 open questions above are tactical refinements; none would change the headline answer materially
+- ⚠️ **Not "shipped product" yield**: framework is at LLM-single-call calibration ceiling; the trading-strategy use case is not viable. The trading substrate served its purpose (cheap evaluation), not the goal
+
+**Verdict**: useful research yield is achieved. The corpus would publish as "an honest 22-experiment study of multi-agent LLM debate dynamics in a high-noise decision domain, with implementation lessons from two attempted refactors." Continued spend should pick from the open-questions table above with explicit hypotheses on what the new evidence would buy, rather than exploratory drift through new experiments hoping for a stronger headline.
+
+The infrastructure-complete moment is the natural pause point. Whether to continue depends on whether the user has a specific question they want answered, not on whether more experiments are *possible*.
+
 ## Empirical core (cross-experiment summary, 5/10/21-day forward α vs SPY)
 
 | Rating | 5d α (Σn) | 10d α (Σn) | **21d α (Σn)** |
