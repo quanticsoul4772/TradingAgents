@@ -202,7 +202,19 @@ config["bot_models"] = {
 
 **Bug found by integration test** (caught before any propagate spent money): the original implementation stored the `BaseLLMClient` wrapper in the cache instead of calling `.get_llm()` to unwrap to the LangChain `ChatAnthropic` / `ChatOpenAI` instance. The wrapper has no `.bind_tools(...)` method, so analyst factories would have crashed at `chain = prompt | llm.bind_tools(tools)` on the very first per-bot routed call. Unit tests with mocked `create_llm_client` returning `MagicMock()` couldn't catch this — `hasattr(MagicMock(), "bind_tools")` is `True` because MagicMock fabricates any attribute. Fixed `_get_or_create_client` to call `.get_llm()` and added `hasattr(llm, "bind_tools")` integration tests that exercise real client construction.
 
-**Status**: wired, unit-tested, integration-tested at the construction level (real `create_llm_client` for anthropic + openai, no propagate cost). Single remaining gap is a live `propagate()` with mixed-model config actually producing a rating end-to-end. The Haiku-for-quick + Opus-for-deep cost-tier story is the obvious near-term operator use case (4 quick analysts at Haiku ≈ 70% cheaper than at Opus, with no expected quality drop on tool-using ReAct loops). Validation experiment deferred — needs separate budget approval and a hypothesis on which split would change rating distribution vs cost.
+**Status**: ✅ **end-to-end validated** by experiment `2026-05-04-007-phase4-bot-models-smoke`. NVDA 2026-01-30 propagated cleanly with `bot_models = {"market": "claude-sonnet-4-6"}` — the BotLLMFactory log line confirmed the override path was taken, the factory cache contained the Sonnet client, the propagate completed in 512s with rating Overweight (matching the Haiku-on-market baseline runs from 005 + 007). Without the wrapper-vs-LLM bug fix (commit `2a55c01`), this propagate would have crashed at `llm.bind_tools(tools)` in the market analyst.
+
+**Documented constraint**: `anthropic_effort` config key forwards to ALL anthropic clients the factory builds, but Sonnet/Haiku reject the `effort` kwarg. Only safe to set `anthropic_effort` when every bot in `bot_models` (and the default deep+quick) is an Opus model. The experiment omitted `anthropic_effort` to avoid this constraint; production users should follow the same rule until per-model effort filtering is added.
+
+**Operator use case unlocked**:
+```python
+config["bot_models"] = {
+    "fundamentals": "claude-opus-4-7",     # heavy analyst → premium
+    "research_manager": "claude-opus-4-7", # synthesizer (already deep by default)
+}
+```
+
+The Haiku-for-quick + Opus-for-deep cost-tier story (4 quick analysts at Haiku ≈ 70% cheaper than at Opus, with no expected quality drop on tool-using ReAct loops) is the obvious near-term application. A larger n=10+ experiment with matched baselines is needed to measure whether per-bot model swaps shift the rating distribution beyond the framework's known mode-collapse behavior.
 
 ## Spec 001 Phase 3 — convergence shortcut doesn't fire on featurization-derived Signals (added 2026-05-04 late-evening)
 

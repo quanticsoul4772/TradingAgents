@@ -1,0 +1,17 @@
+{
+  "config_overrides": {
+    "bot_models": {"market": "claude-sonnet-4-6"},
+    "deep_think_llm": "claude-opus-4-7",
+    "quick_think_llm": "claude-haiku-4-5",
+    "llm_provider": "anthropic"
+  },
+  "explicit_flags": {
+    "--ticker": "NVDA",
+    "--date": "2026-01-30",
+    "--debate-rounds": 1,
+    "--analysts": "market,news,fundamentals",
+    "--news-vendor": "exa"
+  },
+  "baseline": "experiments/2026-05-03-005-opus47-nvda-aapl-q1-2026/results.csv (NVDA 2026-01-30)",
+  "notes": "Live-propagate validation of Phase 4 BotLLMFactory. One per-bot override (market analyst → Sonnet); all other 11 bots use defaults. Custom driver (drive.py) needed because --config-override coercer doesn't handle dict values."
+}
