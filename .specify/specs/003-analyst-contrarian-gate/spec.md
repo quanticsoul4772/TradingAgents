@@ -92,7 +92,7 @@ As a researcher, I want the gate's source signal to be **configurable** — `mar
   - `contrarian_gate_mode`: `"off"` (default), `"shadow"`, `"active"`
   - `contrarian_gate_threshold`: integer percentile (default `80`)
   - `contrarian_gate_target`: `"hold"` (default) or `"underweight"` — what rating to downgrade to when gate fires in active mode
-- **FR-004**: Per-ticker percentile baseline uses the most recent N=20 cached `(market_report, ticker, *, bull_keyword_count)` values from `~/.tradingagents/signals/cache.db`. When N < 5, gate is skipped.
+- **FR-004**: Per-ticker percentile baseline uses the most recent N=20 cached `(market_report, ticker, *, bull_keyword_count)` values from `~/.tradingagents/signals/cache.db`. **When N < 20, gate is skipped** (was N < 5 in the initial spec; bumped after the XLF investigation in `claudedocs/xlf-mechanism-2026-05-05.md` showed that N=10 with a degenerate prior-α distribution can fire false positives — the percentile is meaningless when the source feature has near-zero variance over the window). The gate emits `gate_skipped: insufficient_history` when N < 20.
 - **FR-005**: Active-mode override only applies when PM rating is Buy or Overweight (per finding #4: the contrarian signal anti-predicts bullish commits, no evidence for the bearish direction).
 - **FR-006**: State log emission: every propagate with `contrarian_gate_mode != "off"` writes a `contrarian_gate` block in the state log JSON for downstream analysis.
 - **FR-007**: Backwards-compat: when `contrarian_gate_mode = "off"` (default), graph behavior is byte-identical to pre-spec-003.
@@ -101,7 +101,7 @@ As a researcher, I want the gate's source signal to be **configurable** — `mar
 ## Success Criteria *(mandatory)*
 
 - **SC-001** (Phase 1 / shadow correctness): On a fresh 10-date NVDA propagate in shadow mode, the gate annotation appears in 10/10 state logs, and `final_trade_decision` content is byte-identical to a no-gate baseline run.
-- **SC-002** (Phase 1 / signal validation): Across N >= 30 shadow-mode propagates, the within-ticker IC of `would_fire` (boolean treated as +1/-1) against 90d α reproduces the finding #4 pattern — within-ticker median IC <= -0.30 with majority of tickers showing direction agreement.
+- **SC-002** (Phase 1 / signal validation): Across N >= 30 shadow-mode propagates, the within-ticker IC of `would_fire` (boolean treated as +1/-1) against 90d α reproduces the finding #4 pattern — within-ticker median IC <= -0.30 with majority of tickers showing direction agreement. **Precondition**: tickers in the validation grid must have prior 30d α range >= 10pp (contain both meaningfully positive and meaningfully negative prior 30d α observations). Tickers in degenerate-window regimes (e.g., XLF in the current corpus, where all 10 cached dates fall in a sustained-underperformance window with prior 30d α range -6.48% to 0%) are excluded from this success criterion. The XLF case is documented in `claudedocs/xlf-mechanism-2026-05-05.md`.
 - **SC-003** (Phase 2 / active mode behavior): Matched shadow-vs-active grids of N >= 10 each show active-mode OW + Buy rate strictly lower than shadow rate, with downgrades concentrated on `would_fire = True` propagates.
 - **SC-004** (Phase 2 / α improvement, optional): Active-mode commits produce mean 21d α >= shadow-mode commits (point estimate, not strict significance — a $0 retrospective forecast is unblocked by SC-001+002).
 
@@ -118,6 +118,7 @@ As a researcher, I want the gate's source signal to be **configurable** — `mar
 - **OQ-2**: When the gate fires in active mode, should the override be Hold (calibrated abstention) or Underweight (active contrarian)? Default: Hold. Underweight would be more aggressive but lacks empirical support — finding #4 is anti-prediction of bullish, not pro-prediction of bearish.
 - **OQ-3**: Should the percentile baseline use a rolling window (e.g., last 20 propagates) or all available history? Default: last 20, matching the BOTS / drift-detector convention.
 - **OQ-4**: How does this interact with the A3 momentum filter? A3 suppresses UW commits when ticker is in mean-reversion zone; spec 003 suppresses Buy/OW commits when market analyst is too bullish. Both could fire on the same propagate. Default: independent — let both run, log both annotations, do not arbitrate.
+- **OQ-5** (added 2026-05-05 after XLF investigation): how should the gate handle tickers in sustained-underperformance regimes (XLF in this corpus had all 10 cached dates with non-positive prior 30d α + uniformly high bull_keyword_count)? Three candidate strategies: **(a) skip entirely** — if prior 30d α range over the percentile window is < some threshold (e.g., 5pp), emit `gate_skipped: degenerate_window` and don't fire; **(b) fire only on the percentile-and-trend conjunction** — require both high bull_count percentile AND meaningfully positive prior strength to fire; **(c) accept and treat as weak signal** — fire on percentile alone, accept that the gate operates on a different regime than the recency mechanism on degenerate-window tickers. Default in the spec is unresolved; needs validation data to decide.
 
 ## Related work
 
