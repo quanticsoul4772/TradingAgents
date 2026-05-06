@@ -148,6 +148,20 @@ python scripts/daily_signals.py --tickers tickers.txt
 #   --include-all to show Hold/UW/Sell. Pass --shadow-gates to run
 #   gates in observation-only mode. Estimated cost ~$0.40 per ticker
 #   (Opus + Haiku); 5-10 ticker watchlist ≈ $2-4/day.
+#   Add --emit-csv <path> to also write a paper_trade.py-consumable
+#   signals CSV (Spec 002).
+
+python scripts/paper_trade.py replay \
+    --signals-csv experiments/<id>/results.csv \
+    --watchlist <txt> --start <YYYY-MM-DD> --end <YYYY-MM-DD> --yes
+python scripts/paper_trade.py step --signals-csv ~/.tradingagents/paper/today.csv
+python scripts/paper_trade.py status
+# → Spec 002 paper-trading harness. Zero LLM cost (pure signal consumer).
+#   replay = deterministic backtest; step = single-day, idempotent
+#   (cron-able); status = read-only inspection. State at
+#   ~/.tradingagents/paper/<id>.json + <id>.events.jsonl. Default
+#   policy: 21d window, 8 max positions, 10% per slot, 50% sector cap,
+#   5 bps slippage, SPY benchmark. See docs/PAPER_TRADING.md.
 ```
 
 **News vendor** (per `--news-vendor`):
@@ -163,6 +177,8 @@ python scripts/daily_signals.py --tickers tickers.txt
 - **Spec 003 contrarian gate** — `config["contrarian_gate_mode"]` defaults to `"active"` at 80th-percentile threshold + N≥20 history floor (FR-004). Downgrades Buy/Overweight to Hold when the propagate's `bull_keyword_count` exceeds the 80th percentile of the most recent 20 cached values for that ticker. Corpus retrospective (`scripts/contrarian_gate_retrospective.py`) showed +6.46% cumulative Δα at 21d at the production-default floor; the FR-004 amendment to N≥20 is load-bearing — at the permissive N≥5 floor the gate would HURT alpha by -24.87%. Set to `"off"` (or `"shadow"` for measurement-only) in PARAMS.json to ablate.
 
 **Corpus interpretation note**: experiments dated **before 2026-05-06** were run with both filters OFF unless their `PARAMS.json` explicitly set them on. Experiments dated **on/after 2026-05-06** include both filters by default unless explicitly disabled. When comparing pre- and post-flip experiment results, check each experiment's PARAMS.json to know which baseline applies.
+
+**Paper-trading harness** (Spec 002, 2026-05-06): `scripts/paper_trade.py` provides `replay`, `step`, and `status` subcommands consuming signal CSVs emitted by `daily_signals.py --emit-csv`. State persists at `~/.tradingagents/paper/<portfolio_id>.json` + `<portfolio_id>.events.jsonl` (atomic JSON + append-only JSONL). Default policy: 21-day holding window, 8 max positions, 10% per slot, 50% per-sector cap, 5 bps each-side slippage, SPY benchmark. Zero LLM cost (FR-011/SC-008 — pure signal consumer). SC-001 validation gate: replay over SC-003 reproduces the bullish-bucket mean α within ±150 bps. See `docs/PAPER_TRADING.md` for operator usage; `specs/002-paper-trading-harness/` for the full spec/plan/contracts/tasks bundle.
 
 Tests (pytest is configured in `pyproject.toml`, markers: `unit`, `integration`, `smoke`):
 ```bash
@@ -210,10 +226,11 @@ Tools in `agents/utils/{core_stock,technical_indicators,fundamental_data,news_da
 
 ### Persistence
 
-Two independent systems, both rooted under `~/.tradingagents/` (override base with `TRADINGAGENTS_CACHE_DIR` / `TRADINGAGENTS_RESULTS_DIR`):
+Three independent systems, all rooted under `~/.tradingagents/` (override base with `TRADINGAGENTS_CACHE_DIR` / `TRADINGAGENTS_RESULTS_DIR`):
 
 - **Decision log** (`agents/utils/memory.py`, `TradingMemoryLog`) — append-only markdown at `~/.tradingagents/memory/trading_memory.md` (override with `TRADINGAGENTS_MEMORY_LOG_PATH`). `propagate()` writes a `pending` entry at the end of every run; on the next same-ticker run, `_resolve_pending_entries()` fetches realized return + alpha vs SPY via `yfinance`, generates a one-paragraph reflection, and updates the entry. Only the Portfolio Manager reads memory, and only when entries exist (so empty memory cannot fabricate "past lessons"). `memory_log_max_entries` caps **resolved** entries; pending entries are never pruned. The `<!-- ENTRY_END -->` HTML comment is the hard separator — don't change it (LLM prose can't emit HTML comments).
 - **Checkpoint resume** (`graph/checkpointer.py`) — opt-in via `config["checkpoint_enabled"]` / `--checkpoint`. Per-ticker SQLite DBs at `~/.tradingagents/cache/checkpoints/<TICKER>.db` so concurrent tickers don't contend. Thread ID is `sha256("<TICKER>:<date>")[:16]` so same ticker+date resumes, different date starts fresh. Checkpoints are cleared on successful completion. The graph is recompiled with the SqliteSaver only inside `propagate()` and torn back down in `finally`.
+- **Paper-trading state** (`tradingagents/paper/state.py`, Spec 002) — JSON state file `~/.tradingagents/paper/<portfolio_id>.json` + append-only JSONL event log `<portfolio_id>.events.jsonl`. State is the materialized portfolio (cash, open positions, closed positions, equity_curve, immutable policy snapshot); event log is the source-of-truth audit trail (entries, exits, skips, marks, data anomalies, idempotency-skip events). Atomic writes via temp-file-rename. Replay invariant: applying events in order to an empty Portfolio reproduces the JSON state byte-identically. The harness has zero LLM cost — it only consumes pre-generated signals from `daily_signals.py --emit-csv` (signal generation cost is operator-incurred separately).
 
 ## Conventions
 
