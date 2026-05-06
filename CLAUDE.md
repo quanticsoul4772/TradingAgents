@@ -156,7 +156,13 @@ python scripts/daily_signals.py --tickers tickers.txt
 
 `yfinance` and `brave` news vendors were removed 2026-05-03; `yfinance` the package is still used for stock prices, technical indicators, and fundamental data.
 
-**A3 momentum filter** (opt-in production augmentation): set `config["uw_momentum_filter_threshold"] = -5.0` to enable mean-reversion suppression of UW/Sell commits. Wired in `tradingagents/agents/managers/portfolio_manager.py` via `tradingagents/agents/utils/momentum_filter.py`. Default disabled. **Forensics validation** (post-experiment 007): the filter targets mean-reversion bounces specifically — it correctly stays inert on regime-mismatch UW commits (e.g. INTC was UP +11-33% at 4 of 6 UW dates and never in suppression zone). See `claudedocs/a3-filter-forensics-007.md` for per-row breakdown.
+**Empirical filters (default ON as of 2026-05-06)**:
+
+- **A3 momentum filter** — `config["uw_momentum_filter_threshold"]` defaults to `-5.0`. Suppresses UW/Sell commits to Hold when the ticker is already down >5% over the prior 30 trading days (mean-reversion zone). Wired in `tradingagents/agents/managers/portfolio_manager.py` via `tradingagents/agents/utils/momentum_filter.py`. Forensics (`claudedocs/a3-filter-forensics-007.md`) confirm the filter correctly stays inert on regime-mismatch UW commits (e.g. INTC was UP +11-33% at 4 of 6 UW dates). Corpus retrospective (`scripts/uw_suppression_filter.py`) showed +0.70pp Δα at this threshold across the 43-UW-commit corpus, positive at every threshold tested in the -5 to -10% range. Set to `None` in PARAMS.json to ablate.
+
+- **Spec 003 contrarian gate** — `config["contrarian_gate_mode"]` defaults to `"active"` at 80th-percentile threshold + N≥20 history floor (FR-004). Downgrades Buy/Overweight to Hold when the propagate's `bull_keyword_count` exceeds the 80th percentile of the most recent 20 cached values for that ticker. Corpus retrospective (`scripts/contrarian_gate_retrospective.py`) showed +6.46% cumulative Δα at 21d at the production-default floor; the FR-004 amendment to N≥20 is load-bearing — at the permissive N≥5 floor the gate would HURT alpha by -24.87%. Set to `"off"` (or `"shadow"` for measurement-only) in PARAMS.json to ablate.
+
+**Corpus interpretation note**: experiments dated **before 2026-05-06** were run with both filters OFF unless their `PARAMS.json` explicitly set them on. Experiments dated **on/after 2026-05-06** include both filters by default unless explicitly disabled. When comparing pre- and post-flip experiment results, check each experiment's PARAMS.json to know which baseline applies.
 
 Tests (pytest is configured in `pyproject.toml`, markers: `unit`, `integration`, `smoke`):
 ```bash

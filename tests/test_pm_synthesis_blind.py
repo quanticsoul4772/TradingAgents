@@ -21,6 +21,7 @@ def _state(research_plan="UNIQUE_RESEARCH_PLAN_TOKEN"):
     """Minimal AgentState for portfolio_manager_node."""
     return {
         "company_of_interest": "NVDA",
+        "trade_date": "2026-01-30",
         "past_context": "",
         "risk_debate_state": {
             "history": "Risk debate transcript.",

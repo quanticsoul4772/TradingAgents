@@ -7,7 +7,8 @@ through the actual create_portfolio_manager → portfolio_manager_node path:
 - Config flag actually controls whether the filter runs
 - Filter sees the LLM's rendered markdown and operates on it correctly
 - State fields (company_of_interest, trade_date) flow into the filter
-- Default-off behavior preserved (regression guard)
+- Absent-key fallback preserved (defensive regression guard)
+- DEFAULT_CONFIG flips A3 ON post-2026-05-06 (regression guard)
 - Bull ratings are never touched regardless of momentum
 """
 
@@ -71,9 +72,12 @@ def llm_returning_buy():
 
 
 @pytest.mark.unit
-def test_filter_disabled_by_default(llm_returning_underweight):
-    """Without `uw_momentum_filter_threshold` in config, the filter never
-    fires — Underweight stays Underweight even on a deeply-down ticker."""
+def test_filter_disabled_when_threshold_absent(llm_returning_underweight):
+    """When `uw_momentum_filter_threshold` is missing from config (e.g. a
+    caller passes a hand-built dict that doesn't include the key), the filter
+    never fires — Underweight stays Underweight even on a deeply-down ticker.
+    This is the defensive-fallback contract; the framework default in
+    `DEFAULT_CONFIG` flipped to -5.0 on 2026-05-06 (see default_config.py)."""
     node = create_portfolio_manager(llm_returning_underweight)
     with (
         patch(
@@ -88,6 +92,29 @@ def test_filter_disabled_by_default(llm_returning_underweight):
         result = node(_state())
     assert "Underweight" in result["final_trade_decision"]
     assert "Hold" not in result["final_trade_decision"].split("Rating")[1].split("\n")[0]
+
+
+@pytest.mark.unit
+def test_default_config_activates_a3_filter():
+    """Regression guard for the 2026-05-06 default flip — DEFAULT_CONFIG must
+    keep A3 active at -5.0 so the framework's out-of-the-box behavior reflects
+    the corpus-wide retrospective findings (see claudedocs/uw-suppression-filter.md
+    and CLAUDE.md baseline section). Override in PARAMS.json to ablate."""
+    from tradingagents.default_config import DEFAULT_CONFIG
+
+    assert DEFAULT_CONFIG["uw_momentum_filter_threshold"] == -5.0
+    assert DEFAULT_CONFIG["uw_momentum_filter_lookback_days"] == 30
+
+
+@pytest.mark.unit
+def test_default_config_activates_contrarian_gate():
+    """Regression guard for the 2026-05-06 default flip — DEFAULT_CONFIG must
+    keep the spec 003 contrarian gate in 'active' mode at the production
+    N>=20 history floor (FR-004) and 80th-percentile threshold."""
+    from tradingagents.default_config import DEFAULT_CONFIG
+
+    assert DEFAULT_CONFIG["contrarian_gate_mode"] == "active"
+    assert DEFAULT_CONFIG["contrarian_gate_threshold"] == 80
 
 
 @pytest.mark.unit

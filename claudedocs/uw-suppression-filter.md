@@ -1,8 +1,6 @@
 # UW commit-suppression filter retrospective (A3)
 
-_Generated 2026-05-03T06:45:54.405271_
-
-> **Status**: in-sample retrospective on n=16 UW commits prior to A3 productionization. Superseded for the post-007 question of "does the filter behave correctly on a fresh run" by [`a3-filter-forensics-007.md`](a3-filter-forensics-007.md) — which showed the filter correctly stays inert on regime-mismatch failures (INTC × Q1 2026 was UP +11-33% at 4 of 6 UW dates, never in the suppression zone). This doc remains the in-sample evidence base for the filter's design rationale; do not cite it for "filter is/isn't generalizing" — cite the forensics doc instead.
+_Generated 2026-05-05T21:23:50.572816_
 
 Filter rule: suppress UW (treat as Hold) if ticker is in mean-reversion zone (tic_mom < downside_thr).
 Hypothesis discovered in this analysis: wrong UW commits cluster on tickers already deeply down → forward 21d mean-reverts bullishly.
@@ -11,25 +9,26 @@ Horizon 21d. Convention: UW correct ⇔ α<0.
 
 ## Baseline (no filter)
 
-- n = 16
-- mean α = +1.97%
-- correct rate (α<0) = 31%
+- n = 43
+- mean α = +11.57%
+- correct rate (α<0) = 33%
 
 
 ## Threshold sweep (downside mean-reversion filter)
 
 | downside_thr | n_kept | n_suppressed | kept α | suppressed α | kept correct% | improvement |
 |---|---|---|---|---|---|---|
-| -5.0% | 9 | 7 | +0.82% | +3.45% | 33% | +1.15pp |
-| -7.5% | 10 | 6 | +1.07% | +3.47% | 30% | +0.90pp |
-| -10.0% | 13 | 3 | +2.51% | -0.34% | 31% | -0.53pp |
-| -12.5% | 13 | 3 | +2.51% | -0.34% | 31% | -0.53pp |
-| -15.0% | 13 | 3 | +2.51% | -0.34% | 31% | -0.53pp |
+| -5.0% | 31 | 12 | +10.88% | +13.37% | 39% | +0.70pp |
+| -7.5% | 33 | 10 | +10.34% | +15.63% | 36% | +1.23pp |
+| -10.0% | 38 | 5 | +11.12% | +14.98% | 34% | +0.45pp |
+| -12.5% | 40 | 3 | +12.46% | -0.34% | 32% | -0.89pp |
+| -15.0% | 40 | 3 | +12.46% | -0.34% | 32% | -0.89pp |
 
 ## Per-(ticker, date) UW commit features
 
 | Ticker | Date | 21d α | UW correct | SPY 30d mom | ticker 30d mom |
 |---|---|---|---|---|---|
+| AAPL | 2025-11-21 | -4.07% | ✓ | -2.78% | +4.81% |
 | AAPL | 2026-01-30 | +3.33% | ✗ | +1.96% | -5.78% |
 | AAPL | 2026-02-06 | -4.27% | ✓ | -1.05% | +1.82% |
 | AAPL | 2026-02-13 | +1.00% | ✗ | -0.84% | -4.16% |
@@ -38,6 +37,22 @@ Horizon 21d. Convention: UW correct ⇔ α<0.
 | AAPL | 2026-03-06 | +0.42% | ✗ | -0.60% | +5.10% |
 | AAPL | 2026-03-13 | -1.38% | ✓ | -4.22% | -0.27% |
 | AAPL | 2026-03-20 | -1.23% | ✓ | -3.85% | -9.96% |
+| AAPL | 2026-04-03 | -0.06% | ✓ | -4.19% | -1.79% |
+| GOOGL | 2026-03-25 | +9.68% | ✗ | -5.88% | -10.45% |
+| INTC | 2025-12-26 | +34.01% | ✗ | +1.08% | -4.54% |
+| INTC | 2026-01-02 | +24.13% | ✗ | +2.44% | +6.31% |
+| INTC | 2026-01-09 | +3.75% | ✗ | +3.11% | +14.86% |
+| INTC | 2026-02-06 | -5.59% | ✓ | -1.05% | +32.64% |
+| INTC | 2026-02-13 | -4.23% | ✓ | -0.84% | +24.61% |
+| INTC | 2026-02-20 | +4.71% | ✗ | -1.06% | +11.44% |
+| INTC | 2026-02-27 | -1.82% | ✓ | -0.64% | -3.87% |
+| INTC | 2026-03-04 | +14.81% | ✗ | -1.64% | -8.22% |
+| INTC | 2026-03-11 | +29.55% | ✗ | -2.24% | +10.10% |
+| INTC | 2026-03-18 | +44.76% | ✗ | -3.54% | -9.73% |
+| INTC | 2026-03-20 | +42.48% | ✗ | -3.85% | -4.98% |
+| INTC | 2026-03-25 | +66.25% | ✗ | -5.88% | -12.30% |
+| INTC | 2026-04-01 | +97.43% | ✗ | -4.76% | -4.44% |
+| INTC | 2026-04-03 | +103.14% | ✗ | -4.19% | +12.91% |
 | MSFT | 2026-02-06 | +3.10% | ✗ | -1.05% | -18.82% |
 | MSFT | 2026-02-20 | +1.36% | ✗ | -1.06% | -16.73% |
 | MSFT | 2026-03-13 | -5.47% | ✓ | -4.22% | -16.56% |
@@ -46,14 +61,24 @@ Horizon 21d. Convention: UW correct ⇔ α<0.
 | NVDA | 2026-03-06 | +2.11% | ✗ | -0.60% | +0.01% |
 | NVDA | 2026-03-20 | +7.18% | ✗ | -3.85% | +2.51% |
 | NVDA | 2026-03-27 | +15.01% | ✗ | -6.77% | -9.90% |
+| NVDA | 2026-04-03 | +0.78% | ✗ | -4.19% | -5.59% |
+| XLE | 2025-12-19 | +9.60% | ✗ | -0.16% | +0.96% |
+| XLE | 2025-12-26 | +12.50% | ✗ | +1.08% | -3.05% |
+| XLE | 2026-01-02 | +12.26% | ✗ | +2.44% | -1.02% |
+| XLE | 2026-03-06 | +8.30% | ✗ | -0.60% | +15.86% |
+| XLE | 2026-03-27 | -19.99% | ✓ | -6.77% | +11.90% |
+| XLE | 2026-04-03 | -10.23% | ✓ | -4.19% | +7.38% |
+| XLF | 2026-01-30 | -2.49% | ✓ | +1.96% | -2.62% |
+| XLF | 2026-02-06 | -5.79% | ✓ | -1.05% | -3.67% |
+| XLK | 2026-02-20 | +2.15% | ✗ | -1.06% | -4.39% |
 
 ## Best operating point
 
 
-**Suppress UW when ticker 30d momentum < -5.0%** (mean-reversion zone)
+**Suppress UW when ticker 30d momentum < -7.5%** (mean-reversion zone)
 
-- Kept UW commits: n=9, mean α = **+0.82%** (baseline +1.97%)
-- Suppressed commits: n=7
-- α improvement: **+1.15pp**
+- Kept UW commits: n=33, mean α = **+10.34%** (baseline +11.57%)
+- Suppressed commits: n=10
+- α improvement: **+1.23pp**
 
 _Caveat: in-sample validation on the same 16 commits that informed the hypothesis. Out-of-sample test requires fresh data._

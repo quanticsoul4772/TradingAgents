@@ -55,9 +55,13 @@ DEFAULT_CONFIG = {
     "research_manager_prompt_variant": "default",
     # A3: mean-reversion suppression filter for Underweight / Sell commits.
     # When set (e.g. -5.0 = "down >5% in 30d"), the PM overrides bear ratings
-    # to Hold on tickers in mean-reversion zone. Default None = disabled.
-    # See claudedocs/uw-suppression-filter.md for in-sample evidence.
-    "uw_momentum_filter_threshold": None,
+    # to Hold on tickers in mean-reversion zone.
+    # **Default flipped from None → -5.0 on 2026-05-06** after corpus-wide
+    # retrospective (`scripts/uw_suppression_filter.py`) showed +0.70pp Δα
+    # improvement at -5% threshold across the 43-UW-commit corpus, positive
+    # at every threshold tested in the -5 to -10% range. Set to None in a
+    # specific experiment's PARAMS.json to ablate. In-sample caveat applies.
+    "uw_momentum_filter_threshold": -5.0,
     "uw_momentum_filter_lookback_days": 30,
     # Phase C: independent second-opinion review of PM decisions. When True,
     # an extra LLM call evaluates the framework's commit against the same
@@ -84,9 +88,14 @@ DEFAULT_CONFIG = {
     # recent N=20 cached values for THIS ticker; in active mode, when
     # percentile >= threshold AND PM rating is Buy/Overweight, the rating
     # is downgraded to Hold (or Underweight per target).
-    # Default mode "off" = backwards-compat per spec 003 FR-007.
-    # See .specify/specs/003-analyst-contrarian-gate/spec.md.
-    "contrarian_gate_mode": "off",  # "off" | "shadow" | "active"
+    # **Default mode flipped from "off" → "active" on 2026-05-06** after
+    # corpus-wide retrospective (`scripts/contrarian_gate_retrospective.py`)
+    # showed +6.46% cumulative Δα at 21d at the production-default N>=20
+    # history floor (FR-004). The N>=5 permissive floor would HURT alpha
+    # by -24.87% — confirming FR-004's amendment to N=20 is load-bearing
+    # and cannot be loosened. Set to "off" in a specific experiment's
+    # PARAMS.json to ablate. See claudedocs/contrarian-gate-retrospective-2026-05-05.md.
+    "contrarian_gate_mode": "active",  # "off" | "shadow" | "active"
     "contrarian_gate_threshold": 80,  # percentile threshold
     "contrarian_gate_target": "hold",  # "hold" | "underweight"
     "contrarian_gate_signal": "market_report",  # pluggable per spec User Story 4

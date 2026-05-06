@@ -65,6 +65,7 @@ def _make_pm_state(past_context=""):
     """Minimal AgentState dict for portfolio_manager_node."""
     return {
         "company_of_interest": "NVDA",
+        "trade_date": "2026-01-30",
         "past_context": past_context,
         "risk_debate_state": {
             "history": "Risk debate history.",
