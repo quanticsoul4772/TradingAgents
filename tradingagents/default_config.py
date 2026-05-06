@@ -1,8 +1,60 @@
 import os
+from typing import Literal, TypedDict
 
 _TRADINGAGENTS_HOME = os.path.join(os.path.expanduser("~"), ".tradingagents")
 
-DEFAULT_CONFIG = {
+
+class TradingAgentsConfig(TypedDict):
+    """Typed schema for the framework's runtime config.
+
+    Defined as a TypedDict (rather than a Pydantic model or dataclass) so that
+    `DEFAULT_CONFIG` and the dict that flows through `get_config()` /
+    `set_config()` continue to behave as plain dicts at runtime — preserving
+    backwards compatibility with the many call sites that use `.get(key)`,
+    `.update(...)`, and dict-merge patterns. Mypy uses this schema to type
+    each `cfg["key"]` access; runtime behavior is unchanged.
+
+    Added 2026-05-06 to eliminate the dominant source of the historical
+    175-error mypy baseline (untyped config dict flooding `conditional_logic.py`,
+    LLM clients, and `trading_graph.py` with arg-type / union-attr noise).
+    """
+
+    project_dir: str
+    results_dir: str
+    data_cache_dir: str
+    memory_log_path: str
+    memory_log_max_entries: int | None
+    llm_provider: str
+    deep_think_llm: str
+    quick_think_llm: str
+    backend_url: str | None
+    google_thinking_level: str | None
+    openai_reasoning_effort: str | None
+    anthropic_effort: str | None
+    checkpoint_enabled: bool
+    output_language: str
+    max_debate_rounds: int
+    max_risk_discuss_rounds: int
+    max_recur_limit: int
+    pm_sees_synthesis: bool
+    research_manager_prompt_variant: str
+    uw_momentum_filter_threshold: float | None
+    uw_momentum_filter_lookback_days: int
+    second_opinion_enabled: bool
+    second_opinion_agree_threshold: float
+    second_opinion_disagree_threshold: float
+    framework_mode: Literal["prose", "bots"]
+    contrarian_gate_mode: Literal["off", "shadow", "active"]
+    contrarian_gate_threshold: int
+    contrarian_gate_target: Literal["hold", "underweight"]
+    contrarian_gate_signal: str
+    contrarian_gate_feature: str
+    bot_models: dict[str, str]
+    data_vendors: dict[str, str]
+    tool_vendors: dict[str, str]
+
+
+DEFAULT_CONFIG: TradingAgentsConfig = {
     "project_dir": os.path.abspath(os.path.join(os.path.dirname(__file__), ".")),
     "results_dir": os.getenv(
         "TRADINGAGENTS_RESULTS_DIR", os.path.join(_TRADINGAGENTS_HOME, "logs")
