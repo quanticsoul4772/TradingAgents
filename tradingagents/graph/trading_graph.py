@@ -450,6 +450,10 @@ class TradingAgentsGraph:
             "signals": final_state.get("signals", []),
             "shadow_aggregate_decision": final_state.get("shadow_aggregate_decision", {}),
             "framework_mode": final_state.get("framework_mode", "prose"),
+            # Spec 003 contrarian gate annotation (None when mode=='off');
+            # added 2026-05-06 after sc003_financials_gate_check.py surfaced
+            # that shadow-mode annotations were being silently dropped.
+            "contrarian_gate": final_state.get("contrarian_gate"),
         }
 
         # Save to file

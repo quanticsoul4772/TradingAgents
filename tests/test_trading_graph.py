@@ -322,3 +322,108 @@ def test_process_signal_delegates_to_signal_processor(mocked_graph):
     result = mocked_graph.process_signal("**Rating**: Hold\nblah blah")
     assert result == "Hold"
     mocked_graph.signal_processor.process_signal.assert_called_once()
+
+
+# -- state-log persistence --------------------------------------------------
+
+
+@pytest.mark.unit
+def test_state_log_persists_contrarian_gate_field(mocked_graph, tmp_path):
+    """Regression guard for the 2026-05-06 fix.
+
+    The state-log writer at trading_graph.py:425-453 whitelists fields from
+    final_state. Before the fix, `contrarian_gate` was missing from that
+    whitelist, so shadow-mode annotations from spec 003 were silently
+    dropped — discovered by sc003_financials_gate_check.py."""
+    final_state = {
+        "company_of_interest": "NVDA",
+        "trade_date": "2026-04-03",
+        "market_report": "",
+        "sentiment_report": "",
+        "news_report": "",
+        "fundamentals_report": "",
+        "investment_debate_state": {
+            "bull_history": "",
+            "bear_history": "",
+            "history": "",
+            "current_response": "",
+            "judge_decision": "",
+        },
+        "trader_investment_plan": "",
+        "risk_debate_state": {
+            "aggressive_history": "",
+            "conservative_history": "",
+            "neutral_history": "",
+            "history": "",
+            "judge_decision": "",
+        },
+        "investment_plan": "",
+        "final_trade_decision": "**Rating**: Overweight",
+        "contrarian_gate": {
+            "mode": "shadow",
+            "feature_value": 75.0,
+            "percentile": 92.0,
+            "n_history": 13,
+            "would_fire": True,
+            "gate_fired": False,
+        },
+    }
+    mocked_graph.ticker = "NVDA"
+    mocked_graph._log_state("2026-04-03", final_state)
+
+    log_path = (
+        tmp_path
+        / "results"
+        / "NVDA"
+        / "TradingAgentsStrategy_logs"
+        / "full_states_log_2026-04-03.json"
+    )
+    assert log_path.exists()
+    persisted = json.loads(log_path.read_text(encoding="utf-8"))
+    assert "contrarian_gate" in persisted, (
+        "contrarian_gate field missing from persisted state log "
+        "(would silently lose shadow-mode gate annotations)"
+    )
+    assert persisted["contrarian_gate"]["percentile"] == 92.0
+
+
+@pytest.mark.unit
+def test_state_log_contrarian_gate_is_none_when_field_absent(mocked_graph, tmp_path):
+    """When mode='off' the PM doesn't add contrarian_gate; persisted value is None."""
+    final_state = {
+        "company_of_interest": "NVDA",
+        "trade_date": "2026-04-03",
+        "market_report": "",
+        "sentiment_report": "",
+        "news_report": "",
+        "fundamentals_report": "",
+        "investment_debate_state": {
+            "bull_history": "",
+            "bear_history": "",
+            "history": "",
+            "current_response": "",
+            "judge_decision": "",
+        },
+        "trader_investment_plan": "",
+        "risk_debate_state": {
+            "aggressive_history": "",
+            "conservative_history": "",
+            "neutral_history": "",
+            "history": "",
+            "judge_decision": "",
+        },
+        "investment_plan": "",
+        "final_trade_decision": "**Rating**: Hold",
+        # No contrarian_gate key
+    }
+    mocked_graph.ticker = "NVDA"
+    mocked_graph._log_state("2026-04-03", final_state)
+    log_path = (
+        tmp_path
+        / "results"
+        / "NVDA"
+        / "TradingAgentsStrategy_logs"
+        / "full_states_log_2026-04-03.json"
+    )
+    persisted = json.loads(log_path.read_text(encoding="utf-8"))
+    assert persisted["contrarian_gate"] is None
