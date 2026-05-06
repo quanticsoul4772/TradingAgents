@@ -386,6 +386,15 @@ def main(
         "--gate-threshold",
         help="Spec 003 contrarian gate percentile threshold.",
     ),
+    emit_csv: Path = typer.Option(
+        None,
+        "--emit-csv",
+        help=(
+            "Optional CSV output path consumable by paper_trade.py. Schema: "
+            "specs/002-paper-trading-harness/contracts/signals_csv.md. "
+            "Atomically written; existing file overwritten."
+        ),
+    ),
 ):
     """Run propagate(ticker, today) over the watchlist with active gates; write digest."""
     ticker_list = _resolve_tickers(tickers)
@@ -445,7 +454,54 @@ def main(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(digest, encoding="utf-8")
     console.print(f"[green]Digest:[/green]  {out_path}")
+
+    if emit_csv is not None:
+        _emit_signals_csv(rows, resolved_date, emit_csv)
+        console.print(f"[green]CSV:[/green]     {emit_csv}")
+
     return 0
+
+
+def _emit_signals_csv(rows: list[dict], resolved_date: str, path: Path) -> None:
+    """Write a paper_trade.py-consumable signals CSV per signals_csv.md.
+
+    Atomic write via temp-file-rename. Required columns: ticker, analysis_date,
+    rating. Optional columns mirror scripts/backtest.py results.csv schema for
+    cross-tool compatibility.
+    """
+    import csv
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    fieldnames = [
+        "ticker",
+        "analysis_date",
+        "rating",
+        "gate_threshold",
+        "a3_threshold",
+        "model_deep",
+        "model_quick",
+        "run_seconds",
+        "error",
+    ]
+    with tmp.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for r in rows:
+            writer.writerow(
+                {
+                    "ticker": r.get("ticker", ""),
+                    "analysis_date": resolved_date,
+                    "rating": r.get("rating", ""),
+                    "gate_threshold": r.get("gate_threshold", ""),
+                    "a3_threshold": r.get("a3_threshold", ""),
+                    "model_deep": r.get("model_deep", ""),
+                    "model_quick": r.get("model_quick", ""),
+                    "run_seconds": f"{r.get('run_seconds', 0):.2f}" if r.get("run_seconds") else "",
+                    "error": r.get("error", "") or "",
+                }
+            )
+    tmp.replace(path)
 
 
 if __name__ == "__main__":

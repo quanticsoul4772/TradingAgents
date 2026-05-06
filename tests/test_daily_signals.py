@@ -309,3 +309,88 @@ def test_render_digest_active_mode_label():
     rows = [_make_row("AAPL", "Buy")]
     digest = daily_signals._render_digest(rows, "2026-04-15", shadow_gates=False, include_all=False)
     assert "active (rating override)" in digest
+
+
+# ---- _emit_signals_csv (Spec 002 paper-trading harness consumer) ----------
+
+
+def test_emit_csv_writes_required_columns(tmp_path):
+    import pandas as pd
+
+    out = tmp_path / "signals.csv"
+    rows = [
+        _make_row("AAPL", "Buy"),
+        _make_row("NVDA", "Overweight"),
+        _make_row("INTC", "Hold"),
+    ]
+    for r in rows:
+        r["gate_threshold"] = 80
+        r["a3_threshold"] = -5.0
+        r["model_deep"] = "claude-opus-4-7"
+        r["model_quick"] = "claude-haiku-4-5"
+    daily_signals._emit_signals_csv(rows, "2026-04-15", out)
+
+    df = pd.read_csv(out)
+    required = {"ticker", "analysis_date", "rating"}
+    assert required.issubset(set(df.columns))
+    assert len(df) == 3
+    assert (df["analysis_date"] == "2026-04-15").all()
+
+
+def test_emit_csv_includes_optional_columns_for_cross_tool_compat(tmp_path):
+    out = tmp_path / "s.csv"
+    row = _make_row("NVDA", "Buy")
+    row["gate_threshold"] = 80
+    row["a3_threshold"] = -5.0
+    row["model_deep"] = "claude-opus-4-7"
+    row["model_quick"] = "claude-haiku-4-5"
+    daily_signals._emit_signals_csv([row], "2026-04-15", out)
+
+    import pandas as pd
+
+    df = pd.read_csv(out)
+    for col in [
+        "gate_threshold",
+        "a3_threshold",
+        "model_deep",
+        "model_quick",
+        "run_seconds",
+        "error",
+    ]:
+        assert col in df.columns
+
+
+def test_emit_csv_atomic_write_no_tmp_residue(tmp_path):
+    out = tmp_path / "out.csv"
+    daily_signals._emit_signals_csv([_make_row("AAPL", "Buy")], "2026-04-15", out)
+    assert out.exists()
+    assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_emit_csv_overwrites_existing_file(tmp_path):
+    out = tmp_path / "out.csv"
+    out.write_text("stale content\n", encoding="utf-8")
+    daily_signals._emit_signals_csv([_make_row("AAPL", "Buy")], "2026-04-15", out)
+    assert "stale content" not in out.read_text(encoding="utf-8")
+    assert "AAPL" in out.read_text(encoding="utf-8")
+
+
+def test_emit_csv_consumable_by_paper_trade(tmp_path):
+    """Round-trip: emit_csv output is parseable by paper_trade's CSV reader."""
+    out = tmp_path / "signals.csv"
+    daily_signals._emit_signals_csv(
+        [_make_row("NVDA", "Overweight"), _make_row("HD", "Hold")],
+        "2026-04-15",
+        out,
+    )
+    # Reuse paper_trade.py's _read_signals_csv via direct import
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    import paper_trade  # noqa: E402
+
+    df = paper_trade._read_signals_csv(out)
+    assert {"ticker", "analysis_date", "rating"}.issubset(df.columns)
+    signals = paper_trade._signals_for_date(df, __import__("datetime").date(2026, 4, 15))
+    assert signals == {"NVDA": "Overweight", "HD": "Hold"}

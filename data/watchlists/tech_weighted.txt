@@ -1,0 +1,40 @@
+# Default watchlist for paper-trading harness — tech-weighted per SC-003
+# empirical breakdown (Tech +17.80% mean α on bullish picks; Healthcare
+# +8.16%; Financials -7.07%). Per-sector cap (50% default) prevents pure-Tech
+# concentration even with this composition.
+#
+# Spec: research.md R-11.
+
+# Tech (~60% of universe; SC-003 strongest bullish-α signal)
+AAPL
+MSFT
+NVDA
+GOOGL
+AMZN
+META
+AVGO
+ORCL
+ADBE
+CRM
+NFLX
+CSCO
+AMD
+QCOM
+TSLA
+
+# Healthcare (~12%; SC-003 small-but-positive bullish-α)
+UNH
+LLY
+ABBV
+
+# Financials (~8%; SC-003 negative on bullish — but included for sector
+# diversification; per-sector cap will limit damage if signals concentrate here)
+JPM
+GS
+
+# Other (~20%; mixed sectors for breadth)
+INTC
+ABT
+HD
+MCD
+XOM
