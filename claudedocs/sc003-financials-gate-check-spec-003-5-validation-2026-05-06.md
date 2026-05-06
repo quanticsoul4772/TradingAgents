@@ -54,9 +54,11 @@ Suppressing JPM + BAC (the LEAST-wrong of the 5 at -5.12% and -3.73%) would WORS
 
 ## What this means
 
-**The Financials losers in SC-003 had MODERATE bull_keyword_counts (46–50, near the JPM median of 55), not high-percentile ones.** Their losses came from a different mechanism than the within-ticker bull-prose mean-reversion that finding #4 + spec 003 are built to catch — likely a sector-wide regime move (Financials underperformed the SPY benchmark by ~7% in this 21d window).
+**The Financials losers in SC-003 had MODERATE bull_keyword_counts (46–50, near the JPM median of 55), not high-percentile ones.** Their losses came from a different mechanism than the within-ticker bull-prose mean-reversion that finding #4 + spec 003 are built to catch.
 
-The contrarian gate's `bull_keyword_count` mechanism is calibrated against **prose-density-driven** mean-reversion. It does not catch sector-rotation losses. Spec 003.5 widens the data pool but doesn't change the mechanism.
+> **CORRECTION (added 2026-05-06 evening, after spec 004 SC-008 validation in `claudedocs/spec-004-sc008-validation-2026-05-06.md`)**: this section originally said "likely a sector-wide regime move (Financials underperformed the SPY benchmark by ~7% in this 21d window)." That was a **misread**. The "-7%" figure was the per-ticker α-vs-SPY mean (which is what we measure for individual ratings), not sector-vs-SPY. Direct yfinance check at the SC-003 trade date: **XLF was UP +4.14% in the 21d window after 2026-04-03**, and was only -4.54% in the prior 30 trading days. The actual mechanism for the Financials losses was **per-ticker underperformance vs a rising sector** — neither sector-rotation nor within-ticker prose-density. Spec 004 (sector-momentum filter) was built against this misread premise; SC-008 falsified it for this cohort. The general spec 004 mechanism is still empirically reasonable for genuine sector-rotation cohorts, but the SC-003 Financials cohort isn't one of them. See the spec 004 validation doc for the full unwinding.
+
+The contrarian gate's `bull_keyword_count` mechanism is calibrated against **prose-density-driven** mean-reversion. It does not catch per-ticker-α-vs-rising-sector losses (the actual SC-003 Financials mechanism). Spec 003.5 widens the data pool but doesn't change the mechanism.
 
 ### Implications for spec 003.5's value calculation
 
@@ -66,13 +68,13 @@ The +6.46% retrospective Δα number (`claudedocs/contrarian-gate-retrospective-
 
 Spec 003.5 extends spec 003's reach to **cold-start tickers in sectors with thick history** — but the SC-003 Financials cohort has neither. So the empirical motivator for spec 003.5 (this Financials cohort) is not actually addressed by spec 003.5.
 
-This isn't a spec 003.5 design failure. The spec was correctly motivated by "gate has zero coverage on cold-start tickers" and the implementation correctly extends coverage when there's same-sector data to extend it onto. The Financials cohort just falls into the harder-still failure mode: **cold-start universe** (almost no same-sector accumulation) with **mechanism mismatch** (sector regime, not within-ticker bull-prose).
+This isn't a spec 003.5 design failure. The spec was correctly motivated by "gate has zero coverage on cold-start tickers" and the implementation correctly extends coverage when there's same-sector data to extend it onto. The Financials cohort just falls into the harder-still failure mode: **cold-start universe** (almost no same-sector accumulation) with **mechanism mismatch** (per-ticker-α-vs-rising-sector, not within-ticker bull-prose). [Per-ticker-α-vs-rising-sector was misidentified as "sector regime" in the original version of this doc; corrected after spec 004 SC-008 validation.]
 
 ### Implications for product framing
 
 - For mature universes (NVDA/AAPL/etc with months of history), spec 003 fires + helps directly.
 - For cold-start universes WITH dense same-sector history (e.g., adding a new tech ticker to a portfolio that's been running on 10+ tech tickers for months), spec 003.5 fires + helps.
-- For cold-start universes WITHOUT same-sector accumulation (the SC-003 Financials case), neither spec 003 nor spec 003.5 fires. Operators need either (a) more time accumulating per-ticker/per-sector history, or (b) a different filter mechanism (e.g., sector-momentum overlay, macro-regime detector) to catch sector-rotation losses.
+- For cold-start universes WITHOUT same-sector accumulation (the SC-003 Financials case), neither spec 003 nor spec 003.5 fires. Spec 004 (sector-momentum filter) was built thinking it would address this — but its SC-008 validation showed XLF wasn't actually in the mean-reversion zone the filter is calibrated for. The actual SC-003 Financials mechanism (per-ticker-α-vs-rising-sector) is a fourth distinct failure mode no current filter catches. See `claudedocs/spec-004-sc008-validation-2026-05-06.md` for the unwinding.
 
 ## What we'd do next (research-track ideas)
 
