@@ -51,6 +51,9 @@ class TradingAgentsConfig(TypedDict):
     contrarian_gate_feature: str
     contrarian_gate_sector_fallback_enabled: bool
     contrarian_gate_sector_floor: int
+    sector_momentum_filter_mode: Literal["off", "shadow", "active"]
+    sector_momentum_filter_threshold_pct: float | None
+    sector_momentum_filter_lookback_days: int
     bot_models: dict[str, str]
     data_vendors: dict[str, str]
     tool_vendors: dict[str, str]
@@ -165,6 +168,15 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     # showed 4 of 5 losing OW commits had zero per-ticker history.
     "contrarian_gate_sector_fallback_enabled": True,
     "contrarian_gate_sector_floor": 20,
+    # Spec 004 (specs/004-sector-momentum-filter/spec.md): suppress Buy/OW
+    # commits to Hold when the ticker's sector ETF is in mean-reversion
+    # zone (down >threshold% in prior N trading days). Default-off per
+    # Constitution II ablation discipline; corpus retrospective gate
+    # (scripts/sector_momentum_retrospective.py + SC-008) before any
+    # default-on flip. Threshold = None IS the off switch.
+    "sector_momentum_filter_mode": "off",
+    "sector_momentum_filter_threshold_pct": None,
+    "sector_momentum_filter_lookback_days": 30,
     # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
     # (str). When set, the framework instantiates a per-bot client for that
     # model using the configured llm_provider; bots not in this dict use the
