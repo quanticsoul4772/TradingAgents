@@ -116,8 +116,6 @@ module = [
     "yfinance.*",
     "stockstats",
     "stockstats.*",
-    "parsel",
-    "parsel.*",
     "questionary",
     "questionary.*",
     "langgraph.*",
@@ -126,7 +124,5 @@ module = [
     "langchain_openai.*",
     "langchain_anthropic.*",
     "langchain_google_genai.*",
-    "redis.*",
-    "stockstats.*",
 ]
 ignore_missing_imports = true
