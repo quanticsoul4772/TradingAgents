@@ -52,6 +52,8 @@ class TradingAgentsConfig(TypedDict):
     bot_models: dict[str, str]
     data_vendors: dict[str, str]
     tool_vendors: dict[str, str]
+    paper_state_dir: str
+    paper_digest_dir: str
 
 
 DEFAULT_CONFIG: TradingAgentsConfig = {
@@ -174,4 +176,13 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     "tool_vendors": {
         # Example: "get_stock_data": "alpha_vantage",  # Override category default
     },
+    # Paper-trading harness state + digest directories. Spec 002.
+    # State files (`<id>.json`, `<id>.events.jsonl`) live under paper_state_dir.
+    # Daily digests are written to paper_digest_dir as `paper-<id>-<date>.md`.
+    # paper_state_dir defaults to the paper subdir of TRADINGAGENTS_CACHE_DIR
+    # if set, else `~/.tradingagents/paper/`.
+    "paper_state_dir": os.path.join(
+        os.getenv("TRADINGAGENTS_CACHE_DIR", _TRADINGAGENTS_HOME), "paper"
+    ),
+    "paper_digest_dir": "claudedocs",
 }
