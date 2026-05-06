@@ -10,6 +10,8 @@ back gracefully to free-text generation.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from tradingagents.agents.schemas import PortfolioDecision, render_pm_decision
 from tradingagents.agents.utils.agent_utils import (
     build_instrument_context,
@@ -183,6 +185,47 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
                 exc,
             )
 
+        # Spec 004: sector-momentum filter. When active, downgrades Buy/OW
+        # commits to Hold if the ticker's sector ETF is in mean-reversion
+        # zone (down >threshold% in prior N trading days). Default off; set
+        # `sector_momentum_filter_threshold_pct` (e.g. -5.0) + mode to enable.
+        # Wired AFTER A3 + spec 003 contrarian gate per FR-012 ordering.
+        # See specs/004-sector-momentum-filter/spec.md.
+        sector_momentum_dict: dict | None = None
+        try:
+            from tradingagents.agents.utils.sector_momentum_filter import (
+                maybe_suppress_bull_rating,
+            )
+
+            sm_threshold = get_config().get("sector_momentum_filter_threshold_pct")
+            sm_mode = get_config().get("sector_momentum_filter_mode", "off")
+            sm_lookback = int(get_config().get("sector_momentum_filter_lookback_days", 30))
+            paper_state_dir = get_config().get("paper_state_dir")
+            sm_sectors_cache = (
+                Path(paper_state_dir) / "sectors.json"
+                if paper_state_dir
+                else Path.home() / ".tradingagents" / "paper" / "sectors.json"
+            )
+            modified_decision, sector_momentum_dict = maybe_suppress_bull_rating(
+                final_trade_decision,
+                state["company_of_interest"],
+                state["trade_date"],
+                threshold_pct=float(sm_threshold) if sm_threshold is not None else None,
+                lookback_days=sm_lookback,
+                mode=sm_mode,
+                sectors_cache_path=sm_sectors_cache,
+            )
+            final_trade_decision = modified_decision
+        except Exception as exc:
+            # Never let filter failure break the PM pipeline.
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "sector_momentum_filter: unexpected failure in PM hook (%s); "
+                "proceeding with unmodified decision",
+                exc,
+            )
+
         new_risk_debate_state = {
             "judge_decision": final_trade_decision,
             "history": risk_debate_state["history"],
@@ -202,6 +245,8 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
         }
         if contrarian_gate_dict is not None:
             result["contrarian_gate"] = contrarian_gate_dict
+        if sector_momentum_dict is not None:
+            result["sector_momentum"] = sector_momentum_dict
         return result
 
     return portfolio_manager_node

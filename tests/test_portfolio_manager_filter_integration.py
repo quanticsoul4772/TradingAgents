@@ -267,3 +267,158 @@ def test_node_returns_consistent_judge_decision_after_suppression(
         result = node(_state())
     assert result["risk_debate_state"]["judge_decision"] == result["final_trade_decision"]
     assert "**Rating**: Hold" in result["risk_debate_state"]["judge_decision"]
+
+
+# ---- Spec 004 sector-momentum filter wiring tests --------------------------
+# Mirror the A3 wiring-test pattern; mocks sector_momentum_filter helpers so
+# the tests don't hit yfinance.
+
+
+import pandas as pd  # noqa: E402
+
+
+def _frame(closes: list[float], start: str = "2026-03-01") -> pd.DataFrame:
+    idx = pd.date_range(start, periods=len(closes), freq="B")
+    return pd.DataFrame({"Close": closes}, index=idx)
+
+
+def _make_sector_lookup(sector: str):
+    def lookup(_t: str) -> str:
+        return sector
+
+    return lookup
+
+
+@pytest.mark.unit
+def test_sector_filter_disabled_by_default_threshold_none(llm_returning_buy):
+    """SC-006: when sector_momentum_filter_threshold_pct is None (default),
+    filter does not modify the rating."""
+    node = create_portfolio_manager(llm_returning_buy)
+    with patch(
+        "tradingagents.dataflows.config.get_config",
+        return_value={
+            "output_language": "English",
+            "sector_momentum_filter_threshold_pct": None,
+            "sector_momentum_filter_mode": "off",
+        },
+    ):
+        result = node(_state())
+    assert "**Rating**: Buy" in result["final_trade_decision"]
+    # Annotation should reflect off-mode (or be absent — both valid per contract)
+    if "sector_momentum" in result:
+        assert result["sector_momentum"]["mode"] == "off"
+        assert result["sector_momentum"]["fired"] is False
+
+
+@pytest.mark.unit
+def test_sector_filter_active_downgrades_overweight_when_etf_below_threshold(
+    llm_returning_buy,
+):
+    """ETF down -8%, threshold -5%, active mode → Buy → Hold."""
+    closes = [100.0] * 5 + [92.0] * 30  # -8% over the lookback window
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "sector_momentum_filter_threshold_pct": -5.0,
+                "sector_momentum_filter_mode": "active",
+                "sector_momentum_filter_lookback_days": 30,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.sector_momentum_filter._etf_history",
+            return_value=_frame(closes),
+        ),
+        patch(
+            "tradingagents.agents.utils.sector_momentum_filter.get_sector",
+            new=_make_sector_lookup("Financial Services"),
+            create=True,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_buy)
+        result = node(_state(ticker="WFC"))
+    assert "**Rating**: Hold" in result["final_trade_decision"]
+    assert "[Sector-momentum filter]" in result["final_trade_decision"]
+    assert result["sector_momentum"]["fired"] is True
+    assert result["sector_momentum"]["pre_rating"] == "Buy"
+    assert result["sector_momentum"]["post_rating"] == "Hold"
+
+
+@pytest.mark.unit
+def test_sector_filter_active_keeps_overweight_when_etf_above_threshold(
+    llm_returning_buy,
+):
+    """ETF down only -2%, threshold -5%, active mode → no override."""
+    closes = [100.0] * 5 + [98.0] * 30  # -2%
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "sector_momentum_filter_threshold_pct": -5.0,
+                "sector_momentum_filter_mode": "active",
+                "sector_momentum_filter_lookback_days": 30,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.sector_momentum_filter._etf_history",
+            return_value=_frame(closes),
+        ),
+        patch(
+            "tradingagents.agents.utils.sector_momentum_filter.get_sector",
+            new=_make_sector_lookup("Financial Services"),
+            create=True,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_buy)
+        result = node(_state(ticker="WFC"))
+    assert "**Rating**: Buy" in result["final_trade_decision"]
+    assert result["sector_momentum"]["fired"] is False
+    assert result["sector_momentum"]["would_fire"] is False
+
+
+@pytest.mark.unit
+def test_sector_filter_does_not_act_on_non_bullish_ratings(
+    llm_returning_underweight,
+):
+    """ETF down -8%, but PM rating is Underweight (after A3 may have downgraded
+    to Hold; either way, not Buy/OW) → filter skips."""
+    closes = [100.0] * 5 + [92.0] * 30
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                # A3 disabled to keep UW rating intact for this test
+                "uw_momentum_filter_threshold": None,
+                "sector_momentum_filter_threshold_pct": -5.0,
+                "sector_momentum_filter_mode": "active",
+                "sector_momentum_filter_lookback_days": 30,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.sector_momentum_filter._etf_history",
+            return_value=_frame(closes),
+        ),
+        patch(
+            "tradingagents.agents.utils.sector_momentum_filter.get_sector",
+            new=_make_sector_lookup("Financial Services"),
+            create=True,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_underweight)
+        result = node(_state(ticker="WFC"))
+    assert "**Rating**: Underweight" in result["final_trade_decision"]
+    assert "[Sector-momentum filter]" not in result["final_trade_decision"]
+    assert result["sector_momentum"]["skipped"] == "rating_not_bullish"
+
+
+@pytest.mark.unit
+def test_default_config_has_sector_momentum_filter_off():
+    """SC-006 regression-guard: DEFAULT_CONFIG ships with the filter off."""
+    from tradingagents.default_config import DEFAULT_CONFIG
+
+    assert DEFAULT_CONFIG["sector_momentum_filter_mode"] == "off"
+    assert DEFAULT_CONFIG["sector_momentum_filter_threshold_pct"] is None
+    assert DEFAULT_CONFIG["sector_momentum_filter_lookback_days"] == 30

@@ -454,6 +454,10 @@ class TradingAgentsGraph:
             # added 2026-05-06 after sc003_financials_gate_check.py surfaced
             # that shadow-mode annotations were being silently dropped.
             "contrarian_gate": final_state.get("contrarian_gate"),
+            # Spec 004 sector-momentum filter annotation (None when mode=='off');
+            # mirrors the contrarian_gate persistence path above per spec
+            # 004 R-5 to avoid silently dropping shadow-mode annotations.
+            "sector_momentum": final_state.get("sector_momentum"),
         }
 
         # Save to file

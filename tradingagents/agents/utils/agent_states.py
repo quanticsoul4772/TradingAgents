@@ -71,3 +71,10 @@ class AgentState(MessagesState):
     # n_history, would_fire, gate_skipped, gate_fired, pm_rating_pre_gate, pm_rating_post_gate.
     # Must be declared here so LangGraph propagates it from PM's return dict to final_state.
     contrarian_gate: Annotated[dict, "Spec 003 contrarian-gate annotation; None when mode=='off'"]
+
+    # Spec 004 sector-momentum filter: PM emits this block when sector_momentum_filter_mode != "off".
+    # Keys per specs/004-sector-momentum-filter/contracts/annotation_schema.md.
+    # Must be declared here so LangGraph propagates it from PM's return dict to final_state.
+    sector_momentum: Annotated[
+        dict, "Spec 004 sector-momentum-filter annotation; None when mode=='off'"
+    ]

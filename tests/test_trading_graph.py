@@ -427,3 +427,110 @@ def test_state_log_contrarian_gate_is_none_when_field_absent(mocked_graph, tmp_p
     )
     persisted = json.loads(log_path.read_text(encoding="utf-8"))
     assert persisted["contrarian_gate"] is None
+
+
+@pytest.mark.unit
+def test_state_log_persists_sector_momentum_field(mocked_graph, tmp_path):
+    """Spec 004 regression-guard mirroring test_state_log_persists_contrarian_gate_field.
+
+    Per spec 004 R-5, the state-log writer in trading_graph.py:_log_state
+    must include `sector_momentum` in its whitelist or shadow-mode
+    annotations are silently dropped (the same bug commit `4c14d0f` fixed
+    for `contrarian_gate`).
+    """
+    final_state = {
+        "company_of_interest": "WFC",
+        "trade_date": "2026-04-03",
+        "market_report": "",
+        "sentiment_report": "",
+        "news_report": "",
+        "fundamentals_report": "",
+        "investment_debate_state": {
+            "bull_history": "",
+            "bear_history": "",
+            "history": "",
+            "current_response": "",
+            "judge_decision": "",
+        },
+        "trader_investment_plan": "",
+        "risk_debate_state": {
+            "aggressive_history": "",
+            "conservative_history": "",
+            "neutral_history": "",
+            "history": "",
+            "judge_decision": "",
+        },
+        "investment_plan": "",
+        "final_trade_decision": "**Rating**: Hold",
+        "sector_momentum": {
+            "mode": "active",
+            "sector": "Financial Services",
+            "etf": "XLF",
+            "etf_30d_return_pct": -8.2,
+            "threshold_pct": -5.0,
+            "lookback_days": 30,
+            "would_fire": True,
+            "fired": True,
+            "pre_rating": "Overweight",
+            "post_rating": "Hold",
+            "skipped": None,
+        },
+    }
+    mocked_graph.ticker = "WFC"
+    mocked_graph._log_state("2026-04-03", final_state)
+    log_path = (
+        tmp_path
+        / "results"
+        / "WFC"
+        / "TradingAgentsStrategy_logs"
+        / "full_states_log_2026-04-03.json"
+    )
+    persisted = json.loads(log_path.read_text(encoding="utf-8"))
+    assert "sector_momentum" in persisted, (
+        "sector_momentum field missing from persisted state log "
+        "(would silently lose shadow-mode filter annotations)"
+    )
+    assert persisted["sector_momentum"]["fired"] is True
+    assert persisted["sector_momentum"]["etf"] == "XLF"
+
+
+@pytest.mark.unit
+def test_state_log_sector_momentum_is_none_when_field_absent(mocked_graph, tmp_path):
+    """When mode='off' the PM doesn't add sector_momentum; persisted value is None."""
+    final_state = {
+        "company_of_interest": "WFC",
+        "trade_date": "2026-04-03",
+        "market_report": "",
+        "sentiment_report": "",
+        "news_report": "",
+        "fundamentals_report": "",
+        "investment_debate_state": {
+            "bull_history": "",
+            "bear_history": "",
+            "history": "",
+            "current_response": "",
+            "judge_decision": "",
+        },
+        "trader_investment_plan": "",
+        "risk_debate_state": {
+            "aggressive_history": "",
+            "conservative_history": "",
+            "neutral_history": "",
+            "history": "",
+            "judge_decision": "",
+        },
+        "investment_plan": "",
+        "final_trade_decision": "**Rating**: Hold",
+        # No sector_momentum key
+    }
+    mocked_graph.ticker = "WFC"
+    mocked_graph._log_state("2026-04-03", final_state)
+    log_path = (
+        tmp_path
+        / "results"
+        / "WFC"
+        / "TradingAgentsStrategy_logs"
+        / "full_states_log_2026-04-03.json"
+    )
+    persisted = json.loads(log_path.read_text(encoding="utf-8"))
+    assert persisted["sector_momentum"] is None
