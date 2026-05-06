@@ -19,6 +19,7 @@ from tradingagents.paper.policy import DefaultPolicy, policy_snapshot_hash
 from tradingagents.paper.portfolio import (
     ClosedPosition,
     EquityPoint,
+    PendingEntry,
     Portfolio,
     Position,
 )
@@ -89,10 +90,15 @@ class PaperTradingEngine:
           1. Idempotency check (R-5) — if today is already in equity_curve,
              emit step_skipped_already_processed and return early.
           2. Mark-to-market all open positions to today's close.
-          3. Process exits: window-elapsed + mid-window-bear-signal.
+          3. Process pending entries from prior steps (live-forward path:
+             yesterday's bullish signals queued because next-day close
+             wasn't available; now retry against today's available data).
+          4. Process exits: window-elapsed + mid-window-bear-signal.
              Free cash returned to buffer.
-          4. Process entries: bullish signals on tickers not currently held.
-          5. Append today's equity_curve point.
+          5. Process new entries: today's bullish signals on tickers not
+             currently held. If next-trading-day close is unavailable
+             (live-forward use case), queue as pending_entry instead.
+          6. Append today's equity_curve point.
         """
         result = StepResult(date=today, portfolio=self.portfolio)
 
@@ -112,13 +118,13 @@ class PaperTradingEngine:
         # 2. Mark-to-market
         mark_prices = self._fetch_marks(today, result)
 
-        # 3. Exits (process before entries so freed cash is available for entries)
+        # 3. Pending entries from prior steps
+        self._process_pending_entries(today, mark_prices, result)
+
+        # 4. Exits (process before new entries so freed cash is available)
         self._process_exits(today, signals, mark_prices, result)
 
-        # Refresh marks for any position that just closed (no-op for survivors)
-        # — survivors retain their marks, closed positions removed from .positions
-
-        # 4. Entries
+        # 5. New entries from today's signals
         self._process_entries(today, signals, mark_prices, result)
 
         # 5. Equity curve point (mark-to-market AFTER all entries/exits)
@@ -294,6 +300,23 @@ class PaperTradingEngine:
                 direction="buy",
             )
             if entry_quote is None:
+                # Live-forward: tomorrow's close doesn't exist yet. Queue
+                # for retry on a future step (when next-day data is available).
+                # Skip duplicate-queue (same ticker + signal_date already pending).
+                already_queued = any(
+                    pe.ticker == ticker and pe.signal_date == today
+                    for pe in self.portfolio.pending_entries
+                )
+                if not already_queued:
+                    self.portfolio.pending_entries.append(
+                        PendingEntry(
+                            ticker=ticker,
+                            signal_date=today,
+                            rating=rating,  # type: ignore[arg-type]
+                            sector=sector,
+                            queued_at=today,
+                        )
+                    )
                 self._emit(
                     result,
                     EventType.DATA_ANOMALY,
@@ -301,69 +324,115 @@ class PaperTradingEngine:
                         "ticker": ticker,
                         "date": today.isoformat(),
                         "anomaly_type": "missing_close",
-                        "message": "No next-trading-day close for entry",
-                        "consequence": "entry skipped",
+                        "message": "No next-trading-day close for entry; queued as pending",
+                        "consequence": "entry queued for retry on future step",
                     },
                     is_skip=True,
                 )
                 continue
             entry_date, entry_price = entry_quote
 
-            decision = self.policy.size_position(
-                self.portfolio, ticker, sector, entry_price, mark_prices
+            self._attempt_entry(
+                ticker, rating, sector, entry_date, entry_price, mark_prices, result
             )
-            if not decision.accept:
-                event_type = (
-                    EventType.SKIP_CASH if decision.reason == "cash" else EventType.SKIP_CAP
-                )
-                payload = {
-                    "ticker": ticker,
-                    "reason": decision.reason,
-                    "detail": decision.detail,
-                    "sector": sector,
-                }
-                if decision.reason == "per_sector":
-                    payload["current_exposure"] = str(
-                        self.portfolio.sector_exposure(mark_prices).get(sector, ZERO)
-                    )
-                self._emit(result, event_type, payload, is_skip=True)
+
+    def _process_pending_entries(
+        self,
+        today: date,
+        mark_prices: dict[str, Decimal],
+        result: StepResult,
+    ) -> None:
+        """Retry pending entries from prior steps. Drop any whose ticker is now
+        held (would have entered via a same-day signal-gen) or whose next-day
+        close is STILL unavailable (re-queue)."""
+        if not self.portfolio.pending_entries:
+            return
+        retained: list[PendingEntry] = []
+        for pe in self.portfolio.pending_entries:
+            if self.portfolio.is_held(pe.ticker):
+                # Already entered via a more recent signal; drop the old pending.
                 continue
+            entry_quote = next_trading_day_close(
+                pe.ticker,
+                pe.signal_date,
+                slippage_bps=self.portfolio.policy_snapshot.entry_slippage_bps,
+                direction="buy",
+            )
+            if entry_quote is None:
+                # Still no data; keep pending for next step.
+                retained.append(pe)
+                continue
+            entry_date, entry_price = entry_quote
+            self._attempt_entry(
+                pe.ticker, pe.rating, pe.sector, entry_date, entry_price, mark_prices, result
+            )
+            # Whether the entry succeeded or was rejected by caps, drop it
+            # from pending (caps + cash are evaluated at execution, not at queue).
+        self.portfolio.pending_entries = retained
 
-            # Compute intended close date
-            intended_close = trading_days_after(
-                ticker, entry_date, self.portfolio.policy_snapshot.holding_window_trading_days
-            )
-            if intended_close is None:
-                intended_close = entry_date  # safety net; validate() will catch
+    def _attempt_entry(
+        self,
+        ticker: str,
+        rating: str,
+        sector: str,
+        entry_date: date,
+        entry_price: Decimal,
+        mark_prices: dict[str, Decimal],
+        result: StepResult,
+    ) -> None:
+        """Common path: size + sector/cash/cap checks, then execute or skip."""
+        decision = self.policy.size_position(
+            self.portfolio, ticker, sector, entry_price, mark_prices
+        )
+        if not decision.accept:
+            event_type = EventType.SKIP_CASH if decision.reason == "cash" else EventType.SKIP_CAP
+            payload = {
+                "ticker": ticker,
+                "reason": decision.reason,
+                "detail": decision.detail,
+                "sector": sector,
+            }
+            if decision.reason == "per_sector":
+                payload["current_exposure"] = str(
+                    self.portfolio.sector_exposure(mark_prices).get(sector, ZERO)
+                )
+            self._emit(result, event_type, payload, is_skip=True)
+            return
 
-            pos = Position(
-                ticker=ticker,
-                qty=decision.target_qty,
-                entry_date=entry_date,
-                entry_price=entry_price,
-                entry_rating=rating,  # type: ignore[arg-type]
-                intended_close_date=intended_close,
-                sector=sector,
-            )
-            cost = Decimal(pos.qty) * pos.entry_price
-            self.portfolio.cash -= cost
-            self.portfolio.positions[ticker] = pos
-            mark_prices[ticker] = pos.entry_price
-            result.entries.append(pos)
-            self._emit(
-                result,
-                EventType.ENTRY,
-                {
-                    "ticker": pos.ticker,
-                    "qty": pos.qty,
-                    "entry_date": pos.entry_date.isoformat(),
-                    "entry_price": str(pos.entry_price),
-                    "entry_rating": pos.entry_rating,
-                    "sector": pos.sector,
-                    "intended_close_date": pos.intended_close_date.isoformat(),
-                    "cash_after": str(self.portfolio.cash),
-                },
-            )
+        intended_close = trading_days_after(
+            ticker, entry_date, self.portfolio.policy_snapshot.holding_window_trading_days
+        )
+        if intended_close is None:
+            intended_close = entry_date
+
+        pos = Position(
+            ticker=ticker,
+            qty=decision.target_qty,
+            entry_date=entry_date,
+            entry_price=entry_price,
+            entry_rating=rating,  # type: ignore[arg-type]
+            intended_close_date=intended_close,
+            sector=sector,
+        )
+        cost = Decimal(pos.qty) * pos.entry_price
+        self.portfolio.cash -= cost
+        self.portfolio.positions[ticker] = pos
+        mark_prices[ticker] = pos.entry_price
+        result.entries.append(pos)
+        self._emit(
+            result,
+            EventType.ENTRY,
+            {
+                "ticker": pos.ticker,
+                "qty": pos.qty,
+                "entry_date": pos.entry_date.isoformat(),
+                "entry_price": str(pos.entry_price),
+                "entry_rating": pos.entry_rating,
+                "sector": pos.sector,
+                "intended_close_date": pos.intended_close_date.isoformat(),
+                "cash_after": str(self.portfolio.cash),
+            },
+        )
 
     def _compute_benchmark_equity(self, today: date) -> Decimal:
         """starting_equity × (today's benchmark close / inception's benchmark close)."""

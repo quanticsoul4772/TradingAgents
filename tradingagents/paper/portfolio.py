@@ -67,6 +67,28 @@ class EquityPoint:
 
 
 @dataclass
+class PendingEntry:
+    """A bullish signal queued for entry execution on a future step.
+
+    Created when ``engine.step`` sees a fresh Buy/Overweight signal but the
+    next-trading-day close isn't yet available (live-forward use case: today's
+    step runs after market close, but tomorrow's close is in the future).
+    Each subsequent step retries pending entries first; once the next-day
+    close becomes available, the entry is executed against current portfolio
+    state (re-checked against caps + cash buffer).
+
+    Added 2026-05-06 after experiment 2026-05-06-001-paper-harness-live-forward
+    surfaced this gap on day 1 (Scenario B).
+    """
+
+    ticker: str
+    signal_date: date
+    rating: Literal["Buy", "Overweight"]
+    sector: str
+    queued_at: date
+
+
+@dataclass
 class Portfolio:
     """The materialized state of a paper-trading account."""
 
@@ -78,6 +100,7 @@ class Portfolio:
     positions: dict[str, Position] = field(default_factory=dict)
     closed: list[ClosedPosition] = field(default_factory=list)
     equity_curve: list[EquityPoint] = field(default_factory=list)
+    pending_entries: list[PendingEntry] = field(default_factory=list)
 
     def is_held(self, ticker: str) -> bool:
         return ticker in self.positions

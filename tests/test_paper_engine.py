@@ -240,6 +240,113 @@ def test_step_records_equity_point(tmp_path, monkeypatch):
 
 
 @pytest.mark.unit
+def test_step_queues_pending_entry_when_next_day_close_unavailable(tmp_path, monkeypatch):
+    """Live-forward bug fix: when next_trading_day_close returns None, the
+    bullish signal queues as a PendingEntry instead of being silently dropped."""
+    p = _portfolio()
+    monkeypatch.setattr("tradingagents.paper.engine.close_on_or_before", lambda *a, **k: None)
+    monkeypatch.setattr("tradingagents.paper.engine.next_trading_day_close", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "tradingagents.paper.engine.trading_days_after", lambda t, anchor, n: anchor
+    )
+    monkeypatch.setattr(
+        "tradingagents.paper.engine.compute_realized_alpha",
+        lambda *a, **k: (Decimal("0"), Decimal("0")),
+    )
+    monkeypatch.setattr("tradingagents.paper.engine.get_sector", lambda t, p: "Technology")
+
+    engine = _engine(p, tmp_path)
+    result = engine.step(date(2026, 5, 6), {"NVDA": "Overweight", "AMZN": "Overweight"})
+
+    assert len(result.entries) == 0
+    assert len(p.pending_entries) == 2
+    assert {pe.ticker for pe in p.pending_entries} == {"NVDA", "AMZN"}
+    assert all(pe.signal_date == date(2026, 5, 6) for pe in p.pending_entries)
+
+
+@pytest.mark.unit
+def test_pending_entries_execute_on_next_step_when_data_available(tmp_path, monkeypatch):
+    """Pending entries from a prior step execute when next-day close is available."""
+    from tradingagents.paper.portfolio import PendingEntry
+
+    p = _portfolio()
+    p.pending_entries.append(
+        PendingEntry(
+            ticker="NVDA",
+            signal_date=date(2026, 5, 6),
+            rating="Overweight",
+            sector="Technology",
+            queued_at=date(2026, 5, 6),
+        )
+    )
+    _patch_pricing(monkeypatch)
+    engine = _engine(p, tmp_path)
+    result = engine.step(date(2026, 5, 7), {})
+    assert len(result.entries) == 1
+    assert result.entries[0].ticker == "NVDA"
+    assert "NVDA" in p.positions
+    assert len(p.pending_entries) == 0  # drained on success
+
+
+@pytest.mark.unit
+def test_pending_entry_dropped_if_ticker_already_held(tmp_path, monkeypatch):
+    """If a ticker becomes held via a fresh same-day signal between queue and
+    retry, the pending entry is dropped (no double entry)."""
+    from tradingagents.paper.portfolio import PendingEntry
+
+    p = _portfolio(cash="90000")
+    p.positions["NVDA"] = Position(
+        ticker="NVDA",
+        qty=10,
+        entry_date=date(2026, 5, 7),
+        entry_price=Decimal("100"),
+        entry_rating="Overweight",
+        intended_close_date=date(2026, 6, 7),
+        sector="Technology",
+    )
+    p.pending_entries.append(
+        PendingEntry(
+            ticker="NVDA",
+            signal_date=date(2026, 5, 6),
+            rating="Overweight",
+            sector="Technology",
+            queued_at=date(2026, 5, 6),
+        )
+    )
+    _patch_pricing(monkeypatch)
+    engine = _engine(p, tmp_path)
+    result = engine.step(date(2026, 5, 8), {})
+    assert len(result.entries) == 0
+    assert len(p.pending_entries) == 0
+    assert p.positions["NVDA"].qty == 10
+
+
+@pytest.mark.unit
+def test_pending_entry_re_queued_when_data_still_unavailable(tmp_path, monkeypatch):
+    """If next-day close STILL doesn't exist on retry, pending stays queued."""
+    from tradingagents.paper.portfolio import PendingEntry
+
+    p = _portfolio()
+    p.pending_entries.append(
+        PendingEntry(
+            ticker="NVDA",
+            signal_date=date(2026, 5, 6),
+            rating="Overweight",
+            sector="Technology",
+            queued_at=date(2026, 5, 6),
+        )
+    )
+    monkeypatch.setattr("tradingagents.paper.engine.close_on_or_before", lambda *a, **k: None)
+    monkeypatch.setattr("tradingagents.paper.engine.next_trading_day_close", lambda *a, **k: None)
+    monkeypatch.setattr("tradingagents.paper.engine.get_sector", lambda t, p: "Technology")
+    engine = _engine(p, tmp_path)
+    result = engine.step(date(2026, 5, 7), {})
+    assert len(result.entries) == 0
+    assert len(p.pending_entries) == 1
+    assert p.pending_entries[0].ticker == "NVDA"
+
+
+@pytest.mark.unit
 def test_step_processes_exits_before_entries_for_cash_freeing(tmp_path, monkeypatch):
     """Exits should free cash for entries within the same step."""
     snap = PolicySnapshot(n_max_positions=2)

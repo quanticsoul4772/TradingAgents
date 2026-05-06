@@ -21,6 +21,7 @@ from tradingagents.paper.policy import PolicySnapshot
 from tradingagents.paper.portfolio import (
     ClosedPosition,
     EquityPoint,
+    PendingEntry,
     Portfolio,
     Position,
 )
@@ -80,6 +81,16 @@ def _portfolio_to_dict(portfolio: Portfolio) -> dict[str, Any]:
                 "benchmark_equity": str(ep.benchmark_equity),
             }
             for ep in portfolio.equity_curve
+        ],
+        "pending_entries": [
+            {
+                "ticker": pe.ticker,
+                "signal_date": pe.signal_date.isoformat(),
+                "rating": pe.rating,
+                "sector": pe.sector,
+                "queued_at": pe.queued_at.isoformat(),
+            }
+            for pe in portfolio.pending_entries
         ],
         "policy_snapshot": {
             k: (str(v) if isinstance(v, Decimal) else v)
@@ -144,6 +155,17 @@ def _portfolio_from_dict(data: dict[str, Any], path: Path) -> Portfolio:
             for ep in data.get("equity_curve", [])
         ]
 
+        pending_entries: list[PendingEntry] = [
+            PendingEntry(
+                ticker=pe["ticker"],
+                signal_date=date.fromisoformat(pe["signal_date"]),
+                rating=pe["rating"],
+                sector=pe["sector"],
+                queued_at=date.fromisoformat(pe["queued_at"]),
+            )
+            for pe in data.get("pending_entries", [])
+        ]
+
         portfolio = Portfolio(
             portfolio_id=data["portfolio_id"],
             inception_date=date.fromisoformat(data["inception_date"]),
@@ -153,6 +175,7 @@ def _portfolio_from_dict(data: dict[str, Any], path: Path) -> Portfolio:
             positions=positions,
             closed=closed,
             equity_curve=equity_curve,
+            pending_entries=pending_entries,
         )
     except (KeyError, ValueError, TypeError) as e:
         raise PortfolioStateError(

@@ -1,0 +1,7 @@
+# Live-forward exercise watchlist — 5 Tech tickers
+# Spec 002 first end-to-end exercise (2026-05-06 to 2026-05-12)
+AAPL
+MSFT
+NVDA
+GOOGL
+AMZN
