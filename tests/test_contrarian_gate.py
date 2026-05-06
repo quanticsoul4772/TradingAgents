@@ -518,6 +518,10 @@ def test_annotation_to_dict_complete_keys():
         "n_history",
         "would_fire",
         "gate_skipped",
+        # Spec 003.5 additions
+        "gate_baseline",
+        "n_history_per_ticker",
+        "n_history_sector",
     }
     assert d["feature_value"] == 42.0
 
