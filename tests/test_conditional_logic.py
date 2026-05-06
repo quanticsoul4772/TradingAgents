@@ -10,6 +10,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
+from langchain_core.messages import AIMessage
 
 from tradingagents.graph.conditional_logic import ConditionalLogic
 
@@ -17,8 +18,13 @@ from tradingagents.graph.conditional_logic import ConditionalLogic
 
 
 def _state_with_last_message(tool_calls):
-    """State stub whose last message has the given tool_calls."""
-    msg = MagicMock()
+    """State stub whose last message has the given tool_calls.
+
+    Uses ``spec=AIMessage`` so the conditional's ``isinstance(msg, AIMessage)``
+    narrowing accepts the mock — matching the LangGraph contract that the
+    analyst's last message is always an AIMessage.
+    """
+    msg = MagicMock(spec=AIMessage)
     msg.tool_calls = tool_calls
     return {"messages": [msg]}
 
