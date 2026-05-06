@@ -45,9 +45,12 @@ from .signal_processing import SignalProcessor
 
 
 def fetch_returns(
-    ticker: str, trade_date: str, holding_days: int = 5
+    ticker: str,
+    trade_date: str,
+    holding_days: int = 5,
+    benchmark: str = "SPY",
 ) -> tuple[float | None, float | None, int | None]:
-    """Fetch raw and alpha return for ticker over holding_days from trade_date.
+    """Fetch raw + benchmark-relative alpha return for ticker.
 
     ``holding_days`` is interpreted as **trading days**. The calendar window
     fetched from yfinance is ``int(holding_days * 1.5) + 7`` days — the 1.5
@@ -58,30 +61,26 @@ def fetch_returns(
     fits ~50 trading days), which materially distorted any IC measurement
     using ``holding_days >= 30`` — see ``claudedocs/featurizer-artifact-check-2026-05-04.md``.
 
-    Returns (raw_return, alpha_return, actual_holding_days) or
-    (None, None, None) if price data is unavailable (too recent, delisted,
-    or network error).
+    The forward-α math is delegated to
+    ``tradingagents.dataflows.returns.returns_from_frames`` so that
+    ``alpha_from_frames`` (used by PriceCache + analysis scripts) and this
+    function share a single source of truth.
+
+    Returns (raw_return, alpha_return, actual_holding_days) — both decimal
+    (e.g. 0.015 for 1.5%) — or (None, None, None) if price data is
+    unavailable (too recent, delisted, or network error).
     """
+    from tradingagents.dataflows.returns import returns_from_frames
+
     try:
         start = datetime.strptime(trade_date, "%Y-%m-%d")
         end = start + timedelta(days=int(holding_days * 1.5) + 7)
         end_str = end.strftime("%Y-%m-%d")
 
         stock = yf.Ticker(ticker).history(start=trade_date, end=end_str)
-        spy = yf.Ticker("SPY").history(start=trade_date, end=end_str)
+        bench = yf.Ticker(benchmark).history(start=trade_date, end=end_str)
 
-        if len(stock) < 2 or len(spy) < 2:
-            return None, None, None
-
-        actual_days = min(holding_days, len(stock) - 1, len(spy) - 1)
-        raw = float(
-            (stock["Close"].iloc[actual_days] - stock["Close"].iloc[0]) / stock["Close"].iloc[0]
-        )
-        spy_ret = float(
-            (spy["Close"].iloc[actual_days] - spy["Close"].iloc[0]) / spy["Close"].iloc[0]
-        )
-        alpha = raw - spy_ret
-        return raw, alpha, actual_days
+        return returns_from_frames(stock, bench, trade_date, holding_days, as_percent=False)
     except Exception as e:
         logger.warning(
             "Could not resolve outcome for %s on %s (will retry next run): %s",

@@ -37,33 +37,17 @@ RATING_ORDER = ["Buy", "Overweight", "Hold", "Underweight", "Sell"]
 def _compute_returns(
     stock_df: pd.DataFrame, bench_df: pd.DataFrame, trade_date: str, holding_days: int
 ) -> tuple[float | None, float | None, int | None]:
-    """Mirror of fetch_returns math, operating on cached frames."""
+    """Decimal-units (raw, alpha, actual_holding_days) over forward window.
+
+    Thin wrapper over ``tradingagents.dataflows.returns.returns_from_frames``
+    (the consolidated forward-α primitive). Returns truncated values when
+    the available window is shorter than ``holding_days``; callers should
+    inspect the third element if strict-window checking matters.
+    """
+    from tradingagents.dataflows.returns import returns_from_frames
+
     try:
-        td = pd.Timestamp(trade_date)
-        # Drop tz so .loc comparisons don't blow up against tz-aware yfinance index.
-        stock_idx = (
-            stock_df.index.tz_localize(None) if stock_df.index.tz is not None else stock_df.index
-        )
-        bench_idx = (
-            bench_df.index.tz_localize(None) if bench_df.index.tz is not None else bench_df.index
-        )
-
-        stock_slice = stock_df.loc[stock_idx >= td]
-        bench_slice = bench_df.loc[bench_idx >= td]
-
-        if len(stock_slice) < 2 or len(bench_slice) < 2:
-            return None, None, None
-
-        actual_days = min(holding_days, len(stock_slice) - 1, len(bench_slice) - 1)
-        raw = float(
-            (stock_slice["Close"].iloc[actual_days] - stock_slice["Close"].iloc[0])
-            / stock_slice["Close"].iloc[0]
-        )
-        bench_ret = float(
-            (bench_slice["Close"].iloc[actual_days] - bench_slice["Close"].iloc[0])
-            / bench_slice["Close"].iloc[0]
-        )
-        return raw, raw - bench_ret, actual_days
+        return returns_from_frames(stock_df, bench_df, trade_date, holding_days, as_percent=False)
     except Exception:
         return None, None, None
 

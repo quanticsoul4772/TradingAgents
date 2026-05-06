@@ -25,25 +25,22 @@ classifiers = [
 dependencies = [
     "langchain-core>=0.3.81",
     "langchain-anthropic>=0.3.15",
-    "langchain-experimental>=0.3.4",
     "langchain-google-genai>=4.0.0",
     "langchain-openai>=0.3.23",
     "langgraph>=0.4.8",
     "langgraph-checkpoint-sqlite>=2.0.0",
     "pandas>=2.3.0",
-    "parsel>=1.10.0",
-    "pytz>=2025.2",
     "questionary>=2.1.0",
-    "redis>=6.2.0",
     "requests>=2.32.4",
     "rich>=14.0.0",
     "typer>=0.21.0",
-    "setuptools>=80.9.0",
     "stockstats>=0.6.5",
-    "tqdm>=4.67.1",
     "typing-extensions>=4.14.0",
     "yfinance>=0.2.63",
 ]
+# Removed 2026-05-05 (zero references in code; verified by tech-debt audit
+# claudedocs/tech-debt-2026-05-05.md): redis, parsel, tqdm, pytz,
+# langchain-experimental, setuptools (the build dep stays in [build-system]).
 
 [project.optional-dependencies]
 dev = [
