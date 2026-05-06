@@ -1,0 +1,20 @@
+{
+  "config_overrides": {
+    "contrarian_gate_mode": "shadow",
+    "uw_momentum_filter_threshold": -5.0,
+    "deep_think_llm": "claude-opus-4-7",
+    "quick_think_llm": "claude-haiku-4-5",
+    "llm_provider": "anthropic"
+  },
+  "explicit_flags": {
+    "--tickers": "AAPL,MSFT,NVDA,GOOGL,AMZN,META,TSLA,AVGO,ORCL,ADBE,CRM,NFLX,CSCO,AMD,QCOM,JPM,BAC,WFC,GS,MS,V,MA,AXP,UNH,JNJ,LLY,PFE,MRK,ABBV,TMO,KO,PG,WMT,COST,HD,MCD,SBUX,NKE,GE,CAT,BA,HON,LMT,XOM,CVX,COP,T,VZ,INTC,ABT",
+    "--start": "2026-04-03",
+    "--end": "2026-04-03",
+    "--frequency": "W",
+    "--debate-rounds": 1,
+    "--analysts": "market,news,fundamentals",
+    "--news-vendor": "exa"
+  },
+  "baseline": "9-ticker corpus headline (+1.23% mean α at 21d on bullish commits, RESEARCH_FINDINGS finding #1)",
+  "notes": "50-ticker single-date signal validation. Shadow gates capture annotations without modifying ratings. Compares broader-universe bullish-bucket α to 9-ticker baseline."
+}

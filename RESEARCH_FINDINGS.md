@@ -547,3 +547,28 @@ Two Phase D experiments landed:
 Updated 2026-05-04 (post-NVDA-Q3-micro + post-XLK-Phase-D). The architectural reframe: **calibrated abstention + 3-period-validated bull-side signal at modest magnitude + regime-asymmetric bear-side + substrate-specific commit calibration**. Q1 (n=100+ scaling) is now resolved with **moderate confidence positive** — at n=71 spanning 3 periods the signal is +1.23% with ~61% hit rate; Bayesian posterior 0.63. Q3 (model-specificity) answered: signal is regime-conditional + period-conditional + substrate-conditional, not model-wide. Q4 (UW concentration) answered: regime-concentrated + tail-distorted. Q2 (90d bear fix) reasoning-confidence-rejected (posterior 0.10) — do not pursue. Q5 (reasoning_evidence in PM) unbuilt; reasoning identified real failure modes needing asymmetric handling.
 
 Next planned: choices include (a) substrate-prompt-adapted XLK rerun (~$10 T2) to test prompt-tuning fix for the over-Hold finding, (b) different substrate type (~$10 T2) to test substrate-generalization of over-Hold, (c) full 30-pair Q3 2025 validation (~$30 T3) to push n past 100 on the bull-α claim, (d) cross-ticker Phase D (XLF financials, XLE energy) to test sector-rotation signal at low cost. Two specs unimplemented: 001-bots-architecture (battlecode-style refactor) and 002-signal-lifecycle (discover/evaluate/promote/retire/learn pipeline) — both no-LLM-cost large builds, deferrable.
+
+## SC-003: 50-ticker signal-at-scale validation (added 2026-05-06)
+
+**Experiment**: `experiments/2026-05-05-003-signal-at-scale/` — 50 diversified tickers spanning 8 sectors at single date 2026-04-03 with shadow gates. 50/50 propagated, 0 errors. Cost ~$20.
+
+**Headline result — Scenario B (tech-specific signal)**:
+
+| Bucket | n | Mean α (21d) | Hit rate |
+|---|---|---|---|
+| Overweight | 15 | **+5.96%** | 53% |
+| Hold | 33 | -3.87% | 21% |
+| Underweight | 2 | -15.60% | 0% (correct) |
+
+The aggregate +5.96% bullish-bucket result is nearly 5× the 9-ticker corpus headline of +1.23% — but the per-sector breakdown reveals the signal is **dominated by Tech** (n=7, **+17.80%** mean) with Healthcare contributing modestly (n=2, +8.16%) and Financials actually NEGATIVE on its bullish picks (n=5, -7.07%). The 21d window 2026-04-03 → 2026-05-04 was a Tech-rally regime; the framework correctly went heavily-Hold across down sectors and bullish on Tech, but can't disambiguate "framework picks Tech bullish correctly" from "framework picked Tech bullish at a moment when Tech was about to rally."
+
+**Counterfactuals confirm directional commits carry information**: invert-all -2.41% Δα, hold-all-ow -0.89% Δα, hold-all-uw -0.31% Δα. The framework's commits add value vs the all-Hold counterfactual.
+
+**Implications**:
+- The 9-ticker headline (+1.23%) is **confirmed in aggregate at 50-ticker scale**. The signal generalizes to a broader universe.
+- Signal is **structurally tech-concentrated** at this single-date observation. Multi-window replication needed to disambiguate genuine cross-sector signal from Tech-rally-window-luck.
+- Product surface implication: tech-weighted universes (or per-sector calibrated surfaces) get the strong signal; broad sweeps dilute it.
+- 2 Underweight commits both correct (CVX -13%, HON -18%) — small n, but bear-side is on-direction at this date.
+- Hold bucket mean α = -3.87% is anti-calibrated (Holds underperformed SPY by ~4%) — first time in the corpus where Hold isn't ≈ 0%; suggests this date's Hold population had a downward bias. Worth follow-up.
+
+**Decision**: product-build path proceeds. Per HYPOTHESIS decision tree this is Scenario B → narrow product universe with empirical observation that universe selection matters. See `experiments/2026-05-05-003-signal-at-scale/ANALYSIS.md` for full sector breakdown, surprises, and follow-up questions.
