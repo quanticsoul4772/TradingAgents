@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -153,17 +154,6 @@ def main(
         console.print("[yellow]No state logs found for UW pairs.[/yellow]")
         raise typer.Exit(0)
 
-    # Per-ticker mean of features for AAPL vs NVDA
-    cols_to_compare = [
-        "bull_len",
-        "bear_len",
-        "bear_bull_ratio",
-        "judge_len",
-        "plan_len",
-        "strong_words",
-        "hedge_words",
-    ]
-
     # Group: AAPL UW (correct) vs NVDA UW (wrong) — per ticker
     md = ["# UW debate-quality diagnostic (A1)\n"]
     md.append(f"_Generated {datetime.now().isoformat()}_\n")
@@ -194,8 +184,8 @@ def main(
     md.append("|---|---|---|---|---|---|---|")
     for ticker in sorted(df["ticker"].unique()):
         for label, mask in [
-            ("correct (α<0)", df["correct"] == True),
-            ("wrong (α>0)", df["correct"] == False),
+            ("correct (α<0)", df["correct"].astype(bool)),
+            ("wrong (α>0)", ~df["correct"].astype(bool)),
         ]:
             sub = df[(df["ticker"] == ticker) & mask]
             if sub.empty:
@@ -214,7 +204,7 @@ def main(
         row = [kw]
         for ticker in sorted(df["ticker"].unique()):
             sub = df[df["ticker"] == ticker]
-            mean_hits = sub["kw_hits"].apply(lambda h: h.get(kw, 0)).mean()
+            mean_hits = sub["kw_hits"].apply(lambda h, kw=kw: h.get(kw, 0)).mean()
             row.append(f"{mean_hits:.2f}")
         md.append("| " + " | ".join(row) + " |")
 
