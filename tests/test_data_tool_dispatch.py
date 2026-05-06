@@ -35,7 +35,6 @@ from tradingagents.agents.utils.news_data_tools import (
 )
 from tradingagents.agents.utils.technical_indicators_tools import get_indicators
 
-
 # -- core_stock_tools --------------------------------------------------------
 
 
@@ -96,6 +95,7 @@ def test_get_indicators_splits_comma_separated_input():
 def test_get_indicators_handles_value_error_per_indicator():
     """If route_to_vendor raises ValueError for one indicator, that indicator's
     error message is captured and the others still process."""
+
     def side_effect(method, symbol, ind, curr_date, look_back_days):
         if ind == "garbage":
             raise ValueError("unknown indicator: garbage")
@@ -164,7 +164,7 @@ def test_get_fundamentals_routes_to_vendor():
 def test_financial_statement_tool_default_freq_quarterly(tool_func, method_name):
     """Balance sheet / cashflow / income all default freq='quarterly'."""
     with patch(
-        f"tradingagents.agents.utils.fundamental_data_tools.route_to_vendor",
+        "tradingagents.agents.utils.fundamental_data_tools.route_to_vendor",
         return_value="ok",
     ) as mock_route:
         tool_func.invoke({"ticker": "NVDA", "curr_date": "2026-02-06"})
@@ -185,9 +185,7 @@ def test_financial_statement_tool_explicit_freq_annual(tool_func, method_name):
         "tradingagents.agents.utils.fundamental_data_tools.route_to_vendor",
         return_value="ok",
     ) as mock_route:
-        tool_func.invoke(
-            {"ticker": "NVDA", "freq": "annual", "curr_date": "2026-02-06"}
-        )
+        tool_func.invoke({"ticker": "NVDA", "freq": "annual", "curr_date": "2026-02-06"})
     mock_route.assert_called_once_with(method_name, "NVDA", "annual", "2026-02-06")
 
 

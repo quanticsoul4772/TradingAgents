@@ -7,7 +7,6 @@ and weekday alignment.
 from __future__ import annotations
 
 from datetime import datetime
-from unittest.mock import patch
 
 import pandas as pd
 import pytest
@@ -18,7 +17,6 @@ from tradingagents.dataflows.utils import (
     get_next_weekday,
     save_output,
 )
-
 
 # -- save_output ---------------------------------------------------------
 
@@ -72,6 +70,7 @@ def test_decorate_all_methods_wraps_every_callable():
         def wrapped(*args, **kwargs):
             calls.append(fn.__name__)
             return fn(*args, **kwargs)
+
         return wrapped
 
     @decorate_all_methods(tracking_decorator)

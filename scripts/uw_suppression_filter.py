@@ -101,7 +101,7 @@ def main(
     md.append("## Baseline (no filter)\n")
     md.append(f"- n = {len(df)}")
     md.append(f"- mean α = {df['alpha'].mean():+.2f}%")
-    md.append(f"- correct rate (α<0) = {df['correct'].mean()*100:.0f}%\n")
+    md.append(f"- correct rate (α<0) = {df['correct'].mean() * 100:.0f}%\n")
 
     # Mean-reversion suppression sweep: suppress UW when ticker is already deeply down
     downside_thresholds = [-5.0, -7.5, -10.0, -12.5, -15.0]
@@ -112,7 +112,9 @@ def main(
     )
     md.append("|---|---|---|---|---|---|---|")
 
-    table = Table(title=f"UW suppression: ticker_mom < downside_thr → suppress @ {horizon}d", box=box.SIMPLE)
+    table = Table(
+        title=f"UW suppression: ticker_mom < downside_thr → suppress @ {horizon}d", box=box.SIMPLE
+    )
     for col in ["downside_thr", "n_kept", "n_supp", "kept α", "supp α", "kept_OK%", "Δα"]:
         table.add_column(col)
 
@@ -157,9 +159,7 @@ def main(
     md.append("\n## Best operating point\n")
     if best:
         d_thr, kept_alpha, n_kept, n_supp = best
-        md.append(
-            f"\n**Suppress UW when ticker 30d momentum < {d_thr}%** (mean-reversion zone)\n"
-        )
+        md.append(f"\n**Suppress UW when ticker 30d momentum < {d_thr}%** (mean-reversion zone)\n")
         md.append(
             f"- Kept UW commits: n={n_kept}, mean α = **{kept_alpha:+.2f}%** (baseline {baseline_alpha:+.2f}%)"
         )

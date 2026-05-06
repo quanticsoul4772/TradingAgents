@@ -9,14 +9,12 @@ covered indirectly by checkpoint_resume.py.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 
 from tradingagents.graph.trading_graph import TradingAgentsGraph, fetch_returns
-
 
 # -- fetch_returns (module-level) --------------------------------------------
 
@@ -124,11 +122,13 @@ def mocked_graph(tmp_path):
         "tool_vendors": {},
         "memory_log_max_entries": 50,
     }
-    with patch("tradingagents.graph.trading_graph.create_llm_client") as _create, patch(
-        "tradingagents.graph.trading_graph.TradingMemoryLog"
-    ) as _mem, patch("tradingagents.graph.trading_graph.GraphSetup") as _gs, patch(
-        "tradingagents.graph.trading_graph.SignalProcessor"
-    ) as _sp, patch("tradingagents.graph.trading_graph.Reflector") as _ref:
+    with (
+        patch("tradingagents.graph.trading_graph.create_llm_client") as _create,
+        patch("tradingagents.graph.trading_graph.TradingMemoryLog") as _mem,
+        patch("tradingagents.graph.trading_graph.GraphSetup") as _gs,
+        patch("tradingagents.graph.trading_graph.SignalProcessor") as _sp,
+        patch("tradingagents.graph.trading_graph.Reflector") as _ref,
+    ):
         _create.return_value.get_llm.return_value = MagicMock()
         _gs.return_value.setup_graph.return_value = MagicMock()
         graph = TradingAgentsGraph(config=config)
@@ -138,7 +138,11 @@ def mocked_graph(tmp_path):
 
 @pytest.mark.unit
 def test_get_provider_kwargs_anthropic_with_effort(mocked_graph):
-    mocked_graph.config = {**mocked_graph.config, "llm_provider": "anthropic", "anthropic_effort": "high"}
+    mocked_graph.config = {
+        **mocked_graph.config,
+        "llm_provider": "anthropic",
+        "anthropic_effort": "high",
+    }
     kwargs = mocked_graph._get_provider_kwargs()
     assert kwargs == {"effort": "high"}
 
@@ -153,14 +157,22 @@ def test_get_provider_kwargs_anthropic_without_effort(mocked_graph):
 
 @pytest.mark.unit
 def test_get_provider_kwargs_google_with_thinking_level(mocked_graph):
-    mocked_graph.config = {**mocked_graph.config, "llm_provider": "google", "google_thinking_level": "deep"}
+    mocked_graph.config = {
+        **mocked_graph.config,
+        "llm_provider": "google",
+        "google_thinking_level": "deep",
+    }
     kwargs = mocked_graph._get_provider_kwargs()
     assert kwargs == {"thinking_level": "deep"}
 
 
 @pytest.mark.unit
 def test_get_provider_kwargs_openai_with_reasoning_effort(mocked_graph):
-    mocked_graph.config = {**mocked_graph.config, "llm_provider": "openai", "openai_reasoning_effort": "medium"}
+    mocked_graph.config = {
+        **mocked_graph.config,
+        "llm_provider": "openai",
+        "openai_reasoning_effort": "medium",
+    }
     kwargs = mocked_graph._get_provider_kwargs()
     assert kwargs == {"reasoning_effort": "medium"}
 

@@ -86,14 +86,27 @@ def test_default_four_analysts_produces_full_node_set(setup_with_mocks):
     workflow = setup_with_mocks.setup_graph()  # default = all 4
     nodes = set(workflow.nodes.keys())
     expected_analyst_nodes = {
-        "Market Analyst", "Msg Clear Market", "tools_market",
-        "Social Analyst", "Msg Clear Social", "tools_social",
-        "News Analyst", "Msg Clear News", "tools_news",
-        "Fundamentals Analyst", "Msg Clear Fundamentals", "tools_fundamentals",
+        "Market Analyst",
+        "Msg Clear Market",
+        "tools_market",
+        "Social Analyst",
+        "Msg Clear Social",
+        "tools_social",
+        "News Analyst",
+        "Msg Clear News",
+        "tools_news",
+        "Fundamentals Analyst",
+        "Msg Clear Fundamentals",
+        "tools_fundamentals",
     }
     expected_downstream = {
-        "Bull Researcher", "Bear Researcher", "Research Manager", "Trader",
-        "Aggressive Analyst", "Neutral Analyst", "Conservative Analyst",
+        "Bull Researcher",
+        "Bear Researcher",
+        "Research Manager",
+        "Trader",
+        "Aggressive Analyst",
+        "Neutral Analyst",
+        "Conservative Analyst",
         "Portfolio Manager",
     }
     assert expected_analyst_nodes <= nodes
@@ -125,9 +138,7 @@ def test_start_edge_points_to_first_analyst(setup_with_mocks):
 def test_analysts_chain_in_selected_order(setup_with_mocks):
     """Msg Clear of analyst N → Analyst N+1, and last analyst's Msg Clear →
     Bull Researcher."""
-    workflow = setup_with_mocks.setup_graph(
-        selected_analysts=["market", "news", "fundamentals"]
-    )
+    workflow = setup_with_mocks.setup_graph(selected_analysts=["market", "news", "fundamentals"])
     edges = set(workflow.edges)
     assert ("Msg Clear Market", "News Analyst") in edges
     assert ("Msg Clear News", "Fundamentals Analyst") in edges

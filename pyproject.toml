@@ -99,6 +99,9 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["B011"]
 "scripts/*" = ["E402"]
+# cli/main.py: load_dotenv() must run before module imports (E402); cli.utils
+# is consumed via star-import as a deliberate re-export (F403/F405).
+"cli/main.py" = ["E402", "F403", "F405"]
 
 [tool.mypy]
 python_version = "3.10"

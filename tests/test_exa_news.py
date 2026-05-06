@@ -22,7 +22,6 @@ from tradingagents.dataflows.exa_news import (
     get_news_exa,
 )
 
-
 # -- _to_iso8601 -----------------------------------------------------------
 
 
@@ -131,11 +130,14 @@ def test_throttle_sleeps_to_enforce_rate_limit():
     """When called twice in quick succession, second call sleeps."""
     # Reset module-level state
     exa_mod._last_call_ts = 0.0
-    with patch("tradingagents.dataflows.exa_news.time.sleep") as mock_sleep, patch(
-        "tradingagents.dataflows.exa_news.time.monotonic",
-        side_effect=[100.0, 100.05, 100.05, 100.30],
-        # First call: now=100.0, set _last_call_ts=100.05
-        # Second call: now=100.05, gap=0.05 → wait=0.20, then set ts to 100.30
+    with (
+        patch("tradingagents.dataflows.exa_news.time.sleep") as mock_sleep,
+        patch(
+            "tradingagents.dataflows.exa_news.time.monotonic",
+            side_effect=[100.0, 100.05, 100.05, 100.30],
+            # First call: now=100.0, set _last_call_ts=100.05
+            # Second call: now=100.05, gap=0.05 → wait=0.20, then set ts to 100.30
+        ),
     ):
         _throttle()
         _throttle()
@@ -149,9 +151,12 @@ def test_throttle_sleeps_to_enforce_rate_limit():
 def test_throttle_skips_sleep_when_enough_time_has_passed():
     """When enough time has passed since last call, no sleep."""
     exa_mod._last_call_ts = 0.0
-    with patch("tradingagents.dataflows.exa_news.time.sleep") as mock_sleep, patch(
-        "tradingagents.dataflows.exa_news.time.monotonic",
-        side_effect=[100.0, 100.0, 200.0, 200.0],  # large gap between calls
+    with (
+        patch("tradingagents.dataflows.exa_news.time.sleep") as mock_sleep,
+        patch(
+            "tradingagents.dataflows.exa_news.time.monotonic",
+            side_effect=[100.0, 100.0, 200.0, 200.0],  # large gap between calls
+        ),
     ):
         _throttle()
         _throttle()
@@ -167,9 +172,11 @@ def test_request_with_retry_returns_json_on_success():
     fake_response.status_code = 200
     fake_response.json.return_value = {"results": [{"title": "A"}]}
     fake_response.raise_for_status = MagicMock()
-    with patch("tradingagents.dataflows.exa_news.requests.post", return_value=fake_response), patch(
-        "tradingagents.dataflows.exa_news._throttle"
-    ), patch.dict("os.environ", {"EXA_API_KEY": "k"}, clear=False):
+    with (
+        patch("tradingagents.dataflows.exa_news.requests.post", return_value=fake_response),
+        patch("tradingagents.dataflows.exa_news._throttle"),
+        patch.dict("os.environ", {"EXA_API_KEY": "k"}, clear=False),
+    ):
         result = _request_with_retry({"query": "test"})
     assert result == {"results": [{"title": "A"}]}
 
@@ -185,12 +192,15 @@ def test_request_with_retry_retries_on_429():
     response_200.json.return_value = {"results": []}
     response_200.raise_for_status = MagicMock()
 
-    with patch(
-        "tradingagents.dataflows.exa_news.requests.post",
-        side_effect=[response_429, response_200],
-    ), patch("tradingagents.dataflows.exa_news._throttle"), patch(
-        "tradingagents.dataflows.exa_news.time.sleep"
-    ), patch.dict("os.environ", {"EXA_API_KEY": "k"}, clear=False):
+    with (
+        patch(
+            "tradingagents.dataflows.exa_news.requests.post",
+            side_effect=[response_429, response_200],
+        ),
+        patch("tradingagents.dataflows.exa_news._throttle"),
+        patch("tradingagents.dataflows.exa_news.time.sleep"),
+        patch.dict("os.environ", {"EXA_API_KEY": "k"}, clear=False),
+    ):
         result = _request_with_retry({"query": "test"})
     assert result == {"results": []}
 
@@ -201,10 +211,13 @@ def test_request_with_retry_raises_on_non_429_error():
     fake_response = MagicMock()
     fake_response.status_code = 401
     import requests as _requests
+
     fake_response.raise_for_status.side_effect = _requests.HTTPError("401 Unauthorized")
-    with patch("tradingagents.dataflows.exa_news.requests.post", return_value=fake_response), patch(
-        "tradingagents.dataflows.exa_news._throttle"
-    ), patch.dict("os.environ", {"EXA_API_KEY": "k"}, clear=False):
+    with (
+        patch("tradingagents.dataflows.exa_news.requests.post", return_value=fake_response),
+        patch("tradingagents.dataflows.exa_news._throttle"),
+        patch.dict("os.environ", {"EXA_API_KEY": "k"}, clear=False),
+    ):
         with pytest.raises(_requests.HTTPError):
             _request_with_retry({"query": "test"})
 
@@ -240,9 +253,7 @@ def test_get_news_exa_handles_empty_results():
 @pytest.mark.unit
 def test_get_news_exa_handles_missing_results_key():
     """Some Exa responses might omit 'results' entirely → treat as empty."""
-    with patch(
-        "tradingagents.dataflows.exa_news._request_with_retry", return_value={}
-    ):
+    with patch("tradingagents.dataflows.exa_news._request_with_retry", return_value={}):
         out = get_news_exa("BOGUS", "2026-01-30", "2026-02-06")
     assert "No news articles found" in out
 

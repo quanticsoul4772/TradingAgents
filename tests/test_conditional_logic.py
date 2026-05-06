@@ -13,7 +13,6 @@ import pytest
 
 from tradingagents.graph.conditional_logic import ConditionalLogic
 
-
 # -- Analyst tool-routing helpers --------------------------------------------
 
 
@@ -55,14 +54,8 @@ def test_should_continue_news_branches():
 @pytest.mark.unit
 def test_should_continue_fundamentals_branches():
     cl = ConditionalLogic()
-    assert (
-        cl.should_continue_fundamentals(_state_with_last_message(["x"]))
-        == "tools_fundamentals"
-    )
-    assert (
-        cl.should_continue_fundamentals(_state_with_last_message([]))
-        == "Msg Clear Fundamentals"
-    )
+    assert cl.should_continue_fundamentals(_state_with_last_message(["x"])) == "tools_fundamentals"
+    assert cl.should_continue_fundamentals(_state_with_last_message([])) == "Msg Clear Fundamentals"
 
 
 # -- Bull/Bear debate termination --------------------------------------------
@@ -143,8 +136,7 @@ def test_risk_continues_to_aggressive_after_neutral():
     """Default cycle: after Neutral (or anyone unknown) → Aggressive."""
     cl = ConditionalLogic(max_risk_discuss_rounds=2)
     assert (
-        cl.should_continue_risk_analysis(_risk_state(3, "Neutral Analyst"))
-        == "Aggressive Analyst"
+        cl.should_continue_risk_analysis(_risk_state(3, "Neutral Analyst")) == "Aggressive Analyst"
     )
 
 

@@ -15,10 +15,8 @@ import pytest
 
 from tradingagents.llm_clients.anthropic_client import (
     AnthropicClient,
-    NormalizedChatAnthropic,
 )
 from tradingagents.llm_clients.base_client import normalize_content
-
 
 # -- normalize_content --------------------------------------------------------
 
@@ -82,9 +80,7 @@ def test_normalize_content_empty_list_yields_empty_string():
 def test_anthropic_client_passes_model_to_chat_anthropic():
     """The model arg flows into ChatAnthropic."""
     client = AnthropicClient(model="claude-sonnet-4-6")
-    with patch(
-        "tradingagents.llm_clients.anthropic_client.NormalizedChatAnthropic"
-    ) as mock_chat:
+    with patch("tradingagents.llm_clients.anthropic_client.NormalizedChatAnthropic") as mock_chat:
         client.get_llm()
     args, kwargs = mock_chat.call_args
     assert kwargs["model"] == "claude-sonnet-4-6"
@@ -104,9 +100,7 @@ def test_anthropic_client_filters_unknown_kwargs():
         max_tokens=2048,  # in passthrough — should be kept
         api_key="sk-test",  # in passthrough
     )
-    with patch(
-        "tradingagents.llm_clients.anthropic_client.NormalizedChatAnthropic"
-    ) as mock_chat:
+    with patch("tradingagents.llm_clients.anthropic_client.NormalizedChatAnthropic") as mock_chat:
         client.get_llm()
     _args, kwargs = mock_chat.call_args
     assert kwargs["max_tokens"] == 2048
@@ -118,9 +112,7 @@ def test_anthropic_client_filters_unknown_kwargs():
 def test_anthropic_client_passes_base_url_when_provided():
     """A non-None base_url is forwarded; a None base_url is omitted."""
     client = AnthropicClient(model="claude-sonnet-4-6", base_url="https://proxy.example/")
-    with patch(
-        "tradingagents.llm_clients.anthropic_client.NormalizedChatAnthropic"
-    ) as mock_chat:
+    with patch("tradingagents.llm_clients.anthropic_client.NormalizedChatAnthropic") as mock_chat:
         client.get_llm()
     _args, kwargs = mock_chat.call_args
     assert kwargs["base_url"] == "https://proxy.example/"
@@ -132,9 +124,7 @@ def test_anthropic_client_omits_base_url_when_none():
     (would override its provider default and was the source of the Gemini
     404 bug noted in CLAUDE.md)."""
     client = AnthropicClient(model="claude-sonnet-4-6", base_url=None)
-    with patch(
-        "tradingagents.llm_clients.anthropic_client.NormalizedChatAnthropic"
-    ) as mock_chat:
+    with patch("tradingagents.llm_clients.anthropic_client.NormalizedChatAnthropic") as mock_chat:
         client.get_llm()
     _args, kwargs = mock_chat.call_args
     assert "base_url" not in kwargs
@@ -163,9 +153,9 @@ def test_anthropic_client_warns_on_unknown_model():
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             client.get_llm()
-    assert any(
-        "is not in the known model list" in str(w.message) for w in caught
-    ), f"expected unknown-model warning, got {[str(w.message) for w in caught]}"
+    assert any("is not in the known model list" in str(w.message) for w in caught), (
+        f"expected unknown-model warning, got {[str(w.message) for w in caught]}"
+    )
 
 
 @pytest.mark.unit

@@ -1,11 +1,11 @@
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
 from tradingagents.agents.utils.agent_utils import (
     build_instrument_context,
     get_balance_sheet,
     get_cashflow,
     get_fundamentals,
     get_income_statement,
-    get_insider_transactions,
     get_language_instruction,
 )
 from tradingagents.agents.utils.fundamental_data_tools import (
@@ -15,7 +15,6 @@ from tradingagents.agents.utils.fundamental_data_tools import (
     get_recommendations,
     get_short_interest,
 )
-from tradingagents.dataflows.config import get_config
 
 
 def create_fundamentals_analyst(llm):
@@ -29,11 +28,11 @@ def create_fundamentals_analyst(llm):
             get_cashflow,
             get_income_statement,
             # Extended signals (added 2026-05-03 per docs/SIGNALS.md):
-            get_recommendations,         # analyst consensus + recent rating changes
-            get_earnings_calendar,       # upcoming earnings dates (changes 21d-window prediction)
-            get_short_interest,          # short interest + ownership concentration
-            get_institutional_holders,   # institutional + mutual-fund positioning
-            get_corporate_actions,       # dividend / split history + ESG
+            get_recommendations,  # analyst consensus + recent rating changes
+            get_earnings_calendar,  # upcoming earnings dates (changes 21d-window prediction)
+            get_short_interest,  # short interest + ownership concentration
+            get_institutional_holders,  # institutional + mutual-fund positioning
+            get_corporate_actions,  # dividend / split history + ESG
         ]
 
         system_message = (

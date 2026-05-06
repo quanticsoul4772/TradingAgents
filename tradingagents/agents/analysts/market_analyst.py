@@ -1,4 +1,5 @@
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
 from tradingagents.agents.utils.agent_utils import (
     build_instrument_context,
     get_indicators,
@@ -10,7 +11,6 @@ from tradingagents.agents.utils.technical_indicators_tools import (
     get_sector_etf_strength,
     get_vix,
 )
-from tradingagents.dataflows.config import get_config
 
 
 def create_market_analyst(llm):
@@ -23,9 +23,9 @@ def create_market_analyst(llm):
             get_stock_data,
             get_indicators,
             # Extended signals (added 2026-05-03 per docs/SIGNALS.md):
-            get_vix,                      # macro regime classifier
-            get_sector_etf_strength,      # ticker vs sector ETF (XLK / XLE / etc.)
-            get_options_summary,          # IV, put/call ratio, max-pain proxy
+            get_vix,  # macro regime classifier
+            get_sector_etf_strength,  # ticker vs sector ETF (XLK / XLE / etc.)
+            get_options_summary,  # IV, put/call ratio, max-pain proxy
         ]
 
         system_message = (

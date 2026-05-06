@@ -24,7 +24,6 @@ from tradingagents.agents.analysts.market_analyst import create_market_analyst
 from tradingagents.agents.analysts.news_analyst import create_news_analyst
 from tradingagents.agents.analysts.social_media_analyst import create_social_media_analyst
 
-
 ANALYSTS = [
     ("market", create_market_analyst, "market_report"),
     ("news", create_news_analyst, "news_report"),
@@ -97,7 +96,9 @@ def test_analyst_writes_content_to_report_when_no_tool_calls(name, factory, repo
 def test_analyst_returns_empty_report_when_tool_calls_present(name, factory, report_key):
     """When the LLM emits a tool call (mid-ReAct loop), the report field is
     blank — final report only lands once the loop exits."""
-    llm, result, prompt = _llm_returning_chain("", tool_calls=[{"name": "get_stock_data", "args": {}}])
+    llm, result, prompt = _llm_returning_chain(
+        "", tool_calls=[{"name": "get_stock_data", "args": {}}]
+    )
     node = factory(llm)
     with _patch_prompt(prompt):
         out = node(_state())

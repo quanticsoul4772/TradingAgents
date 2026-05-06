@@ -17,7 +17,6 @@ from tradingagents.llm_clients.openai_client import (
     OpenAIClient,
 )
 
-
 # -- Native OpenAI ------------------------------------------------------------
 
 
@@ -53,7 +52,12 @@ def test_third_party_provider_does_not_set_responses_api():
     [
         ("xai", "https://api.x.ai/v1", "XAI_API_KEY", "sk-xai-test"),
         ("deepseek", "https://api.deepseek.com", "DEEPSEEK_API_KEY", "sk-ds-test"),
-        ("qwen", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1", "DASHSCOPE_API_KEY", "sk-q-test"),
+        (
+            "qwen",
+            "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            "DASHSCOPE_API_KEY",
+            "sk-q-test",
+        ),
         ("glm", "https://api.z.ai/api/paas/v4/", "ZHIPU_API_KEY", "sk-glm-test"),
         ("openrouter", "https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", "sk-or-test"),
     ],
@@ -103,9 +107,7 @@ def test_provider_with_missing_env_var_omits_api_key():
 def test_native_openai_with_user_base_url():
     """For native openai, no provider-config entry → user's base_url passes
     through if provided."""
-    client = OpenAIClient(
-        model="gpt-5.4", base_url="https://proxy.example/", provider="openai"
-    )
+    client = OpenAIClient(model="gpt-5.4", base_url="https://proxy.example/", provider="openai")
     with patch("tradingagents.llm_clients.openai_client.NormalizedChatOpenAI") as mock_cls:
         client.get_llm()
     _args, kwargs = mock_cls.call_args

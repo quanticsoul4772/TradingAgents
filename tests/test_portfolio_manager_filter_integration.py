@@ -75,12 +75,15 @@ def test_filter_disabled_by_default(llm_returning_underweight):
     """Without `uw_momentum_filter_threshold` in config, the filter never
     fires — Underweight stays Underweight even on a deeply-down ticker."""
     node = create_portfolio_manager(llm_returning_underweight)
-    with patch(
-        "tradingagents.dataflows.config.get_config",
-        return_value={"output_language": "English"},  # threshold missing
-    ), patch(
-        "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
-        return_value=-25.0,  # very down — would suppress if filter were on
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={"output_language": "English"},  # threshold missing
+        ),
+        patch(
+            "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
+            return_value=-25.0,  # very down — would suppress if filter were on
+        ),
     ):
         result = node(_state())
     assert "Underweight" in result["final_trade_decision"]
@@ -91,16 +94,19 @@ def test_filter_disabled_by_default(llm_returning_underweight):
 def test_filter_enabled_suppresses_underweight_on_drawdown(llm_returning_underweight):
     """With threshold=-5 AND ticker -10% in last 30d, UW becomes Hold."""
     node = create_portfolio_manager(llm_returning_underweight)
-    with patch(
-        "tradingagents.dataflows.config.get_config",
-        return_value={
-            "output_language": "English",
-            "uw_momentum_filter_threshold": -5.0,
-            "uw_momentum_filter_lookback_days": 30,
-        },
-    ), patch(
-        "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
-        return_value=-10.0,
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": -5.0,
+                "uw_momentum_filter_lookback_days": 30,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
+            return_value=-10.0,
+        ),
     ):
         result = node(_state())
     md = result["final_trade_decision"]
@@ -117,15 +123,18 @@ def test_filter_enabled_does_not_suppress_when_momentum_above_threshold(
 ):
     """Threshold=-5 but ticker only -2% in last 30d → keep the UW commit."""
     node = create_portfolio_manager(llm_returning_underweight)
-    with patch(
-        "tradingagents.dataflows.config.get_config",
-        return_value={
-            "output_language": "English",
-            "uw_momentum_filter_threshold": -5.0,
-        },
-    ), patch(
-        "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
-        return_value=-2.0,  # not in mean-reversion zone
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": -5.0,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
+            return_value=-2.0,  # not in mean-reversion zone
+        ),
     ):
         result = node(_state())
     md = result["final_trade_decision"]
@@ -137,15 +146,18 @@ def test_filter_enabled_does_not_suppress_when_momentum_above_threshold(
 def test_filter_does_not_touch_buy_ratings(llm_returning_buy):
     """The filter only suppresses UW/Sell. Buy stays Buy regardless of momentum."""
     node = create_portfolio_manager(llm_returning_buy)
-    with patch(
-        "tradingagents.dataflows.config.get_config",
-        return_value={
-            "output_language": "English",
-            "uw_momentum_filter_threshold": -5.0,
-        },
-    ), patch(
-        "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
-        return_value=-30.0,  # extreme drawdown
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": -5.0,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
+            return_value=-30.0,  # extreme drawdown
+        ),
     ):
         result = node(_state())
     md = result["final_trade_decision"]
@@ -159,16 +171,19 @@ def test_filter_uses_state_ticker_and_date(llm_returning_underweight):
     hardcoded values."""
     node = create_portfolio_manager(llm_returning_underweight)
 
-    with patch(
-        "tradingagents.dataflows.config.get_config",
-        return_value={
-            "output_language": "English",
-            "uw_momentum_filter_threshold": -5.0,
-        },
-    ), patch(
-        "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
-        return_value=-10.0,
-    ) as mock_mom:
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": -5.0,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
+            return_value=-10.0,
+        ) as mock_mom,
+    ):
         node(_state(ticker="MSFT", trade_date="2026-03-13"))
 
     mock_mom.assert_called_once()
@@ -182,17 +197,20 @@ def test_filter_uses_state_ticker_and_date(llm_returning_underweight):
 def test_filter_lookback_days_config_override(llm_returning_underweight):
     """Custom uw_momentum_filter_lookback_days flows through to the call."""
     node = create_portfolio_manager(llm_returning_underweight)
-    with patch(
-        "tradingagents.dataflows.config.get_config",
-        return_value={
-            "output_language": "English",
-            "uw_momentum_filter_threshold": -5.0,
-            "uw_momentum_filter_lookback_days": 60,
-        },
-    ), patch(
-        "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
-        return_value=-10.0,
-    ) as mock_mom:
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": -5.0,
+                "uw_momentum_filter_lookback_days": 60,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
+            return_value=-10.0,
+        ) as mock_mom,
+    ):
         node(_state())
     args, kwargs = mock_mom.call_args
     assert args[2] == 60  # 3rd positional is lookback_days
@@ -206,15 +224,18 @@ def test_node_returns_consistent_judge_decision_after_suppression(
     the (now-Hold) final_trade_decision so downstream consumers see the
     suppressed version."""
     node = create_portfolio_manager(llm_returning_underweight)
-    with patch(
-        "tradingagents.dataflows.config.get_config",
-        return_value={
-            "output_language": "English",
-            "uw_momentum_filter_threshold": -5.0,
-        },
-    ), patch(
-        "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
-        return_value=-12.0,
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": -5.0,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
+            return_value=-12.0,
+        ),
     ):
         result = node(_state())
     assert result["risk_debate_state"]["judge_decision"] == result["final_trade_decision"]

@@ -11,7 +11,7 @@ trailing_momentum_pct. This file fills the remaining gaps:
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
@@ -20,7 +20,6 @@ from tradingagents.agents.utils.momentum_filter import (
     maybe_suppress_bear_rating,
     trailing_momentum_pct,
 )
-
 
 # -- trailing_momentum_pct -------------------------------------------------
 
@@ -34,9 +33,7 @@ def test_trailing_momentum_pct_happy_path():
     """Sufficient history → returns the trailing % return."""
     # 31 prices: enough for lookback_days=30 (need 31 = lookback+1 prices)
     frame = _fake_history([100.0 + i * 1.0 for i in range(31)])
-    with patch(
-        "tradingagents.agents.utils.momentum_filter.yf.Ticker"
-    ) as mock_ticker:
+    with patch("tradingagents.agents.utils.momentum_filter.yf.Ticker") as mock_ticker:
         mock_ticker.return_value.history.return_value = frame
         result = trailing_momentum_pct("NVDA", "2026-02-06", lookback_days=30)
     # 130 vs 100 over 30 days → +30%
@@ -47,9 +44,7 @@ def test_trailing_momentum_pct_happy_path():
 def test_trailing_momentum_pct_insufficient_history_returns_none():
     """Frame too short → None, not an error."""
     frame = _fake_history([100.0, 101.0, 102.0])  # only 3 rows for 30-day lookback
-    with patch(
-        "tradingagents.agents.utils.momentum_filter.yf.Ticker"
-    ) as mock_ticker:
+    with patch("tradingagents.agents.utils.momentum_filter.yf.Ticker") as mock_ticker:
         mock_ticker.return_value.history.return_value = frame
         result = trailing_momentum_pct("NVDA", "2026-02-06", lookback_days=30)
     assert result is None

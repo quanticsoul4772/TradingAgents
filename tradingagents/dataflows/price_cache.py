@@ -78,9 +78,7 @@ class PriceCache:
     def benchmark_frame(self) -> pd.DataFrame:
         return self._cache[self.benchmark]
 
-    def alpha(
-        self, ticker: str, trade_date: str, holding_days: int
-    ) -> float | None:
+    def alpha(self, ticker: str, trade_date: str, holding_days: int) -> float | None:
         """Forward α of ticker vs benchmark over `holding_days` trading days
         starting at the first trading day on/after `trade_date`. None when
         forward window is unresolvable.
@@ -90,9 +88,7 @@ class PriceCache:
             return None
         return alpha_from_frames(stock, self.benchmark_frame(), trade_date, holding_days)
 
-    def trailing_return(
-        self, ticker: str, trade_date: str, lookback_days: int
-    ) -> float | None:
+    def trailing_return(self, ticker: str, trade_date: str, lookback_days: int) -> float | None:
         """% return of `ticker` over the `lookback_days` trading days BEFORE
         `trade_date`. No look-ahead. None when insufficient prior data.
         """

@@ -8,7 +8,6 @@ import pytest
 
 from tradingagents.agents.utils.momentum_filter import maybe_suppress_bear_rating
 
-
 SAMPLE_UW_MARKDOWN = """**Rating**: Underweight
 
 **Executive Summary**: Reduce position to 60% weight given memory chip cost

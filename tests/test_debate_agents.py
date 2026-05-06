@@ -201,9 +201,7 @@ RISK_DEBATORS = [
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "name,factory,prefix,speaker,history_key,current_key", RISK_DEBATORS
-)
+@pytest.mark.parametrize("name,factory,prefix,speaker,history_key,current_key", RISK_DEBATORS)
 def test_risk_debator_appends_argument_with_correct_prefix(
     name, factory, prefix, speaker, history_key, current_key
 ):
@@ -216,33 +214,23 @@ def test_risk_debator_appends_argument_with_correct_prefix(
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "name,factory,prefix,speaker,history_key,current_key", RISK_DEBATORS
-)
-def test_risk_debator_sets_latest_speaker(
-    name, factory, prefix, speaker, history_key, current_key
-):
+@pytest.mark.parametrize("name,factory,prefix,speaker,history_key,current_key", RISK_DEBATORS)
+def test_risk_debator_sets_latest_speaker(name, factory, prefix, speaker, history_key, current_key):
     node = factory(_llm_returning("ok"))
     out = node(_risk_state())
     assert out["risk_debate_state"]["latest_speaker"] == speaker
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "name,factory,prefix,speaker,history_key,current_key", RISK_DEBATORS
-)
-def test_risk_debator_increments_count(
-    name, factory, prefix, speaker, history_key, current_key
-):
+@pytest.mark.parametrize("name,factory,prefix,speaker,history_key,current_key", RISK_DEBATORS)
+def test_risk_debator_increments_count(name, factory, prefix, speaker, history_key, current_key):
     node = factory(_llm_returning("ok"))
     out = node(_risk_state(count=4))
     assert out["risk_debate_state"]["count"] == 5
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "name,factory,prefix,speaker,history_key,current_key", RISK_DEBATORS
-)
+@pytest.mark.parametrize("name,factory,prefix,speaker,history_key,current_key", RISK_DEBATORS)
 def test_risk_debator_preserves_other_history_buckets(
     name, factory, prefix, speaker, history_key, current_key
 ):
@@ -267,9 +255,7 @@ def test_risk_debator_preserves_other_history_buckets(
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "name,factory,prefix,speaker,history_key,current_key", RISK_DEBATORS
-)
+@pytest.mark.parametrize("name,factory,prefix,speaker,history_key,current_key", RISK_DEBATORS)
 def test_risk_debator_prompt_includes_trader_decision(
     name, factory, prefix, speaker, history_key, current_key
 ):

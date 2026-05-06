@@ -7,7 +7,7 @@ get_balance_sheet, get_cashflow, get_income_statement, get_insider_transactions.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
@@ -24,7 +24,9 @@ from tradingagents.dataflows.y_finance import (
 
 def _ohlcv_frame() -> pd.DataFrame:
     """yfinance-shaped frame with OHLCV columns."""
-    idx = pd.DatetimeIndex(pd.to_datetime(["2026-01-30", "2026-01-31", "2026-02-01"])).tz_localize("UTC")
+    idx = pd.DatetimeIndex(pd.to_datetime(["2026-01-30", "2026-01-31", "2026-02-01"])).tz_localize(
+        "UTC"
+    )
     return pd.DataFrame(
         {
             "Open": [100.0, 101.5, 102.3],
@@ -44,8 +46,9 @@ def _ohlcv_frame() -> pd.DataFrame:
 @pytest.mark.unit
 def test_get_yfin_data_online_returns_csv_with_header():
     """Happy path: returns CSV-formatted string prefixed with metadata header."""
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock_ticker.return_value.history.return_value = _ohlcv_frame()
         result = get_YFin_data_online("NVDA", "2026-01-30", "2026-02-01")
@@ -59,8 +62,9 @@ def test_get_yfin_data_online_returns_csv_with_header():
 @pytest.mark.unit
 def test_get_yfin_data_online_empty_returns_no_data_message():
     """Empty yfinance response → friendly message, not exception."""
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock_ticker.return_value.history.return_value = pd.DataFrame()
         result = get_YFin_data_online("BOGUS", "2026-01-30", "2026-02-01")
@@ -70,8 +74,9 @@ def test_get_yfin_data_online_empty_returns_no_data_message():
 @pytest.mark.unit
 def test_get_yfin_data_online_uppercases_symbol():
     """Lowercased ticker is uppercased for yf.Ticker call."""
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock_ticker.return_value.history.return_value = _ohlcv_frame()
         get_YFin_data_online("nvda", "2026-01-30", "2026-02-01")
@@ -81,8 +86,9 @@ def test_get_yfin_data_online_uppercases_symbol():
 @pytest.mark.unit
 def test_get_yfin_data_online_strips_timezone_from_index():
     """tz-aware index is converted to tz-naive in the output."""
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock_ticker.return_value.history.return_value = _ohlcv_frame()
         result = get_YFin_data_online("NVDA", "2026-01-30", "2026-02-01")
@@ -103,8 +109,9 @@ def test_get_fundamentals_renders_known_fields():
         "trailingPE": 65.4,
         "ebitda": None,  # None values dropped
     }
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock_ticker.return_value.info = info
         result = get_fundamentals("NVDA")
@@ -118,8 +125,9 @@ def test_get_fundamentals_renders_known_fields():
 @pytest.mark.unit
 def test_get_fundamentals_empty_info_returns_no_data_message():
     """Empty info dict → friendly message."""
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock_ticker.return_value.info = {}
         result = get_fundamentals("BOGUS")
@@ -144,11 +152,13 @@ def test_get_fundamentals_swallows_exceptions():
 def mock_yf_for_financials():
     """Patch yf.Ticker + yf_retry + filter_financials_by_date for the
     financial-statement helpers (balance_sheet, cashflow, income_statement)."""
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
-    ), patch(
-        "tradingagents.dataflows.y_finance.filter_financials_by_date",
-        side_effect=lambda df, _d: df,  # passthrough — no date filtering
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
+        patch(
+            "tradingagents.dataflows.y_finance.filter_financials_by_date",
+            side_effect=lambda df, _d: df,  # passthrough — no date filtering
+        ),
     ):
         yield mock_ticker
 
@@ -156,7 +166,9 @@ def mock_yf_for_financials():
 @pytest.mark.unit
 def test_get_balance_sheet_quarterly_default(mock_yf_for_financials):
     """Default freq=quarterly → calls quarterly_balance_sheet."""
-    fake_bs = pd.DataFrame({"2025-12-31": [100, 200, 300]}, index=["Cash", "Receivables", "Inventory"])
+    fake_bs = pd.DataFrame(
+        {"2025-12-31": [100, 200, 300]}, index=["Cash", "Receivables", "Inventory"]
+    )
     mock_yf_for_financials.return_value.quarterly_balance_sheet = fake_bs
     result = get_balance_sheet("NVDA", curr_date="2026-02-06")
     assert "# Balance Sheet" in result
@@ -207,8 +219,9 @@ def test_get_insider_transactions_renders_csv():
             "Shares": [10_000],
         }
     )
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock_ticker.return_value.insider_transactions = fake_insider
         result = get_insider_transactions("NVDA")
@@ -219,8 +232,9 @@ def test_get_insider_transactions_renders_csv():
 @pytest.mark.unit
 def test_get_insider_transactions_none_returns_no_data():
     """yfinance can return None for insider_transactions on some tickers."""
-    with patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker, patch(
-        "tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()
+    with (
+        patch("tradingagents.dataflows.y_finance.yf.Ticker") as mock_ticker,
+        patch("tradingagents.dataflows.y_finance.yf_retry", side_effect=lambda fn: fn()),
     ):
         mock_ticker.return_value.insider_transactions = None
         result = get_insider_transactions("NVDA")
