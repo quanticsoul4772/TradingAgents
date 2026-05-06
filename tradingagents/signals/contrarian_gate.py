@@ -51,7 +51,12 @@ _TARGET_RATING = {"hold": "Hold", "underweight": "Underweight"}
 @dataclass(frozen=True)
 class GateAnnotation:
     """Per-propagate gate decision + diagnostics. Always emitted into the
-    state log when ``contrarian_gate_mode != "off"``."""
+    state log when ``contrarian_gate_mode != "off"``.
+
+    Extended in spec 003.5 (specs/003-sector-baseline-gate/) with
+    ``gate_baseline`` + ``n_history_per_ticker`` + ``n_history_sector``
+    fields to support the cold-start sector-fallback path.
+    """
 
     mode: Literal["off", "shadow", "active"]
     signal_id: str
@@ -61,12 +66,17 @@ class GateAnnotation:
 
     feature_value: float | None
     percentile: float | None
-    n_history: int | None
+    n_history: int | None  # Backward-compat alias: size of whichever pool drove the decision
     would_fire: bool | None
 
     gate_skipped: (
         str | None
     )  # "mode_off" | "insufficient_history" | "missing_source_signal" | "missing_featurizer" | None
+
+    # Spec 003.5 extensions
+    gate_baseline: Literal["per_ticker", "sector", "none"] = "none"
+    n_history_per_ticker: int = 0
+    n_history_sector: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -80,6 +90,9 @@ class GateAnnotation:
             "n_history": self.n_history,
             "would_fire": self.would_fire,
             "gate_skipped": self.gate_skipped,
+            "gate_baseline": self.gate_baseline,
+            "n_history_per_ticker": self.n_history_per_ticker,
+            "n_history_sector": self.n_history_sector,
         }
 
 
@@ -138,6 +151,21 @@ class ContrarianGate:
         self.feature: str = config.get("contrarian_gate_feature", "bull_keyword_count")
         self.cache_path = cache_path
         self.history_floor = history_floor
+        # Spec 003.5: sector-baseline fallback (default-on per R-5)
+        self.sector_fallback_enabled: bool = bool(
+            config.get("contrarian_gate_sector_fallback_enabled", True)
+        )
+        self.sector_floor: int = int(
+            config.get("contrarian_gate_sector_floor", self.DEFAULT_HISTORY_FLOOR)
+        )
+        # paper_state_dir is the canonical sector-cache home (Spec 002 convention).
+        # Defaults to ~/.tradingagents/paper/ when missing — matches default_config.py default.
+        paper_state_dir = config.get("paper_state_dir")
+        self.sectors_cache_path: Path = (
+            Path(paper_state_dir) / "sectors.json"
+            if paper_state_dir
+            else Path.home() / ".tradingagents" / "paper" / "sectors.json"
+        )
 
     # ---- Annotation computation ------------------------------------------------
 
@@ -146,11 +174,22 @@ class ContrarianGate:
         ticker: str,
         market_report_text: str,
         pm_rating: str,
+        trade_date: str | None = None,
     ) -> GateAnnotation:
         """Compute the gate annotation for THIS propagate.
 
         Always returns a GateAnnotation; never raises. When mode == "off",
         returns the no-op annotation (gate_skipped="mode_off").
+
+        Spec 003.5 fallback ladder:
+          1. If per-ticker history N >= history_floor → use per-ticker baseline.
+          2. Else if sector_fallback_enabled and sector pool N >= sector_floor
+             → use sector baseline.
+          3. Else → emit gate_skipped="insufficient_history" with both pool sizes.
+
+        ``trade_date`` is required for the sector-fallback strict-prior cutoff
+        (R-2). When None, the sector path is skipped — the per-ticker path
+        works either way (cache convention assumes today's row isn't yet present).
         """
         if self.mode == "off":
             return self._skipped("mode_off", pm_rating)
@@ -159,7 +198,6 @@ class ContrarianGate:
         if featurizer is None:
             return self._skipped("missing_featurizer", pm_rating)
 
-        # Compute the current propagate's feature value
         try:
             current_value = float(featurizer(market_report_text or ""))
         except Exception as exc:  # noqa: BLE001
@@ -168,20 +206,74 @@ class ContrarianGate:
             )
             return self._skipped("missing_source_signal", pm_rating)
 
-        # Pull historical values for THIS ticker from cache (per-ticker baseline)
-        history = self._load_per_ticker_history(ticker, featurizer)
-        if len(history) < self.history_floor:
-            return self._skipped(
-                "insufficient_history",
-                pm_rating,
+        # ---- Per-ticker baseline (Spec 003 original path) -----------------
+        per_ticker_history = self._load_per_ticker_history(ticker, featurizer)
+        n_per_ticker = len(per_ticker_history)
+        if n_per_ticker >= self.history_floor:
+            return self._build_annotation(
+                pm_rating=pm_rating,
                 feature_value=current_value,
-                n_history=len(history),
+                pool_values=per_ticker_history,
+                n_per_ticker=n_per_ticker,
+                n_sector=0,
+                gate_baseline="per_ticker",
             )
 
-        percentile = _percentile_of_value(history, current_value)
+        # ---- Sector-baseline fallback (Spec 003.5) ------------------------
+        n_sector = 0
+        if self.sector_fallback_enabled and trade_date is not None:
+            sector_pool = self._load_sector_pool(ticker, trade_date, featurizer)
+            n_sector = sector_pool.n
+            if n_sector >= self.sector_floor:
+                return self._build_annotation(
+                    pm_rating=pm_rating,
+                    feature_value=current_value,
+                    pool_values=sector_pool.values,
+                    n_per_ticker=n_per_ticker,
+                    n_sector=n_sector,
+                    gate_baseline="sector",
+                )
+
+        # ---- Neither pool qualified ---------------------------------------
+        return self._skipped(
+            "insufficient_history",
+            pm_rating,
+            feature_value=current_value,
+            n_history=n_per_ticker,
+            n_history_per_ticker=n_per_ticker,
+            n_history_sector=n_sector,
+            gate_baseline="none",
+        )
+
+    def _build_annotation(
+        self,
+        *,
+        pm_rating: str,
+        feature_value: float,
+        pool_values: list[float],
+        n_per_ticker: int,
+        n_sector: int,
+        gate_baseline: Literal["per_ticker", "sector", "none"],
+    ) -> GateAnnotation:
+        """Compute percentile + would_fire, build the annotation. Asserts the
+        spec 003.5 invariants from data-model.md."""
+        n_history = len(pool_values)
+        percentile = _percentile_of_value(pool_values, feature_value)
         threshold_crossed = percentile >= self.threshold
-        # would_fire requires both threshold AND eligible bullish rating
         would_fire = threshold_crossed and (pm_rating in _BULLISH_RATINGS)
+
+        # Invariant assertions (data-model.md "Validation invariants")
+        if gate_baseline == "per_ticker":
+            assert n_per_ticker >= self.history_floor, (
+                f"gate_baseline=per_ticker but n_per_ticker={n_per_ticker} < floor={self.history_floor}"
+            )
+        elif gate_baseline == "sector":
+            assert n_per_ticker < self.history_floor, (
+                f"gate_baseline=sector but n_per_ticker={n_per_ticker} >= floor — should have used per_ticker"
+            )
+            assert n_sector >= self.sector_floor, (
+                f"gate_baseline=sector but n_sector={n_sector} < sector_floor={self.sector_floor}"
+            )
 
         return GateAnnotation(
             mode=self.mode,
@@ -189,11 +281,14 @@ class ContrarianGate:
             feature=self.feature,
             threshold=self.threshold,
             target=self.target,
-            feature_value=current_value,
+            feature_value=feature_value,
             percentile=percentile,
-            n_history=len(history),
+            n_history=n_history,
             would_fire=would_fire,
             gate_skipped=None,
+            gate_baseline=gate_baseline,
+            n_history_per_ticker=n_per_ticker,
+            n_history_sector=n_sector,
         )
 
     # ---- Active-mode rating override -------------------------------------------
@@ -257,6 +352,9 @@ class ContrarianGate:
         pm_rating: str,
         feature_value: float | None = None,
         n_history: int | None = None,
+        n_history_per_ticker: int = 0,
+        n_history_sector: int = 0,
+        gate_baseline: Literal["per_ticker", "sector", "none"] = "none",
     ) -> GateAnnotation:
         return GateAnnotation(
             mode=self.mode,
@@ -269,6 +367,52 @@ class ContrarianGate:
             n_history=n_history,
             would_fire=None,
             gate_skipped=reason,
+            gate_baseline=gate_baseline,
+            n_history_per_ticker=n_history_per_ticker,
+            n_history_sector=n_history_sector,
+        )
+
+    def _load_sector_pool(self, ticker: str, trade_date: str, featurizer: Any):
+        """Aggregate sector-level pool for ``ticker`` strictly before ``trade_date``.
+
+        Uses ``tradingagents.signals.sector_baseline.aggregate_sector_pool``;
+        looks up the sector via paper/sectors.py cache. Returns the raw
+        SectorPool (with .n, .values, .contributors) so the caller can use n
+        for the floor check + values for the percentile.
+        """
+        from datetime import date as _date
+
+        from tradingagents.paper.sectors import get_sector
+        from tradingagents.signals.sector_baseline import (
+            SectorPool,
+            aggregate_sector_pool,
+        )
+
+        try:
+            sector = get_sector(ticker, self.sectors_cache_path)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "contrarian_gate: sector lookup failed for %s (%s); sector fallback skipped",
+                ticker,
+                exc,
+            )
+            return SectorPool(sector="Unknown", before_date=_date.fromisoformat(trade_date))
+
+        try:
+            before_date = _date.fromisoformat(trade_date)
+        except ValueError:
+            logger.warning(
+                "contrarian_gate: invalid trade_date %r; sector fallback skipped", trade_date
+            )
+            return SectorPool(sector=sector, before_date=_date.today())
+
+        return aggregate_sector_pool(
+            sector,
+            before_date,
+            sectors_cache_path=self.sectors_cache_path,
+            signal_id=self.signal_id,
+            feature_callable=featurizer,
+            cache_path=self.cache_path,
         )
 
     def _load_per_ticker_history(self, ticker: str, featurizer: Any) -> list[float]:

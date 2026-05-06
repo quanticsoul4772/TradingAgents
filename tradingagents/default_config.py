@@ -49,6 +49,8 @@ class TradingAgentsConfig(TypedDict):
     contrarian_gate_target: Literal["hold", "underweight"]
     contrarian_gate_signal: str
     contrarian_gate_feature: str
+    contrarian_gate_sector_fallback_enabled: bool
+    contrarian_gate_sector_floor: int
     bot_models: dict[str, str]
     data_vendors: dict[str, str]
     tool_vendors: dict[str, str]
@@ -154,6 +156,15 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     "contrarian_gate_target": "hold",  # "hold" | "underweight"
     "contrarian_gate_signal": "market_report",  # pluggable per spec User Story 4
     "contrarian_gate_feature": "bull_keyword_count",  # pluggable per spec User Story 4
+    # Spec 003.5 (specs/003-sector-baseline-gate/spec.md): sector-baseline
+    # fallback for cold-start tickers. When per-ticker history is below
+    # contrarian_gate_threshold's N>=20 floor, the gate falls back to
+    # aggregating bull_keyword_count history across same-sector tickers.
+    # Set to False for ablation experiments comparing spec-003-only vs
+    # spec-003+sector. Empirical motivation: SC-003 Financials investigation
+    # showed 4 of 5 losing OW commits had zero per-ticker history.
+    "contrarian_gate_sector_fallback_enabled": True,
+    "contrarian_gate_sector_floor": 20,
     # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
     # (str). When set, the framework instantiates a per-bot client for that
     # model using the configured llm_provider; bots not in this dict use the

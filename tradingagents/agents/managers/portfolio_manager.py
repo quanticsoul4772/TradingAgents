@@ -161,6 +161,7 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
                 ticker=state["company_of_interest"],
                 market_report_text=state.get("market_report", ""),
                 pm_rating=pre_gate_rating,
+                trade_date=state.get("trade_date"),
             )
             modified_decision, gate_fired = gate.maybe_override_decision(
                 final_trade_decision, annotation
