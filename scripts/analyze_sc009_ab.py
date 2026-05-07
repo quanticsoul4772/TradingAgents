@@ -150,6 +150,11 @@ def _enrich_row(row: pd.Series, holding_days: int) -> dict:
     calendar_boost = float(fc.get("calendar_boost", 0.0) or 0.0)
     days_to_earnings = fc.get("days_to_earnings")
 
+    # Spec 003 baseline status (PR #68 followup — surfaces cold-start coverage)
+    cg = state.get("contrarian_gate", {}) or {}
+    spec_003_baseline = cg.get("gate_baseline")  # "per_ticker" | "sector" | "none"
+    spec_003_n_history_sector = cg.get("n_history_sector")
+
     # Boost-OFF would-fire decision (post-hoc reconstruction)
     would_fire_unboosted = (
         bull_case_priced_in is not None
@@ -173,6 +178,8 @@ def _enrich_row(row: pd.Series, holding_days: int) -> dict:
         "alpha_vs_spy_pct": alpha_pct,
         "alpha_pending": alpha_pending,
         "state_log_loaded": True,
+        "spec_003_baseline": spec_003_baseline,
+        "spec_003_n_history_sector": spec_003_n_history_sector,
     }
 
 
@@ -323,6 +330,34 @@ def main():
         f"  Gate 3 (boost engaged ≥ 1 row): {'PASS' if gate_3_pass else 'FAIL'} "
         f"(observed: {n_engaged})"
     )
+
+    # Spec 003 baseline-coverage diagnostic (PR #68 followup — surfaces
+    # cold-start gap so operators interpret verdict correctly per
+    # memory/reference_spec_003_cold_start_coverage.md).
+    if "spec_003_baseline" in df.columns:
+        baseline_counts = df["spec_003_baseline"].value_counts(dropna=False).to_dict()
+        n_total = len(df)
+        n_none = int(baseline_counts.get("none", 0)) + int(
+            baseline_counts.get(None, 0)  # NaN safety
+        )
+        n_per_ticker = int(baseline_counts.get("per_ticker", 0))
+        n_sector = int(baseline_counts.get("sector", 0))
+        print()
+        print("## Spec 003 baseline-coverage diagnostic")
+        print()
+        print(
+            f"  per_ticker baseline: {n_per_ticker}/{n_total} ({n_per_ticker / n_total * 100:.1f}%)"
+        )
+        print(f"  sector baseline:     {n_sector}/{n_total} ({n_sector / n_total * 100:.1f}%)")
+        print(f"  none baseline:       {n_none}/{n_total} ({n_none / n_total * 100:.1f}%)")
+        if n_none / n_total > 0.30:
+            print()
+            print(
+                "  ⚠ baseline=none rate > 30% — Spec 003 was structurally inert on "
+                "much of this cohort. Verdict re: Spec 003 effect should be "
+                "interpreted per reference_spec_003_cold_start_coverage.md "
+                "(distinguish 'didn't fire' from 'couldn't fire')."
+            )
 
     # all_pass uses the EFFECTIVE gate-1 (standard or alternative)
     all_pass = effective_gate_1 and gate_2_pass and gate_3_pass

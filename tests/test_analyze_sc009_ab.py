@@ -148,3 +148,24 @@ def test_preliminary_marker_string_appears_in_module():
         "before overwriting ANALYSIS.md (added 2026-05-07 evening to "
         "preserve operator hand-edits during mid-flight backtests)."
     )
+
+
+# ---- Spec 003 baseline-coverage diagnostic (PR #68 followup) ---------------
+
+
+def test_baseline_coverage_diagnostic_section_in_module():
+    """Smoke check that the analyzer's baseline-coverage diagnostic survives
+    refactors. This was added per PR #68 followup to surface cold-start
+    rate so operators interpret SC-009-class verdicts correctly.
+    """
+    src = (SCRIPTS_DIR / "analyze_sc009_ab.py").read_text(encoding="utf-8")
+    assert "Spec 003 baseline-coverage diagnostic" in src, (
+        "Analyzer must surface gate_baseline distribution per PR #68. "
+        "Operators need to see baseline=none rate to distinguish "
+        "'didn't fire' from 'couldn't fire' per "
+        "memory/reference_spec_003_cold_start_coverage.md."
+    )
+    assert "spec_003_baseline" in src, (
+        "Enrichment dict must include spec_003_baseline field for the "
+        "diagnostic to compute the distribution."
+    )
