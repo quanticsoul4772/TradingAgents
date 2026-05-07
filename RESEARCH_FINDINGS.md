@@ -187,6 +187,57 @@ After three same-day retrospective failures (spec 004 -0.45pp, spec 006 -0.71pp,
 
 Cost asymmetry: $0/1h retrospective vs ~6-8h spec+impl+tests. Three failures in one day codified the lesson. Spec 004 + spec 006 grandfathered as pre-principle implementations; ship as operator-opt-in. A3 grandfathered (pre-dates principle). Future filters of this class follow the new gate. See `.specify/memory/constitution.md` Principle VIII for the full text.
 
+## Constitution v1.4.3 — additive-to-existing-filter gate (added 2026-05-06 late-evening)
+
+After Class 5 fundamentals-delta retrospective PASSED standalone (discrim +11.92pp / hit 96.3% / net Δα +4.37pp at T=0.02) but the post-hoc overlap analysis showed 89% of bull-cohort losers were ALREADY caught by Spec 007 + Class 5's incremental fires were 8 false-positive winners + 2 incremental losers (union HURT net Δα by -4.09pp), Constitution amended:
+
+> **Principle VIII v1.4.3 — Additive-to-existing-filter gate**: any new filter retrospective that PASSES the standalone Constitution VIII gate MUST ALSO show net Δα improvement ≥ +0.5pp OR cohort hit improvement ≥ +5pp OR FP-rate improvement ≥ -10pp vs the union/intersection with the best-performing existing default-active filter in the same direction. Otherwise SKIP the spec entirely.
+
+Without this gate, Spec 010 (Class 5 standalone) would have shipped — wasting ~6-8h on a redundant filter. Spec 008 (Hybrid C) is exempted by the hybrid-filter exception (spec ships its own "improves over underlying" criterion); Spec 007 is exempted by the cross-mechanism-class structural argument (FIRST forward-catalyst-class filter).
+
+5 amendments to Constitution Principle VIII in one day (2026-05-06): v1.3.0 (backward-price gate) → v1.4.0 (forward-catalyst-class gate) → v1.4.1 (Principle VI sub: spec ships its retrospective) → v1.4.2 (Principle VIII sub: magnitude fungibility for hybrid filters) → v1.4.3 (Principle VIII sub: additive-to-existing-filter gate).
+
+## 2026-05-07 morning extension findings
+
+### Hold-rate is a load-bearing precondition for filter ablations (NEW)
+
+SC-009 backtest mid-flight diagnostic (`claudedocs/sc-009-hold-rate-root-cause-2026-05-07.md`): in the first 7/36 propagates of `experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/`, 6 returned Hold (86% rate). Root cause is the PM's calibrated Hold-rating behavior on extended-rally large-cap Tech (NVDA, MSFT, AAPL); all 4 PM-stage filters (Spec 003, Spec 004, Spec 006, Spec 007) work correctly but have NOTHING to fire on when PM commits to Hold.
+
+**Mechanism**: Spec 003/007/008 gate on `pre_rating in {Buy, OW, UW, Sell}`. When PM picks Hold from start (per Constitution VII Calibrated Abstention), the filter chain has zero commits to suppress. SC-009 gate 2 (n_fired ≥ 8) becomes structurally constrained by PM commit rate, not filter calibration.
+
+**Operational implication**: ablation experiments for PM-stage filters MUST select cohorts with high commit-elicitation probability (bear-correct + volatile + earnings-active mix). The original 18-large-cap-Tech cohort starves the ablation. Captured as `claudedocs/sc-009-expansion-contingency-design-2026-05-07.md` + scaffolded as `experiments/2026-05-07-002-sc-009-expansion/` (CONDITIONAL kick-off).
+
+### PM Hold-rating + bullish prose can both be calibrated (NEW)
+
+State-log inspection of NVDA 2026-04-17 (rated Hold) showed executive_summary text "Initiate NVDA at Overweight with disciplined tranched entry strategy targeting 4-6% portfolio position, built gradually over 4-8 weeks." Same pattern for MSFT 2026-04-24. The PM's structured rating field and prose recommendation can intentionally diverge per Constitution VII — Hold means "no commit on this propagate"; prose can still recommend "build to OW over weeks."
+
+Downstream filters parse the rating not the prose. Future ANALYSIS.md framings must distinguish:
+- "PM didn't commit" (Hold-regime starvation; filter has nothing to act on)
+- "Filter fired but missed cohort" (filter calibration issue)
+- "Filter fired and caught cohort" (filter working as designed)
+
+Captured as memory `reference_pm_hold_with_bullish_prose.md` + `reference_pm_hold_regime_starves_filters.md`.
+
+### Class C-1 (insider transactions) retrospective SKIP (NEW)
+
+Bear-side mechanism exploration design doc (`claudedocs/bear-side-mechanism-exploration-2026-05-07.md`) enumerated 6 candidate mechanism classes for the +28pp `ticker_strong`-bear cohort. Class C-1 (insider transactions, prior-30d net buying) was the highest-prior candidate. Empirical retrospective (`claudedocs/forward-catalyst-class-c1-insider-retrospective-2026-05-07.md`):
+
+| Metric | Value |
+|---|---|
+| Tickers with ANY insider purchases | 7/18 (only INTC has 1 actual purchase event) |
+| Cohort_b_bear_target rows with insider buys in prior 30d | 1/18 (5.6% < 60% gate) |
+| Bear-side fire at T≥1 | n=5, net Δα = -2.23pp (anti-pred) |
+
+**Verdict**: SKIP. Insider purchases at large-cap tech are extremely rare (officers exercise + sell options; rarely open wallet to buy). Per design doc decision tree: pivot to Class C-3 (analyst PT consensus delta).
+
+### Spec 007 + Spec 008 v1.4.3 retroactive audits (NEW)
+
+Both Spec 007 and Spec 008 EXEMPTED from Constitution v1.4.3 retroactive application:
+- **Spec 008 Hybrid C** (`claudedocs/spec-008-v1.4.3-exemption-audit-2026-05-07.md`): hybrid-filter exception applies cleanly. Spec 008 is structurally INSIDE Spec 007; the v1.4.3 trigger criteria's 5th bullet explicitly names Spec 008 Hybrid C as the canonical exemption case.
+- **Spec 007 forward-catalyst** (`claudedocs/spec-007-v1.4.3-overlap-audit-2026-05-07.md`): cross-mechanism-class structural argument. Spec 007 is the FIRST forward-catalyst-class filter; existing default-active filters at invocation time were prose-density (Spec 003 + Spec 003.5) and backward-price (A3) — different mechanism classes per v1.4.0's separate gate tracks.
+
+Both audits would PASS the v1.4.3 numerical criteria if applied retroactively (Spec 008: +3.34pp net Δα improvement vs Spec 007 alone; Spec 007: +1.59pp vs Spec 003 alone). The exemption is consistent with the empirical reality.
+
 ## Key claims (load-bearing, n large enough)
 
 1. **5-day strong calls are noise.** Buy α=-1.27% (25% hit), OW α=-0.59% (44%) — bull commits underperform on the realized 5-day window. UW α=+1.04% (60% positive) — bear commits also underperform their direction. **007 single-experiment OW hit rate climb 56→67→75% across 5d→10d→21d** is the cleanest single-experiment evidence yet for horizon-dependent signal emergence.
