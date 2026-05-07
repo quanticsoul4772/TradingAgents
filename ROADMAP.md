@@ -1,6 +1,6 @@
 # ROADMAP — TradingAgents-lab
 
-_Forward-looking exploration map. Updated 2026-05-07 morning. **2026-05-06**: 17-ship-quality-unit research-burst day; v0.7.0-spec-007 + v0.8.0-spec-008 + v0.8.1-spec-008.5 tags; Constitution v1.3.0 → v1.4.3 (5 amendments in one day). **2026-05-07 morning**: 8 PRs (5 merged + 3 open) covering SC-009 ablation kick-off + Class C-1 SKIP + Spec 007 v1.4.3 exemption audit + global-conftest test flake fix + Class 5 outlier investigation + bear-side mechanism design doc + analyzer prep script. SC-009 backtest in progress (3-5h ETA, 4/36 rows as of mid-morning). Canonical meta-retrospective at `claudedocs/research-burst-2026-05-06.md`._
+_Forward-looking exploration map. Updated 2026-05-07 late-afternoon. **2026-05-06**: 17-ship-quality-unit research-burst day; v0.7.0-spec-007 + v0.8.0-spec-008 + v0.8.1-spec-008.5 tags; Constitution v1.3.0 → v1.4.3 (5 amendments in one day). **2026-05-07**: 25+ PRs (all merged) across morning + afternoon + late-afternoon; SC-009 backtest in progress (16/36 rows late-afternoon, ~3h remaining); cross-cohort behavioral-additive sweep finds evidence in ALL 4 mechanism classes (PR #41) → v1.4.4 codification threshold MET; Class C-3 (analyst PT delta) NOT FEASIBLE on $0 budget (PR #40); SC-009 alt gate-1 evaluator validated with unit tests (PR #38). Canonical meta-retrospective at `claudedocs/research-burst-2026-05-07.md`. Tomorrow's scaffold at `claudedocs/research-burst-2026-05-08.md`._
 
 This is a research playground, not a product. The roadmap is directions for exploration, not delivery milestones. Per Constitution Principle V ("Steal Liberally"), cross-pollination from sibling projects in the portfolio is a primary driver — many ideas listed here originate elsewhere.
 
@@ -50,6 +50,25 @@ Plus 2 cross-session memories added today: `reference_sc009_ablation_pattern.md`
 - **Class C-3 (analyst PT delta) retrospective**: ~3h, $0 — next candidate per bear-side design doc decision tree
 - **Class C-5 (earnings price reaction) retrospective**: ~3h, $0 — alternative to C-3 with cleaner data structure
 - **Forward-catalyst overlap audit on Spec 007 retroactively**: ~30min, $0 — Spec 007 isn't a hybrid filter so v1.4.3 trigger criteria DO apply; verify it PASSES the additive gate against A3 + spec 003 + spec 003.5
+
+## 2026-05-07 late-afternoon extension (PRs #38-#41)
+
+After PR #37 (standalone meta-retrospective), the session continued through 4 more ship-quality units:
+
+35. **SC-009 analyzer unit tests** (PR #38, merged): 15 unit tests for the new `evaluate_gate_1` helper covering all 5 paths (standard PASS at midpoint/lower-bound/upper-bound, standard FAIL at multiple boundaries, alt PASS, alt FAIL, INCONCLUSIVE). Refactor + tests in one PR. 1138/1138 PASS (was 1123, +15).
+36. **Bear-side mid-flight diagnostic on COP+INTC UW commits** (PR #39, merged): 5 findings; F-3 = SECOND behavioral-additive case in a NEW mechanism class (Spec 007 LLM-extracted, complementing morning's Spec 003 prose-density). Evidence base for v1.4.4 codification grows.
+37. **Class C-3 (analyst PT delta) feasibility probe** (PR #40, merged): SKIP/NOT-FEASIBLE verdict. yfinance.analyst_price_targets returns ONLY current snapshot; `recommendations` DataFrame uses RELATIVE periods (0m/-1m/-2m/-3m) not absolute dates → can't backfill historical retrospectives. 30-minute probe saved 3h sunk cost. Path forward (deferred): Path C snapshot wiring would unlock future C-3 retrospectives at zero LLM cost.
+38. **Cross-cohort behavioral-additive sweep** (PR #41, merged): walks all 236 state logs, finds 23 behavioral-additive cases across 6 tickers in ALL 4 mechanism classes (Spec 003 + Spec 007 bull + Spec 007 bear + Spec 008). Reframes L-8 from "PM-as-implicit-Spec-003" to **PM-as-multi-mechanism-validator**. v1.4.4 codification threshold MET.
+
+**Open work entering 2026-05-08**:
+- **SC-009 backtest** ~3h remaining; expansion contingency `experiments/2026-05-07-002-sc-009-expansion/` ready to kick off if `n_fired_boost_on < 4` after final row
+- **v1.4.4 amendment draft (L-8 only)**: drafting eligible per PR #41 evidence; ratification deferred 1+ session (Constitution VI risk-management)
+- **Hybrid D feasibility design doc**: ~5 candidate both-sides-priced-in cases identified by PR #41 (NVDA-04-24, MSFT-04-24, WFC-04-17, COP-04-24, COP-04-17). Cohort too small for retrospective today
+- **C-5 (earnings price reaction) feasibility probe**: same de-risking pattern as C-1 SKIP + C-3 NOT-FEASIBLE. ~30min, $0
+- **Path C snapshot wiring PoC**: defer until next backtest design (piggyback on existing LLM spend)
+- **Memory polish to PM-as-multi-mechanism-validator framing**: ~15min, $0
+- **Spec 003 historical-recompute script** still deferred (~2h)
+- **CHANGELOG.md update for PRs #29-#41+** still deferred (~30min)
 
 ## Prior research-burst day — 14-work-unit (2026-05-06; tagged v0.8.0-spec-008)
 
