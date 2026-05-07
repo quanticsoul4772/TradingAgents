@@ -155,3 +155,75 @@ The most important methodology output of today is Constitution v1.4.3. Before to
 The v1.4.3 gate adds 30 minutes of overlap-analysis work between the standalone PASS and the spec invocation. This is a Pareto improvement over the 6-8h spec+impl cycle: cheap insurance against shipping correlated filters.
 
 The v1.4.3 amendment ships in PR #15 in parallel with v1.4.2 (PR #8). When both PRs merge, the constitution will have all 5 sub-sections under Principle VIII; merge order matters only for the version metadata in the header.
+
+---
+
+# Appendix — 2026-05-07 morning + early-afternoon extension session
+
+**Day**: 2026-05-07 (next-day continuation)
+**Tally**: **12 PRs merged** in 4h (07:00 → ~11:00 PDT) + SC-009 backtest in progress (~5h ETA, started 06:14 PDT) + 3 new cross-session memories
+
+This appendix captures the 2026-05-07 extension session. The core day's meta-retrospective above (2026-05-06 with 17 ship-quality units) remains the canonical record; this appendix layers on the next-day work without disturbing the original day-end snapshot.
+
+## Verdict ledger (2026-05-07 extension)
+
+| # | Time | Unit | Verdict |
+|---|---|---|---|
+| 1 | morning | SC-009 ablation experiment kick-off (PR #17) | backtest running |
+| 2 | morning | Class 5 surprise outlier investigation (PR #18) | INTC identified (3 quarters with epsEstimate near $0.01 blow up the ratio); LLY clean |
+| 3 | morning | Spec 008 v1.4.3 exemption audit (PR #19) | EXEMPTED (hybrid-filter exception applies cleanly) |
+| 4 | morning | Test flake fix — global conftest autouse (PR #20) | 1123/1123 PASS; fixes pre-existing test_pm flake |
+| 5 | morning | SC-009 analysis plan committed in advance (PR #21) | 6-phase methodology locked before data collection (avoids p-hacking) |
+| 6 | morning | Bear-side mechanism design doc (PR #22) | 6 candidates enumerated; C-1 insider-transactions recommended next |
+| 7 | morning | Class C-1 insider-transactions retrospective (PR #23) | SKIP — only 1/18 cohort_b_bear_target rows have insider buys in prior 30d; -2.23pp anti-pred; pivot to C-3 |
+| 8 | morning | SC-009 analyzer prep script (PR #24) | ready-to-run analyze_sc009_ab.py for ANALYSIS.md when realized α lands |
+| 9 | morning | ROADMAP.md refresh (PR #25) | active branch updated with 2026-05-07 morning work |
+| 10 | morning | Spec 007 v1.4.3 exemption audit (PR #26) | EXEMPTED via structural argument (different mechanism class than existing default-active filters) |
+| 11 | early-afternoon | SC-009 expansion contingency design (PR #27) | trigger criteria documented; LIKELY NOT triggered per mid-flight diagnostic |
+| 12 | early-afternoon | SC-009 mid-backtest commit-pattern diagnostic (PR #28) | boost engaging 4/6 rows; spec 007 fired once; expansion contingency LIKELY NOT triggered |
+
+## Cross-session memories added (2026-05-07)
+
+- `reference_sc009_ablation_pattern.md` — single-run + post-hoc reconstruction saves 50% LLM cost vs naive two-branch design
+- `feedback_global_conftest_autouse_for_real_llm.md` — when adding default-on lazy-LLM filter, ALWAYS extend conftest with autouse fixture
+- `reference_pm_hold_regime_starves_filters.md` — when PM picks Hold from start (per Constitution VII), filters gating on `pre_rating` commits have nothing to suppress
+
+Combined with yesterday's 4 memories: **12 cross-session memories total** (5 feedback + 4 reference + 1 project + 2 pre-existing).
+
+## Cost (2026-05-07 extension)
+
+| Phase | LLM cost | Wall-clock |
+|---|---|---|
+| SC-009 ablation backtest (in progress) | ~\$18 (estimated) | ~5h compute (in progress) + 21d wait for realized α |
+| Class C-1 insider retrospective | \$0 | ~30min (free yfinance) |
+| Class 5 outlier probe | \$0 | ~20min |
+| 2 v1.4.3 exemption audits + design docs + diagnostics | \$0 | ~3h |
+| Memory polish (3 files) | \$0 | ~30min |
+| **Extension total** | **~\$18** | **~5h compute (parallel) + ~4h ship-quality units (foreground)** |
+
+Combined 2026-05-06 + 2026-05-07 extension: ~\$23 LLM + ~26h wall-clock (with ~5h of 2026-05-07 backtest running in background).
+
+## Methodology pattern (2026-05-07 extension)
+
+The extension session demonstrates a different mode than yesterday's research-burst:
+- Yesterday: dense retrospective + spec invocation work (17 ship-quality units in ~22h, $5 LLM, mostly $0 retrospectives + 2 LLM-cost retrospectives)
+- Today: parallel-safe documentation + diagnostic + risk-mitigation + memory polish work (12 ship-quality units in ~4h, $18 LLM mostly in the background backtest, foreground work all $0)
+
+Both modes work. Today's mode is appropriate when a long-running experiment is the gating step + cheap parallel work can fill the wait time without competing for compute or attention.
+
+**Key methodology insight from 2026-05-07 extension**: the "PM Hold-regime starves filters" lesson (codified as `reference_pm_hold_regime_starves_filters.md` + `claudedocs/sc-009-mid-backtest-commit-pattern-2026-05-07.md`) is a NEW kind of finding that doesn't fit cleanly into Constitution VIII's gates. It's about the FRAMEWORK's commit rate being a load-bearing precondition for ANY downstream filter to fire — not a property of any specific filter. May warrant a future Constitution v1.5.0 amendment if it becomes a recurring blocker.
+
+## Cumulative state at end of 2026-05-07 morning extension
+
+- **Filter portfolio**: unchanged (8 sides, 4 default-active + 4 operator-opt-in)
+- **Constitution version**: v1.4.3 (no further amendments today; pending observation of more empirical cases)
+- **Cross-session memories**: 12 total
+- **PRs merged YTD across both days**: 27 (15 from 2026-05-06 + 12 from 2026-05-07 extension)
+- **Tags**: v0.7.0-spec-007 + v0.8.0-spec-008 + v0.8.1-spec-008.5 (all from 2026-05-06; today extension produced no new tags pending SC-009 verdict)
+- **Open work entering 2026-05-07 mid-day**:
+  - SC-009 backtest in progress (~3h ETA remaining at time of writing)
+  - Class C-3 (analyst PT delta) retrospective deferred (~3h)
+  - Class C-5 (earnings price reaction) retrospective deferred (~3h)
+  - Spec 003 historical-recompute script deferred (~2h)
+  - ANALYSIS.md ~2026-05-22 (after 21d forward windows close)
+  - Constitution VIII v1.4.4+ candidate amendment for "framework commit rate as precondition" if pattern recurs
