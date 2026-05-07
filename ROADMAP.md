@@ -1,6 +1,6 @@
 # ROADMAP — TradingAgents-lab
 
-_Forward-looking exploration map. Updated 2026-05-05 (post-Spec 003 contrarian gate Phases 1+2 + SC-001 + SC-002 validation, post-finding-#4 four-line-evidence convergence, post-counterfactual-auto-analysis wiring)._
+_Forward-looking exploration map. Updated 2026-05-06 (post-11-work-unit research-burst day: Spec 003 default-on @80% threshold-sweep validated, Spec 003.5 sector-baseline fallback, Spec 004 sector-momentum filter retrospective-rejected default-off, Spec 006 bear-sector-symmetry filter retrospective-rejected default-off, Spec 005 candidate retrospectively SKIPPED, sector-α attribution analyzer surfaced 5th failure mode + bearish anti-calibration shock, INTC +103%-on-Hold investigation closed SC-003 follow-up arc, Constitution v1.3.0 with Principle VIII added)._
 
 This is a research playground, not a product. The roadmap is directions for exploration, not delivery milestones. Per Constitution Principle V ("Steal Liberally"), cross-pollination from sibling projects in the portfolio is a primary driver — many ideas listed here originate elsewhere.
 
@@ -8,42 +8,55 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 
 ---
 
-## Current state (2026-05-05)
+## Current state (2026-05-06)
 
-- **24 completed experiments** + cross-experiment horizon sweep + 3-period NVDA cross-validation + per-ticker breakdown + A1/A3 diagnostics + A3 forensics + Phase D substrate exploration + Phase C reasoning_evidence wiring + Spec 002 signal-lifecycle (Phases 0-2.5) + Spec 001 bots-architecture (Phases 1-5) + **Spec 003 contrarian gate (Phases 1+2 + SC-001 + SC-002 validated)**
-- A3 mean-reversion suppression filter productionized; validated as correctly inert on regime-mismatch failures (007 INTC half)
-- **Spec 003 contrarian gate productionized** (`tradingagents/signals/contrarian_gate.py`, default `contrarian_gate_mode = "off"`); SC-001 + SC-002 validated; combined fire rate 7.7% across 26 N≥20-eligible propagates from retrospective + SC-002 fresh data
-- Constitution **v1.2.2** with Principle VII (Calibrated Abstention is a Valid Output) + Replicability-scope + Cross-period-scope clarifications
+- **24 completed experiments** + cross-experiment horizon sweep + 3-period NVDA cross-validation + per-ticker breakdown + A1/A3 diagnostics + A3 forensics + Phase D substrate exploration + Phase C reasoning_evidence wiring + Spec 002 signal-lifecycle (Phases 0-2.5) + Spec 001 bots-architecture (Phases 1-5) + **Spec 003 contrarian gate (Phases 1+2 + SC-001 + SC-002 + SC-003 50-ticker validated; default-on flipped @80% threshold 2026-05-06)** + **Spec 003.5 sector-baseline fallback (default-on)** + **Spec 004 sector-momentum filter (default-off after retrospective)** + **Spec 006 bear-sector-symmetry filter (default-off after SC-008 FAIL)**
+- A3 mean-reversion suppression filter productionized + default-on @-5%/30d (2026-05-06 flip); validated as correctly inert on regime-mismatch failures (007 INTC half)
+- **Spec 003 contrarian gate productionized** (`tradingagents/signals/contrarian_gate.py`); **default flipped to active @80th-percentile + N≥20 floor on 2026-05-06** after `claudedocs/contrarian-gate-retrospective-2026-05-05.md` showed +6.46% cumulative Δα at 21d at production-default floor. **Threshold sweep follow-up validated default at 80%** (`claudedocs/contrarian-gate-threshold-sweep-2026-05-06.md`): +0.65pp net Δα across 11 eligible commits; tightening to 85+ doesn't fire; loosening to 75 gives +1.36pp but more incorrect-suppression risk.
+- **Spec 003.5 sector-baseline fallback** (`tradingagents/signals/sector_baseline.py`, `specs/003-sector-baseline-gate/`): when per-ticker history is below FR-004 N≥20 floor, gate aggregates across same-sector tickers. Default-on. Closes the cold-start universe gap structurally; doesn't help SC-003 Financials cohort (different mechanism — see Spec 004 finding).
+- **Spec 004 sector-momentum filter** (`tradingagents/agents/utils/sector_momentum_filter.py`, `specs/004-sector-momentum-filter/`): suppresses Buy/OW when sector ETF is down >threshold% in prior 30d. Default-off after corpus retrospective (`claudedocs/sector-momentum-retrospective-2026-05-06.md`) showed -0.45pp net Δα across 73 commits at -5% threshold. SC-008 falsified (XLF was -4.54%, suppress 0/5). Ships as operator-opt-in.
+- **Spec 006 bear-sector-symmetry filter** (`tradingagents/agents/utils/bear_sector_symmetry_filter.py`, `specs/005-bear-sector-symmetry/`): suppresses UW/Sell when ticker has outperformed sector ETF by >threshold% in prior 30d (counter-trend bear suppression). Default-off after SC-008 FAILED at +5% (5/18 cohort fires; target ≥8) AND -0.71pp net Δα anti-predictive. Ships as operator-opt-in.
+- **Spec 005 candidate (per-ticker-vs-sector BULL filter)**: retrospectively SKIPPED before any spec was written (`claudedocs/ticker-sector-alpha-retrospective-2026-05-06.md`). Max +0.31pp net Δα across 79 commits, well below Constitution VIII's +1pp gate. Saved 6-8h of empty-spec work.
+- Constitution **v1.3.0** with **Principle VIII** (Retrospective Before Spec for Backward-Looking Price Filters) added 2026-05-06 after three same-day retrospective failures. Plus Principles VII (Calibrated Abstention) + Replicability-scope + Cross-period-scope clarifications.
 - Cost-tier ladder shipped; end-to-end exercised on 008
-- **825 tests passing** (was 501 → 785 → 825) — added Spec 003 (30 tests) + within-ticker IC methodology (8 tests) + counterfactual-integration contract (2 tests)
-- **Load-bearing claim recovered post-NVDA-Q3**: framework's Buy/OW commits at 21d show **+1.23% α (n=71, ~61% hit)** — POSITIVE AT MODERATE CONFIDENCE. Bayesian posterior 0.64 → 0.52 → **0.63** (recovered after Q3 2-of-3 periods positive)
-- UW failure mode is **regime-asymmetric, not uniformly anti-calibrated**
+- **984 tests passing** (was 825) — added Spec 003.5 (10+15 tests) + Spec 004 (~29 tests) + Spec 006 (27 unit + 5 PM integration + 2 state-log regression tests). All filters' state-log persistence tests follow the `4c14d0f` precedent.
+- **Load-bearing claim still stands post-NVDA-Q3 + SC-003 50-ticker validation**: framework's Buy/OW commits at 21d show **+1.23% α (n=71, ~61% hit)** in the legacy 9-ticker cohort + **+5.96% mean α (n=15, 53% hit) on the SC-003 50-ticker bullish bucket** (single-date 2026-04-03 — bullish bucket nearly 5× the 9-ticker headline magnitude, but per-sector breakdown shows the signal is structurally Tech-concentrated: Tech n=7 +17.80% mean; Financials n=5 -7.07% on bullish picks). Scenario B per HYPOTHESIS decision tree.
+- **5th failure mode discovered (2026-05-06)** — bullish commits underperforming a rising sector (stock-specific α-vs-sector miss). Affects 27 of 79 bullish commits; 88.9% Tech-concentrated. Backward-price-only signals (Spec 005 candidate) cannot catch it; gap remains for forward-catalyst-aware mechanism. See `RESEARCH_FINDINGS.md` "5th failure mode" section.
+- **Bearish anti-calibration shock (2026-05-06)** — 18 of 37 bearish commits at +28.02% mean α-vs-SPY in `ticker_strong` cell. A3 misses; spec 006 was built to catch but failed empirically. Largest single-metric anti-calibration finding in the corpus.
+- UW failure mode is **regime-asymmetric, not uniformly anti-calibrated** (unchanged; reinforced by today's bearish anti-calibration finding)
 - **Phase D substrate finding**: decision architecture portable across substrates; commit calibration single-stock-prompt-tuned
-- **Finding #4 four-line-evidence convergence**: market_report bull_keyword_count anti-predicts within-ticker α at 90d. (a) corpus IC -0.49, (b) strict-prior IC -0.49 (look-ahead ruled out), (c) within-bullish-subset IC -0.42, (d) SC-002 fresh-data reproduction -0.30. **First validated within-ticker predictor in the corpus.**
-- **No experiments running** — most recent: experiment `2026-05-05-002-spec003-sc002` (25 propagates, SC-002 borderline-validated)
+- **Finding #4 four-line-evidence convergence**: market_report bull_keyword_count anti-predicts within-ticker α at 90d. **First validated within-ticker predictor in the corpus.** Operationalized as Spec 003 contrarian gate; default-on @80% threshold validated by 2026-05-06 sweep.
+- **No experiments running** — most recent: experiment `2026-05-05-003-signal-at-scale` (50-ticker SC-003 single-date validation). All 2026-05-06 work was retrospective + spec-development; no new propagates.
 
 ---
 
-## Active branch — Spec 003 contrarian gate validated (2026-05-05)
+## Active branch — 11-work-unit research-burst day (2026-05-06)
 
-**Most recent shipping work (2026-05-05 day-long burst)**:
-- **Spec 003 contrarian gate (analyst-stage contrarian gate, Phases 1+2 implemented + SC-001 + SC-002 validated)**:
-  - Empirically motivated by finding #4 (market_report bull_keyword_count anti-predicts within-ticker α at 90d)
-  - `tradingagents/signals/contrarian_gate.py`: per-ticker percentile baseline + active-mode rating override (Buy/OW → Hold)
-  - 30 unit tests + experiment 001 SC-001 smoke (NVDA 2026-01-30, gate annotation captured cleanly) + experiment 002 SC-002 (25 propagates × 5 tickers, median bullish-subset IC -0.301 met threshold)
-  - Combined fire rate 7.7% across 26 N≥20-eligible propagates from retrospective + SC-002. Gate is selective by design.
-- **Finding #4 mechanism + caveats fully resolved**:
-  - Mechanism: recency + mean-reversion (analyst's bullish prose tracks recent strength, which mean-reverts)
-  - Look-ahead bias ruled out (strict-prior IC = -0.49 ≈ original -0.49)
-  - Within-bullish-subset transfer confirmed (IC = -0.42)
-  - SC-002 fresh-data reproduction at -0.301 (4 of 5 tickers direction-agree)
-  - XLF/XLK identified as degenerate-window (sector ETFs with low-N + low-prior-α-variance); excluded from validation grid
-- **Methodology contributions**:
-  - Within-ticker IC column wired into `scripts/evaluate_signals.py` with auto-flagged Simpson's-paradox marker
-  - Counterfactual auto-analysis wired into `scripts/analyze_backtest.py` (per spec 002 Phase 2)
-  - `fetch_returns` calendar-buffer fix (`int(holding_days * 1.5) + 7`) — old `holding_days + 7` truncated 90d windows to ~50 trading days
+Today's arc (in commit order on main):
 
-**No experiment currently selected**. Possible next directions per the open questions table below.
+1. **Spec 003.5 sector-baseline fallback** (`specs/003-sector-baseline-gate/`, PR #3 merged): when per-ticker history < N=20 floor, gate aggregates across same-sector tickers from the yfinance cache. Closes the cold-start universe gap. 10+15 unit tests. Default-on.
+
+2. **Spec 004 sector-momentum filter** (`specs/004-sector-momentum-filter/`, PR #4 merged): suppresses Buy/OW when sector ETF is in mean-reversion zone. ~29 tests + new SECTOR_ETF_MAP constant covering 11 GICS sectors. SC-008 validation (`claudedocs/spec-004-sc008-validation-2026-05-06.md`) FALSIFIED the motivating premise: XLF was -4.54% (above -5% threshold), filter would suppress 0/5 of SC-003 Financials (not ≥3/5). Corpus retrospective (`claudedocs/sector-momentum-retrospective-2026-05-06.md`) showed -0.45pp net Δα across 73 commits. Default-off; ships as operator-opt-in.
+
+3. **INTC +103%-on-Hold investigation** (`claudedocs/sc003-intc-hold-investigation-2026-05-06.md`): INTC went +103.14% in 21 trading days from 2026-04-03 (driven by April 23 earnings catalyst). Framework rated Hold; calibrated abstention per Constitution VII validated. Surfaced spec 003 default-on as a counter-example: if PM had committed Buy/OW, the spec 003 contrarian gate would have suppressed back to Hold (NVDA + AAPL retrospective evidence is n=2; 1 large counter-example would dwarf cumulative gain).
+
+4. **Spec 003 contrarian gate threshold sweep** (`scripts/contrarian_gate_threshold_sweep.py`, `claudedocs/contrarian-gate-threshold-sweep-2026-05-06.md`): walks 228 propagate state logs in `~/.tradingagents/logs/`, computes per-ticker strict-prior `bull_keyword_count` history, sweeps thresholds 75/80/85/90/95th percentile. 11 of 82 bullish commits eligible (above N≥20 floor + α available). At default 80% threshold: net Δα = +0.65pp. Verdict: **KEEP default-on at 80%** — tightening doesn't help (gate never fires at 85+); loosening to 75% gives +1.36pp but more incorrect-suppression risk.
+
+5. **Sector-α attribution analyzer** (`scripts/sector_alpha_attribution.py`, `claudedocs/sector-alpha-attribution-2026-05-06.md`): walks all 194 commits in the corpus, computes (raw_return, α-vs-SPY, α-vs-sector-ETF) at 21d, cross-tabs sign(α-vs-SPY) × sign(α-vs-sector) into 4 cells. **Surfaced 5th failure mode** (27/79 bullish commits in ticker_weak with -5.34% mean α; 88.9% Tech-concentrated) AND **bearish anti-calibration shock** (18/37 bearish commits in ticker_strong with +28.02% mean α-vs-SPY). Both findings are RESEARCH_FINDINGS-grade; documented in their own sections there.
+
+6. **Spec 006 design bundle** (`specs/005-bear-sector-symmetry/`, full speckit Phase 0+1+2): 1664 LOC across spec.md + plan.md + research.md + data-model.md + 2 contracts + quickstart.md + 31-task tasks.md. Mechanism: when ticker has outperformed sector ETF by >threshold% in prior 30d, suppress UW/Sell to Hold (counter-trend bear suppression).
+
+7. **Spec 006 implementation + retrospective**: ~190 LOC implementation (reuses spec 004's `SECTOR_ETF_MAP` + `_etf_history` LRU cache per FR-004; new `_ticker_history` LRU). Retrospective (`claudedocs/bear-sector-symmetry-retrospective-2026-05-06.md`) ran on 36 valid bearish commits. **SC-008 FAILED at +5%**: 5 of 18 cohort commits fire (target was ≥8). Net Δα at +5% = **-0.71pp anti-predictive**. Default-off; ships as operator-opt-in. Mirrors spec 004's outcome.
+
+8. **Spec 006 merge into main** (commit `4d0401d` --no-ff): closes the spec 006 work unit; feature branch deleted local + remote.
+
+9. **Spec 005 retrospective FIRST** (`scripts/ticker_sector_alpha_retrospective.py`, `claudedocs/ticker-sector-alpha-retrospective-2026-05-06.md`): pre-spec validation of the per-ticker-vs-sector BULL filter hypothesis. Both criteria: (a) max +0.31pp net Δα across 79 commits — FAIL +1pp gate; (b) 48% cohort hit rate at +3% — PASS 40% gate. **Verdict: SKIP spec entirely** — cohort-loser suppression washed by winner suppression at indistinguishable rel-strength values. The pre-spec retrospective saved 6-8h of empty-spec implementation.
+
+10. **Constitution v1.3.0 with Principle VIII** (`.specify/memory/constitution.md`): codifies "backward-looking price filters require pre-spec corpus retrospective showing net Δα ≥ +1pp at proposed default threshold + cohort hit rate ≥ 40% (when target cohort named) BEFORE any spec is written." Three same-day retrospective failures validated the case.
+
+11. **Constitution-VIII follow-up**: cross-reference Principle VIII in spec 004 + spec 006 spec.md preambles + quickstart.md "What's new" sections + SC-008 measurable-outcome entries. Future readers of either spec immediately see (a) default-off status, (b) empirical verdict with numbers, (c) Principle VIII pointer, (d) grandfathered status (spec was authored BEFORE Principle VIII).
+
+**No experiment currently selected.** Today was a research-burst day; tomorrow's options are tracked in the open data questions table below.
 
 ---
 
@@ -149,6 +162,9 @@ These need new experiments to answer; no amount of analysis on existing CSVs wil
 | Does same-prompt rerun-variance dominate the signal at the date level? | n=3 reps on the existing 10 NVDA dates with current config — formalizes the 005-vs-007 finding | $15 | open (B-priority 4) |
 | Does spec 002 (signal-lifecycle) IC measurement reveal which signals are noise? | Build signal-lifecycle pipeline + run on saved state logs | $0 build + $0 run | **resolved** — Spec 002 Phases 0-2.5 shipped; first IC measurement: final_trade_decision IC = -0.172 at 21d, n=153; strongest IC: bear_bigram_count = +0.457 at 90d |
 | Does per-bot LLM model routing (Spec 001 Phase 4) shift rating distribution beyond mode-collapse? | n=10+ matched-baseline run with `bot_models = {"fundamentals": "claude-opus-4-7"}` | $5-10 | open (B-priority 6, new) |
+| Can a forward-catalyst-aware mechanism catch the 27-row 5th-failure-mode cohort + the 18-row +28%-mean-α ticker_strong-bear cohort? | Design-doc-only exploration of news-density signals / options-IV / LLM-extracted "bull case priced in" feature. Different mechanism class than backward-price-only (Principle VIII grandfathering). | $0 design + $20-40 to implement + retrospect | **open (NEW post-spec-006)** — would address the gap that all 5 current filters cannot catch |
+| Does multi-window SC-003 replication strengthen all retrospectives? | Re-run SC-003 50-ticker on 3-5 additional dates; would expand corpus from 234 to 290+ commits + spec 003 eligible from 11 to 30+ + spec 006 ticker_strong cohort from 18 to 40+. | $40 (T3) | **open (NEW post-spec-006)** — biggest empirical-strengthening lever |
+| At what corpus size does Spec 005 percentile-based variant become viable? | Extend per-ticker history to 30+ obs per ticker; re-run `scripts/ticker_sector_alpha_retrospective.py` with `--percentile-history-floor 30`. May surface signal that washed at the absolute-threshold variant. | $0 retrospective; needs corpus-expansion first | **open (NEW post-spec-005-skip)** |
 
 ---
 
