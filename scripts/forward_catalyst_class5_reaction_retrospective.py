@@ -5,11 +5,11 @@ tests the EPS surprise-magnitude variant — verdict PASS standalone +
 FAIL additive vs Spec 007 per PR #22 / Constitution v1.4.3).
 
 This script tests a DIFFERENT C-5 operationalization per PR #22 design
-doc: the announcement-day STOCK PRICE REACTION magnitude (open-to-close
-move on earnings day) as the contrarian signal, not the EPS surprise
-itself. A stock can have small surprise + large reaction (driven by
-guidance / commentary) or vice versa — these are correlated but not
-identical signals.
+doc: the announcement-day STOCK PRICE REACTION magnitude (previous close
+to earnings-day close move, including overnight gaps) as the contrarian
+signal, not the EPS surprise itself. A stock can have small surprise +
+large reaction (driven by guidance / commentary) or vice versa — these
+are correlated but not identical signals.
 
 Mechanism hypothesis: when a stock has had a recent EARNINGS DAY
 PRICE REACTION of large magnitude, the reaction signals information
@@ -27,7 +27,7 @@ Two operationalizations:
      Beat + UP + bullish commit = post-hoc chasing pattern.
 
 Per Constitution VIII v1.4.0 + v1.4.3:
-  - Standalone gate: discrim ≥ +5pp / cohort hit ≥ 60% / net Δα ≥ +0.5pp
+  - Standalone gate: discrim ≥ +5pp / cohort hit ≥ 60% / net Δalpha ≥ +0.5pp
   - Additive overlap vs Spec 007 + Spec 008 (deferred)
 
 Cost: ZERO LLM. yfinance + state-log reads only.
@@ -69,7 +69,7 @@ def _earnings_dates_df(ticker: str):
         if ed is None or not hasattr(ed, "empty") or ed.empty:
             return None
         return ed
-    except Exception:
+    except Exception:  # noqa: BLE001  # intentionally broad: yfinance can raise many undocumented exception types
         return None
 
 
@@ -82,7 +82,7 @@ def _price_history(ticker: str):
         if hist is None or not hasattr(hist, "empty") or hist.empty:
             return None
         return hist
-    except Exception:
+    except Exception:  # noqa: BLE001  # intentionally broad: yfinance can raise many undocumented exception types
         return None
 
 
@@ -235,8 +235,8 @@ def _gate(label: str, sup: dict, fp: dict, suppression: str) -> str:
     if sup["n"] == 0 or fp.get("n", 0) == 0:
         return f"{label}: SKIP — insufficient cohort (n_sup={sup['n']}, n_fp={fp.get('n', 0)})"
     discrim = sup["hit_rate_pct"] - fp["hit_rate_pct"]
-    # net Δα from suppressing = if bullish, suppression gain = -realized α (we avoided losses)
-    # if bearish, suppression gain = +realized α (we avoided gains we would have missed shorting)
+    # net Δalpha from suppressing = if bullish, suppression gain = -realized alpha (we avoided losses)
+    # if bearish, suppression gain = +realized alpha (we avoided gains we would have missed shorting)
     # Standardize: gain from suppression = signed value such that positive = beneficial
     if suppression == "bullish":
         net_dalpha = -sup["mean_alpha_pct"]
@@ -250,7 +250,7 @@ def _gate(label: str, sup: dict, fp: dict, suppression: str) -> str:
         f"{label}: {verdict}\n"
         f"  Gate 1 (discrim ≥ +5pp): {'PASS' if g1 else 'FAIL'} ({discrim:+.2f}pp; sup={sup['hit_rate_pct']:.1f}%, fp={fp['hit_rate_pct']:.1f}%)\n"
         f"  Gate 2 (cohort hit ≥ 60%): {'PASS' if g2 else 'FAIL'} ({sup['hit_rate_pct']:.1f}%)\n"
-        f"  Gate 3 (net Δα ≥ +0.5pp): {'PASS' if g3 else 'FAIL'} ({net_dalpha:+.2f}pp)"
+        f"  Gate 3 (net Δalpha ≥ +0.5pp): {'PASS' if g3 else 'FAIL'} ({net_dalpha:+.2f}pp)"
     )
 
 
@@ -274,9 +274,9 @@ def main() -> int:
     print(f"  {len(rows)} state logs with parseable PM ratings")
 
     print()
-    print("Enriching with realized α (yfinance, slow)...")
+    print("Enriching with realized alpha (yfinance, slow)...")
     enriched = _enrich_with_alpha(rows, args.holding_days)
-    print(f"  {len(enriched)} rows with measurable α at {args.holding_days}d")
+    print(f"  {len(enriched)} rows with measurable alpha at {args.holding_days}d")
 
     print()
     print(f"Applying {args.variant} filter at ±{args.threshold}%...")
@@ -299,7 +299,7 @@ def main() -> int:
         print(f"### {label}")
         print(f"  n: {s['n']}")
         if s["n"] > 0:
-            print(f"  mean α: {s['mean_alpha_pct']:+.2f}%")
+            print(f"  mean alpha: {s['mean_alpha_pct']:+.2f}%")
             print(f"  hit rate: {s['hit_rate_pct']:.1f}%")
         print()
 
