@@ -1,89 +1,114 @@
-# Research-burst day — 2026-05-08 (scaffold, written 2026-05-07 evening)
+# Research-burst day — 2026-05-08 (scaffold, written 2026-05-07 evening; UPDATED 2026-05-07 night)
 
-**Status as of scaffold writing**: SC-009 backtest still in progress; ~16/36 rows
-complete late-afternoon 2026-05-07. Expected to finish overnight or
-tomorrow morning. This doc is a forward-planning scaffold, not yet a
-record of work.
+**Status as of LATEST UPDATE (2026-05-07 night)**: SC-009 backtest
+**COMPLETED** via background process (exit code 0) at 36/36 rows. Final
+acceptance gates documented in PR #57 + PR #58. ANALYSIS.md updated to
+final-PRELIMINARY state. Tomorrow opens with **Scenario A confirmed**.
+
+**Status as of original scaffold writing (afternoon)**: SC-009 backtest in
+progress; ~16/36 rows. Predictions about scenarios are now obsolete —
+see "Confirmed opening state" section below.
 
 **Companion docs**:
 - `claudedocs/research-burst-2026-05-06.md` — yesterday's 17-unit + 5-amendment day
-- `claudedocs/research-burst-2026-05-07.md` — today's 24+ unit parallel-safe-during-backtest day
+- `claudedocs/research-burst-2026-05-07.md` — today's parallel-safe-during-backtest day (final tally TBD)
+- `claudedocs/sc-009-backtest-complete-final-state-2026-05-07-night.md` — backtest completion summary (PR #57)
 
-## Likely opening state (predicted)
+## Confirmed opening state (UPDATED 2026-05-07 night)
 
-When tomorrow opens, the SC-009 backtest is most likely:
+**Scenario A confirmed**. Backtest finished. 36/36 rows in CSV. Analyzer
+already re-run with PR #52 PRELIMINARY guard preserving operator hand-edit.
 
-**Scenario A (likely, ~70% probability)**: backtest completed overnight.
-36 rows in `experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/results.csv`.
-Re-running the analyzer produces:
-- Final n_fired_boost_on count (predicted 4-7 based on 16-row trajectory of 3 fires)
-- Final alt gate-1 suppressed-α (still PASS-likely if pattern holds)
-- Bull commit count (predicted 6-10 based on 16-row trajectory of 6)
+Final acceptance gates (PRELIMINARY at full sample):
+- Gate 1 (alt suppressed-α in [-10%, +2%]): PASS at **+0.43%** (61% margin from upper bound)
+- Gate 2 (n_fired_boost_on ≥ 8): PASS at **13** fires (was predicted 4-7; actual 13 — well above threshold)
+- Gate 3 (boost engaged ≥ 1): PASS at **18** rows
+- Verdict line (auto-generated): PASS — recommend Spec 008 v2 default-on flip proposal
+- Refined verdict (per PR #56/#57): **PRELIMINARY PASS-by-non-counterexample** — recommend SHADOW-MODE-FIRST per Constitution VIII v1.4.0, NOT direct default-on flip
 
-**Scenario B (~25% probability)**: backtest still running at start of session.
-Continue in parallel-safe mode like today.
+**Headline**: 13 bull commits / 13 fires / 100% fire rate / **0 decisions changed by boost** (PR #56 finding empirically confirmed at full sample).
 
-**Scenario C (~5% probability)**: backtest crashed or stalled. Diagnose,
-restart from where it left off (resumable per design — checkpointed CSV
-appends).
+Realized α window status (UNCHANGED — windows still open):
+- 2026-04-17 cohort: ~2026-05-18 (~11 days remaining)
+- 2026-04-24 cohort: ~2026-05-26 (~19 days remaining)
+- Final SC-009 ANALYSIS.md (FINAL status, not PRELIMINARY) writable ~2026-05-22+
 
-## Decisions to make Tuesday morning
+## Decisions to make Tuesday morning (UPDATED 2026-05-07 night)
 
-### D-1: SC-009 expansion contingency trigger
+### D-1: SC-009 expansion contingency trigger — **RESOLVED**
 
-If backtest finished AND `n_fired_boost_on < 4`:
-- KICK OFF expansion experiment `experiments/2026-05-07-002-sc-009-expansion/`
-  (already scaffolded). 13 tickers × 2 dates = 26 propagates targeting
-  bear-correct + volatile + earnings-active mix. Cost ~$15.
+Final n_fired_boost_on = 13. Per criterion `n_fired_boost_on ≥ 8`:
+**NO EXPANSION needed**. The conditional `experiments/2026-05-07-002-sc-009-expansion/`
+scaffold stays inert. Proceed to ANALYSIS.md FINAL writing once
+realized α landings start ~2026-05-22+.
 
-If backtest finished AND `4 ≤ n_fired_boost_on < 8`:
-- DECISION: expansion (boost gate-2 to ≥8) or accept partial-pass and ship
-  ANALYSIS.md as-is. Default is expansion — alt gate-1 alone isn't enough
-  for clean v0.8.0+ default-flip.
+Tuesday action: none for D-1; conditional-experiment scaffold remains
+available for future borderline-regime cohort if one is needed.
 
-If backtest finished AND `n_fired_boost_on ≥ 8`:
-- NO EXPANSION needed. Proceed to ANALYSIS.md skeleton fill-in once
-  realized α landings start ~2026-05-15.
+### D-2: v1.4.4 amendment ratification timing — **READY**
 
-### D-2: v1.4.4 amendment draft timing
+Per PR #44 v1.4.4 draft decision matrix, **ALL 7 pre-ratification checks
+NOW PASS** (last one — "SC-009 finishes without counter-evidence" —
+flipped from PENDING to YES per PR #57). Counter-evidence watch (PR #49)
+still 0 refuting rows.
 
-Per yesterday's PR #41 cross-cohort sweep: L-8 codification threshold MET
-(4/4 mechanism classes show evidence). Drafting-eligible from a memory-
-deferral perspective. But per Constitution VI, formal amendments should
-ship via the standard `/speckit.constitution` workflow with their own
-verdict cadence.
+Tuesday action: **ratify v1.4.4** per PR #44 plan. Single commit modifying:
+- `.specify/memory/constitution.md` (add behavioral-additive sub-section
+  + bump header to v1.4.4)
+- `CHANGELOG.md` (add v1.4.4 entry)
+- Reference PR #44 draft doc in commit body for traceability.
 
-Two options for D-2:
-- **Draft + ratify in one PR Tuesday**: unblocks future spec ROIs that
-  depend on the 4th additive interpretation. Risk: SC-009 final data
-  could reveal counter-evidence.
-- **Draft Tuesday, ratify in a later session**: safer; builds in 1-2
-  more sessions of pattern-holding before flipping.
+No code changes; tests unchanged. ~30min, $0.
 
-Recommend: **draft Tuesday, ratify Wednesday-or-later**.
+### D-2.5 (NEW): v1.4.5 amendment ratification candidacy — **DRAFTING-ELIGIBLE**
 
-### D-3: C-5 (earnings price reaction) feasibility probe
+Per PR #55 systematic finding (3 hallucinated reflections at 20%
+incidence rate in SC-009 backtest_memory.md), the n=3 threshold for the
+v1.4.5 "reflection-prose-distrustable" amendment is now MET. Per the
+"draft-then-ratify across sessions" defensive pattern, v1.4.5 needs to
+be DRAFTED before it can be ratified.
+
+Two options for D-2.5:
+- **Draft tonight (2026-05-07 night), ratify Tuesday alongside v1.4.4**
+  — efficient dual-amendment session.
+- **Draft Tuesday, ratify Wednesday-or-later** — safer per same-session-
+  ratification rule (mirror of v1.4.4 plan).
+
+Recommend: **decide based on time/energy**. If drafting tonight is
+feasible, dual-ratification Tuesday is the ROI-maximizing path. Otherwise
+draft Tuesday + ratify Wednesday parallel to v1.4.4's two-stage cadence.
+
+### D-3: C-5 (earnings price reaction) feasibility probe — UNCHANGED
 
 Per the C-1 SKIP + C-3 NOT-FEASIBLE pattern, the de-risking probe (~30min,
-$0) saves ~3h sunk cost if the data isn't accessible.
-
-For C-5 specifically, the question is: does yfinance return historical
-post-earnings price-reaction magnitudes (1-day, 5-day) cleanly enough to
-backfill across our SC-009 cohort dates? `Ticker(t).earnings_history` is
-the candidate API; needs to be probed analogously to PR #40.
+$0) saves ~3h sunk cost if the data isn't accessible. `Ticker(t).earnings_history`
+is the candidate API.
 
 Recommend: **probe Tuesday morning** (~30min, $0). If feasible → schedule
 C-5 retrospective for later in the week.
 
-### D-4: Path C snapshot wiring PoC
+### D-4: Path C snapshot wiring PoC — UNCHANGED + CONTEXT REFINED
 
 PR #40 verdict on C-3 was: "Path C (snapshot wiring) costs ~1h + 21d wait
-for first replayable validation." With backtest finishing soon, a fresh
-backtest with Path C snapshot wiring active becomes attractive — it
-piggybacks on the next experiment's LLM spend without extra $$$.
+for first replayable validation." Tomorrow's session has no immediate next
+backtest planned (no expansion needed per D-1). Path C wiring can wait
+until a future experiment is designed.
 
-Recommend: **defer until next backtest design** (could be SC-009 expansion
-or a fresh experiment). Wire it into the design phase, not as a one-off.
+Recommend: **defer until next backtest design**. Wire it into the design
+phase, not as a one-off.
+
+### D-5 (NEW): SC-009 ANALYSIS.md — FINAL status timing
+
+Current ANALYSIS.md is PRELIMINARY (preserved by PR #52 guard). The
+FINAL version requires:
+- Operator removes the `**Status**: PRELIMINARY` line
+- Re-runs analyzer (with canonical 21d-closed α data, post 2026-05-22+)
+- Writes operator framing on top of the auto-generated content (or
+  extends it with the PASS-by-non-counterexample shadow-mode-first
+  recommendation per PR #56/#57)
+
+Recommend: **schedule for ~2026-05-22 or later**. Tuesday action: none
+for D-5 yet; place a calendar reminder for 2026-05-22 to revisit.
 
 ## Standing open work (carryover from 2026-05-07 evening)
 
@@ -157,11 +182,19 @@ Conservative estimate:
   saved 3h by probing in 30min. Continue this pattern for any new
   data-source-dependent retrospective.
 
-## Reset checklist for opening tomorrow's session
+## Reset checklist for opening tomorrow's session (UPDATED 2026-05-07 night)
 
-- [ ] Read `MEMORY.md` (auto-loaded)
-- [ ] Check `wc -l experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/results.csv`
-- [ ] If 36 rows: read latest analyzer output (`python scripts/analyze_sc009_ab.py ...`)
-- [ ] Apply D-1 expansion-trigger logic
-- [ ] Run `reasoning_decision` for the first task selection
-- [ ] Execute rank #1
+- [x] Backtest finished — confirmed 36/36 rows
+- [x] Analyzer re-run; ANALYSIS.md updated to PRELIMINARY + 36-row data
+- [x] D-1 expansion-trigger logic applied → no expansion needed
+- [ ] Tomorrow morning: read `MEMORY.md` (auto-loaded; 16 cross-session memories)
+- [ ] Tomorrow morning: ratify v1.4.4 per D-2 (single commit; ~30min)
+- [ ] Tomorrow morning: decide D-2.5 v1.4.5 draft timing (tonight vs Tuesday)
+- [ ] Tomorrow morning: run `reasoning_decision` for the first task after ratification
+- [ ] Calendar reminder for 2026-05-22+ — D-5 final SC-009 ANALYSIS.md
+
+**Memories most directly relevant to tomorrow's ratification work**:
+- `reference_behavioral_additive_4th_interpretation.md` — guides v1.4.4 amendment text
+- `reference_pass_by_non_counterexample.md` — informs spec 008 default-flip framing
+- `reference_memory_log_reflection_hallucination.md` — guides v1.4.5 amendment text
+- `feedback_retrospective_first_pattern.md` — Constitution VIII v1.4.1 gate (always applies)
