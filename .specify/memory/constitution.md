@@ -2,9 +2,10 @@
 
 **Project**: Personal experimental fork of TradingAgents — a research playground for studying multi-agent LLM debate dynamics, using equity-decision-making as the substrate because it has cheap, objective ground truth.
 
-**Version**: 1.4.0
+**Version**: 1.4.1
 **Adopted**: 2026-05-01
-**Last amended**: 2026-05-06 (later) — extended **Principle VIII** with a "Forward-catalyst-class validation gate" sub-section. Empirical basis: Class 3 Opus retrospective DECISIVELY PASSED bull-side gate (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp at T=0.60); bear-side passed criteria 1+2 with shadow-mode-first condition. Spec 007 ships as the first instance of this filter class. v1.3.0 → v1.4.0 (MINOR per amended-principle rule).
+**Last amended**: 2026-05-06 (evening, third amendment of the day) — appended a "Spec ships its retrospective + verdict" sub-section to Principle VI. Codifies the pattern that today's 22-work-unit research-burst day demonstrated 5 times: spec invocation requires accompanying retrospective markdown in `claudedocs/` documenting the empirical justification + verdict + decision tree. Cost asymmetry (retrospective $0-2 / 1h vs spec+impl ~6-8h) makes "retrospective FIRST, spec SECOND" the dominant strategy. v1.4.0 → v1.4.1 (PATCH per clarification rule).
+**Prior version**: 1.4.0 — extended **Principle VIII** with a "Forward-catalyst-class validation gate" sub-section. Empirical basis: Class 3 Opus retrospective DECISIVELY PASSED bull-side gate (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp at T=0.60); bear-side passed criteria 1+2 with shadow-mode-first condition. Spec 007 ships as the first instance of this filter class.
 
 This constitution governs how this project evolves. The commitments below are intentionally short and few. They are constraints, not aspirations — when in conflict with convenience, they win.
 
@@ -87,6 +88,36 @@ Use the spec-kit slash commands: `/speckit.specify` → `/speckit.plan` → `/sp
 **Why**: The pilot showed the upstream framework had no spec for "the PM should produce all 5 ratings" — it was an implicit assumption that was violated emergently. Specs protect against the same class of failure here.
 
 **Acceptable exception**: ad-hoc scripts under `scripts/` that don't touch structural state can skip the spec workflow. Bias toward writing the spec when in doubt.
+
+### Spec ships its retrospective + verdict (added 2026-05-06 evening; v1.4.1)
+
+Every spec MUST ship with an accompanying retrospective markdown in `claudedocs/` that documents:
+1. **The empirical retrospective** that motivated the spec (or, for filters subject to Principle VIII, that PASSED the validation gate)
+2. **The verdict block** — explicit pass/fail per the relevant gate criteria, with magnitudes
+3. **The decision tree** — what happens if defaults are flipped, ablated, or the spec is later revisited
+
+**Empirical basis** (today's 22-work-unit research-burst day demonstrated this pattern 5 times):
+
+| Spec | Retrospective doc | Verdict |
+|---|---|---|
+| Spec 004 sector-momentum | `claudedocs/sector-momentum-retrospective-2026-05-06.md` | -0.45pp net Δα → default-off; KEEP off (Constitution VIII grandfathered) |
+| Spec 006 bear-sector-symmetry | `claudedocs/bear-sector-symmetry-retrospective-2026-05-06.md` | -0.71pp net Δα + SC-008 FAIL → default-off; KEEP off |
+| Spec 005 candidate (per-ticker-vs-sector bull) | `claudedocs/ticker-sector-alpha-retrospective-2026-05-06.md` | max +0.31pp → SKIP spec entirely |
+| Class 3 (Haiku) — Spec 007 candidate | `claudedocs/forward-catalyst-class3-retrospective-2026-05-06.md` | BORDERLINE → recommend Opus rerun |
+| Class 3 (Opus) — Spec 007 actual | `claudedocs/forward-catalyst-class3-opus-retrospective-2026-05-06.md` | DECISIVE PASS → spec invocation justified at v0.7.0 |
+
+The pattern: retrospective is the empirical justification for spec invocation (per Principle VIII v1.3.0 / v1.4.0 gates). The retrospective markdown ships alongside the spec dir so future readers can:
+- Find the empirical case for the spec without reading commit history
+- Re-run the retrospective with new corpus/data to revisit the verdict
+- Understand WHY a default-on / default-off / shadow-mode-first decision was made
+
+**Operational test**: `/speckit.specify` invocation for any new filter spec MUST be preceded by a retrospective commit in `claudedocs/<spec-name>-retrospective-<DATE>.md`. The spec.md preamble cross-references the retrospective. Constitution VIII gates apply to the retrospective; if the gate fails, the spec is NOT invoked.
+
+**Why**: Without this codification, future iterations of the spec-kit workflow may write specs without the empirical-validation step, regressing back to the pre-v1.3.0 pattern of "build the filter, then maybe retrospect later." Today's $0-2 retrospective methodology is a Pareto improvement over the ~6-8h spec+impl+tests cost; the pattern is load-bearing for the project's research economy.
+
+**Cost rationale** (cross-references Principle III): retrospectives cost $0-2 ($0 for offline-replay-against-existing-data; $0.10-2 for LLM-extracted features). Spec writing + implementation costs ~6-8h (~$0 LLM but significant time). The cost asymmetry makes "retrospective FIRST, spec SECOND" the dominant strategy for any filter mechanism class.
+
+**Acceptable exception**: experimental "shakeout" filters scoped explicitly to operator-opt-in (default-off, no SC-008-style gate, marked `shakeout_filter: true` in PARAMS.json) — same exception as Principle VIII allows. Use sparingly.
 
 ### VII. Calibrated Abstention is a Valid Output (added 2026-05-03)
 
@@ -237,8 +268,9 @@ This constitution is amendable. Amendments follow the spec-kit constitution flow
 
 The principles above are themselves up for amendment if they prove ceremonial rather than load-bearing. The test: after one month of use, are we honoring this principle because it's helping or because it's written down? If the latter, amend or remove.
 
-**Version**: 1.4.0
-**Last amended**: 2026-05-06 (later) — extended **Principle VIII** with a "Forward-catalyst-class validation gate" sub-section. Empirical basis: Class 3 Opus retrospective DECISIVELY PASSED bull-side (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp at T=0.60 on n=33 fires); bear-side passed criteria 1+2 with shadow-mode-first condition (discrim +23.10pp / hit rate 72.2% / net Δα +0.30pp). Forward-catalyst signals follow a separate gate (discrim ≥ +5pp PRIMARY + cohort hit rate ≥ 60% + net Δα ≥ +0.5pp OR shadow-mode-first) calibrated to their different statistical properties. Spec 007 ships as the first instance of this filter class.
+**Version**: 1.4.1
+**Last amended**: 2026-05-06 (evening, third amendment of the day) — appended a "Spec ships its retrospective + verdict" sub-section to Principle VI. Codifies the pattern that today's 22-work-unit research-burst day demonstrated 5 times: spec invocation requires accompanying retrospective markdown in `claudedocs/` documenting the empirical justification + verdict + decision tree. Cost asymmetry (retrospective $0-2 / 1h vs spec+impl ~6-8h) makes "retrospective FIRST, spec SECOND" the dominant strategy. v1.4.0 → v1.4.1 (PATCH per clarification rule).
+**Prior version**: 1.4.0 — extended **Principle VIII** with a "Forward-catalyst-class validation gate" sub-section. Empirical basis: Class 3 Opus retrospective DECISIVELY PASSED bull-side (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp at T=0.60 on n=33 fires); bear-side passed criteria 1+2 with shadow-mode-first condition (discrim +23.10pp / hit rate 72.2% / net Δα +0.30pp). Forward-catalyst signals follow a separate gate (discrim ≥ +5pp PRIMARY + cohort hit rate ≥ 60% + net Δα ≥ +0.5pp OR shadow-mode-first) calibrated to their different statistical properties. Spec 007 ships as the first instance of this filter class.
 **Prior version**: 1.3.0 — added **Principle VIII (Retrospective Before Spec for Backward-Looking Price Filters)** after three same-day retrospective failures (spec 004 sector momentum -0.45pp/n=73; spec 006 bear sector-symmetry -0.71pp/n=36; spec 005-candidate bull sector-relative +0.31pp max/n=79). Cost asymmetry: $0/1h retrospective vs ~6-8h spec+impl+tests. Backward-looking price filters cannot DISCRIMINATE cohort losers from similar-pattern winners; the retrospective gate must come FIRST for this filter class. Both criteria (net Δα ≥ +1pp at default + cohort hit rate ≥ 40%) must pass for spec to be written. Three failures in one day codified the lesson.
 **Prior version**: 1.2.2 — Principle VII appended Cross-period scope clarification: realized-α claims (not commit-rate claims) must be treated as period-conditional unless validated across multiple periods. Empirical trigger: experiment 008 (same config as 007, Q4 2025 dates instead of Q1 2026) produced OW 21d α = -1.81% vs 007's +3.05%. Bayesian posterior on stable-cross-period-signal hypothesis dropped 0.64 → 0.52. ANALYSIS.md write-ups must state the period composition of any n=N cohort and the cross-period replication status of the claim.
 **Prior version**: 1.2.1 — Principle VII appended Replicability-scope clarification: bucket-level (replicable) vs date-level (single observation) evidence. Trigger: 005-vs-007 NVDA non-replication on the same dates.

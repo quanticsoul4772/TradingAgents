@@ -6,6 +6,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (2026-05-06 evening — Constitution v1.4.1: spec ships its retrospective + verdict)
+
+**Constitution v1.4.1** (`.specify/memory/constitution.md`): appended a "Spec ships its retrospective + verdict" sub-section to Principle VI (Spec Before Structural Change). Codifies the pattern that today's 22-work-unit research-burst day demonstrated 5 times: spec invocation requires an accompanying retrospective markdown in `claudedocs/` documenting:
+1. The empirical retrospective that motivated the spec (or PASSED Constitution VIII gate)
+2. The verdict block — explicit pass/fail per gate criteria with magnitudes
+3. The decision tree — what happens if defaults are flipped, ablated, or revisited
+
+Empirical basis (5 retrospectives shipped today):
+- `claudedocs/sector-momentum-retrospective-2026-05-06.md` (spec 004, default-off)
+- `claudedocs/bear-sector-symmetry-retrospective-2026-05-06.md` (spec 006, default-off)
+- `claudedocs/ticker-sector-alpha-retrospective-2026-05-06.md` (spec 005 candidate, SKIP)
+- `claudedocs/forward-catalyst-class3-retrospective-2026-05-06.md` (Class 3 Haiku, BORDERLINE)
+- `claudedocs/forward-catalyst-class3-opus-retrospective-2026-05-06.md` (Class 3 Opus, DECISIVE PASS → spec 007)
+
+Cost asymmetry (retrospective $0-2 / 1h vs spec+impl ~6-8h) makes "retrospective FIRST, spec SECOND" the dominant strategy for any new filter mechanism class. The pattern is load-bearing for the project's research economy.
+
+v1.4.0 → v1.4.1 (PATCH per clarification rule). Third constitution amendment of the day after v1.3.0 (Principle VIII added) + v1.4.0 (Principle VIII extended with forward-catalyst-class gate).
+
 ### Added (2026-05-06 evening — Spec 007 + Constitution v1.4.0)
 
 **Spec 007 forward-catalyst-aware contrarian gate** (`specs/006-forward-catalyst-gate/`, branch `006-forward-catalyst-gate` merged via TBD): FIRST forward-catalyst-aware filter in the framework. New module `tradingagents/agents/utils/forward_catalyst_filter.py` invokes an LLM (Opus default; configurable to Haiku) per propagate to score how widely the bull/bear case is already absorbed by the market via the existing analyst reports + bull/bear debate.
