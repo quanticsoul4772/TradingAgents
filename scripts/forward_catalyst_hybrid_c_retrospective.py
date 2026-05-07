@@ -51,6 +51,8 @@ import yfinance as yf
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from tradingagents.default_config import DEFAULT_CONFIG  # noqa: E402
+
 CLASS3_CSV = Path("claudedocs/forward-catalyst-class3-opus-retrospective-2026-05-06.csv")
 OUT_MD = Path("claudedocs/forward-catalyst-hybrid-c-retrospective-2026-05-06.md")
 OUT_CSV = Path("claudedocs/forward-catalyst-hybrid-c-retrospective-2026-05-06.csv")
@@ -60,8 +62,11 @@ BEARISH_RATINGS = {"Underweight", "Sell"}
 
 DEFAULT_WINDOWS = (7, 14, 21)
 DEFAULT_MAGNITUDES = (0.5, 1.0, 2.0)
-DEFAULT_BULL_THRESHOLD = 0.60
-DEFAULT_BEAR_THRESHOLD = 0.50
+# Production-config defaults — pulled from spec 007's live configuration so the
+# retrospective auto-tracks any future threshold drift. Per Constitution VI/VIII
+# v1.4.1 "spec ships its retrospective + verdict" pattern.
+DEFAULT_BULL_THRESHOLD = DEFAULT_CONFIG["forward_catalyst_bull_threshold"]
+DEFAULT_BEAR_THRESHOLD = DEFAULT_CONFIG["forward_catalyst_bear_threshold"]
 
 
 # ---- Earnings calendar lookup --------------------------------------------
@@ -249,10 +254,21 @@ def main():
     windows = tuple(int(w) for w in args.windows.split(","))
     magnitudes = tuple(float(m) for m in args.magnitudes.split(","))
 
+    using_prod_config = (
+        args.bull_threshold == DEFAULT_CONFIG["forward_catalyst_bull_threshold"]
+        and args.bear_threshold == DEFAULT_CONFIG["forward_catalyst_bear_threshold"]
+    )
+
     print("# Hybrid C retrofit — Class 3 LLM scores + Class 6 calendar boost")
     print()
-    print(f"Bull threshold: {args.bull_threshold}")
-    print(f"Bear threshold: {args.bear_threshold}")
+    print(
+        f"Bull threshold: {args.bull_threshold}{' (production-config)' if using_prod_config else ' (override)'}"
+    )
+    print(
+        f"Bear threshold: {args.bear_threshold}{' (production-config)' if using_prod_config else ' (override)'}"
+    )
+    print(f"Bull mode (prod): {DEFAULT_CONFIG['forward_catalyst_bull_mode']}")
+    print(f"Bear mode (prod): {DEFAULT_CONFIG['forward_catalyst_bear_mode']}")
     print(f"Boost windows (cal days): {windows}")
     print(f"Boost magnitudes: {magnitudes}")
     print()
@@ -413,6 +429,10 @@ def main():
     # Markdown
     md = [
         f"# Hybrid C retrofit — {pd.Timestamp.now().date().isoformat()}",
+        "",
+        f"**Config source**: {'production (`tradingagents.default_config.DEFAULT_CONFIG`)' if using_prod_config else 'CLI override'}.",
+        f"Bull mode: `{DEFAULT_CONFIG['forward_catalyst_bull_mode']}` (active means fired commits actually downgrade in production).",
+        f"Bear mode: `{DEFAULT_CONFIG['forward_catalyst_bear_mode']}` (shadow means fired commits are observed-only in production).",
         "",
         "**Hypothesis** (Spec 008 design doc pivot): Class 3 (LLM-extracted `bull/bear_case_priced_in` "
         "scores, validated + shipped at v0.7.0-spec-007) combined with Class 6 (calendar features: "

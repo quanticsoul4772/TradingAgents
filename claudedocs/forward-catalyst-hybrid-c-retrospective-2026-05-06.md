@@ -1,5 +1,9 @@
 # Hybrid C retrofit — 2026-05-06
 
+**Config source**: production (`tradingagents.default_config.DEFAULT_CONFIG`).
+Bull mode: `active` (active means fired commits actually downgrade in production).
+Bear mode: `shadow` (shadow means fired commits are observed-only in production).
+
 **Hypothesis** (Spec 008 design doc pivot): Class 3 (LLM-extracted `bull/bear_case_priced_in` scores, validated + shipped at v0.7.0-spec-007) combined with Class 6 (calendar features: days-to-next-earnings) improves discrimination beyond Class 3 alone, by amplifying the priced-in effect for commits close to forward catalysts (which are more likely to be already-absorbed by the market).
 
 **Mechanism**: `effective_score = base_score × (1 + magnitude × boost)` where `boost = max(0, 1 - days_to_earnings / window)`. At earnings day, boost=1.0 → effective = base × (1+magnitude); at window+ days out, boost=0 → effective = base.
