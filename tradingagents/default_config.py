@@ -66,6 +66,7 @@ class TradingAgentsConfig(TypedDict):
     hybrid_c_calendar_boost_enabled: bool
     hybrid_c_calendar_boost_window_days: int
     hybrid_c_calendar_boost_magnitude: float
+    analyst_pt_snapshot_enabled: bool
     bot_models: dict[str, str]
     data_vendors: dict[str, str]
     tool_vendors: dict[str, str]
@@ -229,6 +230,15 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     "hybrid_c_calendar_boost_enabled": False,
     "hybrid_c_calendar_boost_window_days": 14,
     "hybrid_c_calendar_boost_magnitude": 0.5,
+    # Path C snapshot wiring (PR #73): when True, capture analyst PT panel +
+    # recommendations distribution at propagate time and persist to
+    # state["forward_catalyst"]["analyst_pt_snapshot"]. Unlocks future
+    # C-3-class retrospectives by accumulating historical snapshots in state
+    # logs (yfinance has no historical PT panels per PR #40 — snapshots
+    # forward are the only way to build the time series). Default OFF;
+    # zero behavior impact when disabled. ~50-200ms latency per propagate
+    # when enabled (per PR #40 + PR #66 empirical timings). Zero LLM cost.
+    "analyst_pt_snapshot_enabled": False,
     # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
     # (str). When set, the framework instantiates a per-bot client for that
     # model using the configured llm_provider; bots not in this dict use the

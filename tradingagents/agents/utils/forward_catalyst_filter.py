@@ -265,6 +265,7 @@ def evaluate_forward_catalyst(
     hybrid_c_calendar_boost_enabled: bool = False,
     hybrid_c_calendar_boost_window_days: int = 14,
     hybrid_c_calendar_boost_magnitude: float = 0.5,
+    analyst_pt_snapshot_enabled: bool = False,
 ) -> tuple[str, dict]:
     """Apply the forward-catalyst filter to a PM decision.
 
@@ -442,6 +443,19 @@ def evaluate_forward_catalyst(
     }
     if hybrid_c_annotation is not None:
         annotation.update(hybrid_c_annotation)
+
+    # 7b. Path C snapshot (PR #73) — capture analyst PT panel +
+    #     recommendations distribution at propagate time so future
+    #     C-3-class retrospectives can backfill historical contrarian
+    #     signals from accumulated state logs. Default OFF; zero behavior
+    #     impact when disabled. Per PR #40 + PR #66 graceful-degradation
+    #     pattern: snapshot dict or None on failure / no data.
+    if analyst_pt_snapshot_enabled:
+        from tradingagents.agents.utils.analyst_pt_snapshot import (
+            fetch_analyst_pt_snapshot,
+        )
+
+        annotation["analyst_pt_snapshot"] = fetch_analyst_pt_snapshot(ticker)
 
     # 8. Active-mode override (mutually exclusive — pre_rating can't be both bullish AND bearish)
     if would_fire_bull and bull_mode == "active":

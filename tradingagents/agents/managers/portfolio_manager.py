@@ -298,6 +298,9 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
             hc_enabled = bool(get_config().get("hybrid_c_calendar_boost_enabled", False))
             hc_window = int(get_config().get("hybrid_c_calendar_boost_window_days", 14))
             hc_magnitude = float(get_config().get("hybrid_c_calendar_boost_magnitude", 0.5))
+            # Path C analyst PT snapshot wiring (PR #73, default-off). Captures
+            # historical signals forward-going at zero LLM cost.
+            pt_snap_enabled = bool(get_config().get("analyst_pt_snapshot_enabled", False))
             modified_decision, forward_catalyst_dict = evaluate_forward_catalyst(
                 final_trade_decision,
                 state,
@@ -310,6 +313,7 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
                 hybrid_c_calendar_boost_enabled=hc_enabled,
                 hybrid_c_calendar_boost_window_days=hc_window,
                 hybrid_c_calendar_boost_magnitude=hc_magnitude,
+                analyst_pt_snapshot_enabled=pt_snap_enabled,
             )
             final_trade_decision = modified_decision
         except Exception as exc:
