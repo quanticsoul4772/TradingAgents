@@ -293,6 +293,11 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
             fc_bear_threshold = float(get_config().get("forward_catalyst_bear_threshold", 0.50))
             fc_model = get_config().get("forward_catalyst_model", "claude-opus-4-7")
             fc_max_chars = int(get_config().get("forward_catalyst_max_rationale_chars", 2000))
+            # Spec 008 Hybrid C calendar boost (default-off per FR-007). Adds
+            # ZERO LLM cost when enabled (post-processing of spec 007's score).
+            hc_enabled = bool(get_config().get("hybrid_c_calendar_boost_enabled", False))
+            hc_window = int(get_config().get("hybrid_c_calendar_boost_window_days", 14))
+            hc_magnitude = float(get_config().get("hybrid_c_calendar_boost_magnitude", 0.5))
             modified_decision, forward_catalyst_dict = evaluate_forward_catalyst(
                 final_trade_decision,
                 state,
@@ -302,6 +307,9 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
                 bear_threshold=fc_bear_threshold,
                 model=fc_model,
                 max_rationale_chars=fc_max_chars,
+                hybrid_c_calendar_boost_enabled=hc_enabled,
+                hybrid_c_calendar_boost_window_days=hc_window,
+                hybrid_c_calendar_boost_magnitude=hc_magnitude,
             )
             final_trade_decision = modified_decision
         except Exception as exc:
