@@ -1,6 +1,6 @@
 # ROADMAP — TradingAgents-lab
 
-_Forward-looking exploration map. Updated 2026-05-06 evening (post-**20-work-unit research-burst day** culminating in spec 007 forward-catalyst-aware contrarian gate + Constitution v1.4.0 + tag `v0.7.0-spec-007`). Day's arc captured in the v0.7.0-spec-007 tag annotation; CHANGELOG.md [Unreleased] section; RESEARCH_FINDINGS.md "Filter portfolio" + "5th failure mode" + "Bearish anti-calibration shock" + "Constitution Principle VIII" sections. Earlier cleanup: Spec 003 default-on @80%; Spec 003.5 sector-baseline fallback; Spec 004 + Spec 006 retrospective-rejected default-off; Spec 005 candidate retrospectively SKIPPED; sector-α attribution analyzer; INTC +103% Hold investigation; Constitution v1.3.0 Principle VIII; CHANGELOG/README/CLAUDE.md refreshes; forward-catalyst design doc; Class 3 Haiku BORDERLINE → Opus DECISIVE PASS retrospectives; Spec 007 design bundle + implementation + Constitution v1.4.0 amendment + merge into main + tag._
+_Forward-looking exploration map. Updated 2026-05-06 late-evening (post-**14-work-unit research-burst day; 12 ship-quality units** culminating in spec 008 Hybrid C calendar-boost filter + Constitution v1.4.2 + tag `v0.8.0-spec-008`). Day's arc captured in `claudedocs/research-burst-2026-05-06.md` (canonical meta-retrospective) + CHANGELOG.md [Unreleased] section + RESEARCH_FINDINGS.md "Filter portfolio" section. Late-evening additions: spec 008 Hybrid C bull-only enhancement of spec 007 + spec 009 candidate (bear-inverted Hybrid C) retrospectively SKIPPED + Constitution v1.4.0 → v1.4.1 (spec ships its retrospective) → v1.4.2 (magnitude fungibility for hybrid filters) + meta-retrospective + spec 008.5 latency benchmark closing /speckit.analyze coverage gap._
 
 This is a research playground, not a product. The roadmap is directions for exploration, not delivery milestones. Per Constitution Principle V ("Steal Liberally"), cross-pollination from sibling projects in the portfolio is a primary driver — many ideas listed here originate elsewhere.
 
@@ -30,21 +30,29 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 
 ---
 
-## Active branch — 20-work-unit research-burst day (2026-05-06; tagged v0.7.0-spec-007)
+## Active branch — 14-work-unit research-burst day (2026-05-06; tagged v0.8.0-spec-008)
 
-The day expanded from the original 11 work units (documented below) to **20 work units total** by end of session. The additional 9 work units (in commit order):
+The day expanded through evening + late-evening sessions, ultimately shipping **12 ship-quality units** across **14 distinct work activities**. The post-Spec 007 work units (in commit order on the late-evening session):
 
-12. RESEARCH_FINDINGS + ROADMAP refresh (commit `9b5b829`)
-13. CHANGELOG refresh (`e803119`)
-14. README refresh (`2f9b8ae`)
-15. Forward-catalyst mechanism exploration design doc (`21b0a1f`) — recommended Class 3 LLM-extracted feature as starting point
-16. Class 3 Haiku retrospective (`f564e3a`) — BORDERLINE verdict; Opus rerun recommended
-17. Class 3 Opus retrospective (`0169e2b`) — DECISIVE PASS bull-side; shadow-mode-first bear-side
-18. Spec 007 design bundle (1750 LOC, branch `006-forward-catalyst-gate`) — full speckit Phase 0+1+2
-19. Spec 007 implementation + Constitution v1.4.0 amendment (`dc95746`, then merged via `0186507`) — 38 tasks complete; SC-008 PASSES
-20. Spec 007 merge to main + tag `v0.7.0-spec-007`
+20. Spec 007 merge to main + tag `v0.7.0-spec-007` (earlier evening)
+21. Forward-catalyst mechanism design doc + pivot (Class 2 options-IV data-blocked → Hybrid C as substitute, commits `ada8ebb` + `25adb67`)
+22. Hybrid C retrofit retrospective (`91135eb`) — DECISIVE PASS bull-side at window=14d/magnitude=0.5x; +3.35pp Δα improvement vs Class 3 alone
+23. Hybrid C production-config retrospective confirms (`6cc7be9`) — identical numbers (DEFAULT_CONFIG matched retrofit)
+24. Constitution v1.4.0 → v1.4.1 (`b470383`) — Principle VI sub: spec ships its retrospective + verdict
+25. Spec 008 design bundle (1850+ LOC: spec.md + plan.md + research.md + data-model.md + contracts/ + quickstart.md + tasks.md, branch `007-calendar-boost-filter`)
+26. Spec 008 implementation (`1f1ef27`) — calendar_boost.py helper + spec 007 integration + 34 net-new tests
+27. Spec 008 live smoke (`d2680d8`) — real Opus + real yfinance, boost > 0 path verified end-to-end ($0.05)
+28. Spec 008 merge to main via PR #6 (`6d7e417`) + tag `v0.8.0-spec-008`
+29. Spec 009 candidate (bear-inverted Hybrid C) retrospective — SKIP verdict (+0.00pp at every config; PR #7 open)
+30. Constitution v1.4.1 → v1.4.2 (PR #8 open) — Principle VIII sub: magnitude fungibility for hybrid filters
+31. Meta-retrospective `claudedocs/research-burst-2026-05-06.md` (PR #9 open) — canonical day-end narrative
+32. Doc refresh — README + RESEARCH_FINDINGS + CHANGELOG (PR #10 open)
+33. Spec 008.5 latency-benchmark amendment (PR #11 open) — closes the 1 coverage gap from /speckit.analyze
+34. (this) ROADMAP + claudedocs/SETUP refresh
 
-Full arc captured in the tag annotation. Filter portfolio at v0.7.0-spec-007: 7 sides total (5 default-on/shadow, 2 default-off — see CLAUDE.md "Empirical filters" section). Constitution v1.4.0 Principle VIII has both backward-price + forward-catalyst gates.
+Full arc captured in `claudedocs/research-burst-2026-05-06.md`. Filter portfolio at `v0.8.0-spec-008`: **8 sides total** (5 default-active, 3 default-off operator-opt-in — see CLAUDE.md "Empirical filters" section + RESEARCH_FINDINGS.md "Filter portfolio status" section).
+
+**Methodology validation**: Constitution v1.4.1 retrospective-first pattern shipped 6 retrospectives today (2 PASS + 4 SKIP) + 1 candidate SKIP. Empirical ROI: ~10-13× wall-clock leverage on the spec invocations that DID launch (5 SKIP outcomes × 6-8h avoided spec cycles = 30-40h saved). Cost asymmetry validated by direct measurement.
 
 ## Original active branch — 11-work-unit research-burst day (2026-05-06; pre-Spec 007)
 
@@ -178,7 +186,10 @@ These need new experiments to answer; no amount of analysis on existing CSVs wil
 | Does same-prompt rerun-variance dominate the signal at the date level? | n=3 reps on the existing 10 NVDA dates with current config — formalizes the 005-vs-007 finding | $15 | open (B-priority 4) |
 | Does spec 002 (signal-lifecycle) IC measurement reveal which signals are noise? | Build signal-lifecycle pipeline + run on saved state logs | $0 build + $0 run | **resolved** — Spec 002 Phases 0-2.5 shipped; first IC measurement: final_trade_decision IC = -0.172 at 21d, n=153; strongest IC: bear_bigram_count = +0.457 at 90d |
 | Does per-bot LLM model routing (Spec 001 Phase 4) shift rating distribution beyond mode-collapse? | n=10+ matched-baseline run with `bot_models = {"fundamentals": "claude-opus-4-7"}` | $5-10 | open (B-priority 6, new) |
-| Can a forward-catalyst-aware mechanism catch the 27-row 5th-failure-mode cohort + the 18-row +28%-mean-α ticker_strong-bear cohort? | Design-doc-only exploration of news-density signals / options-IV / LLM-extracted "bull case priced in" feature. Different mechanism class than backward-price-only (Principle VIII grandfathering). | $0 design + $20-40 to implement + retrospect | **open (NEW post-spec-006)** — would address the gap that all 5 current filters cannot catch |
+| Can a forward-catalyst-aware mechanism catch the 27-row 5th-failure-mode cohort + the 18-row +28%-mean-α ticker_strong-bear cohort? | Design-doc-only exploration of news-density signals / options-IV / LLM-extracted "bull case priced in" feature. Different mechanism class than backward-price-only (Principle VIII grandfathering). | $0 design + $20-40 to implement + retrospect | **partial-resolved (post-spec-007 + spec-008)** — Spec 007 Class 3 LLM feature catches a meaningful slice of the 5th-failure-mode cohort (88.9% bull cohort hit, +14.43pp discrim, +2.24pp net Δα). Spec 008 Hybrid C adds +3.35pp Δα on top. Bear-side ticker_strong cohort still uncaught — bear-inverted Hybrid C SKIP'd, suggests bear-side may need a different mechanism class entirely (Class 4 macro / Class 5 fundamentals deferred). |
+| Does a Class 4 (cross-asset/macro) filter catch the bear-side ticker_strong cohort? | VIX + 10y yield + USD index + sector ETF correlation features. Build cohort + retrofit script per Spec 008 design doc Class 4 entry. | $2-10 LLM + ~3h | **open (NEW post-spec-008)** — bear-side cohort still uncaught after all 8 filter sides |
+| Does a Class 5 (fundamentals-delta) filter add discrimination beyond Class 3? | Recent earnings surprise + analyst revisions as features. Same retrofit shape; different mechanism. | $1-5 LLM + ~3h | **open (NEW post-spec-008)** — orthogonal to Class 3's prose synthesis |
+| Does the Spec 008 Hybrid C bull-only retrofit hold under live-mode A/B ablation? | Run daily_signals.py with boost enabled vs disabled on n≥30 same propagates; verify +3.35pp at 21d. | $5-10 LLM | **open (Spec 008 SC-009 condition for default-on flip)** |
 | Does multi-window SC-003 replication strengthen all retrospectives? | Re-run SC-003 50-ticker on 3-5 additional dates; would expand corpus from 234 to 290+ commits + spec 003 eligible from 11 to 30+ + spec 006 ticker_strong cohort from 18 to 40+. | $40 (T3) | **open (NEW post-spec-006)** — biggest empirical-strengthening lever |
 | At what corpus size does Spec 005 percentile-based variant become viable? | Extend per-ticker history to 30+ obs per ticker; re-run `scripts/ticker_sector_alpha_retrospective.py` with `--percentile-history-floor 30`. May surface signal that washed at the absolute-threshold variant. | $0 retrospective; needs corpus-expansion first | **open (NEW post-spec-005-skip)** |
 

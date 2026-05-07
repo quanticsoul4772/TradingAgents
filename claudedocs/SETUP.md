@@ -13,8 +13,17 @@ Your local config, distilled. This reflects what's actually on disk, not generic
   - Stock prices / technicals / fundamentals: yfinance (no key needed); insider transactions also yfinance (moved out of news_data category 2026-05-03 evening to fix routing-mismatch)
   - 18 tools wired into analyst layer (was 8 before SIGNALS expansion): full inventory in `docs/SIGNALS.md`
 - **Checkpoint resume:** enabled in `main.py` (opt-in for the CLI)
-- **A3 momentum filter:** opt-in via `config["uw_momentum_filter_threshold"] = -5.0` — suppresses UW/Sell commits on tickers in -5%+ trailing-30d drawdown (mean-reversion zone). Default off. **Validated post-007**: filter correctly stays inert when ticker isn't in mean-reversion zone (per `claudedocs/a3-filter-forensics-007.md`); targets specifically the mean-reversion failure mode, not regime-mismatch.
-- **Cost-tier ladder** (Constitution v1.2.0 → v1.2.1): per-experiment LLM spend governed by T1 ≤$5 (free exploration) / T2 $5-30 (standard, default) / T3 $30-100 (scaled — requires Cost-Justification scaffold) / T4 >$100 (capital — requires multi-day deliberation + kill criteria). Use `python scripts/new_experiment.py <slug> --tier T2 --cost 15` when scaffolding.
+- **Filter portfolio (8 sides as of 2026-05-06; tagged v0.8.0-spec-008):**
+  - **A3 momentum filter** (default ON @ -5%/30d): suppresses UW/Sell commits on tickers in mean-reversion zone. Validated by `claudedocs/a3-filter-forensics-007.md`.
+  - **Spec 003 contrarian gate** (default ON @ 80th percentile, N≥20): bull-side per-ticker `bull_keyword_count` percentile suppression.
+  - **Spec 003.5 sector-baseline fallback** (default ON): when per-ticker history below N=20, falls back to sector-pool percentile.
+  - **Spec 004 sector-momentum** (default OFF): operator opts in via `config["sector_momentum_filter_threshold_pct"] = -5.0`. Empirically anti-predictive (-0.45pp); ships as opt-in only.
+  - **Spec 006 bear-sector-symmetry** (default OFF): operator opts in via `config["bear_sector_symmetry_filter_threshold_pct"] = 5.0`. Empirically anti-predictive (-0.71pp); ships as opt-in only.
+  - **Spec 007 forward-catalyst BULL** (default ACTIVE @ T=0.60): LLM-extracted (`bull_case_priced_in`) score; suppresses Buy/OW when bull case is consensus-priced-in. Adds ~$0.025/propagate Opus cost. Disable both bull+bear modes to skip the LLM call entirely.
+  - **Spec 007 forward-catalyst BEAR** (default SHADOW @ T=0.50): observed-only by default. Flip to "active" via `config["forward_catalyst_bear_mode"] = "active"` after live n≥20 observation period.
+  - **Spec 008 Hybrid C calendar boost** (default OFF): operator opts in via `config["hybrid_c_calendar_boost_enabled"] = True`. When enabled: window=14d + magnitude=0.5x are the empirically-grounded defaults. Bull-only enhancement of Spec 007; ZERO LLM cost (post-processing of Spec 007's already-paid call). See `specs/007-calendar-boost-filter/quickstart.md` for operator instructions.
+- **Cost-tier ladder** (Constitution v1.2.0 → v1.2.2): per-experiment LLM spend governed by T0 $0 (free post-processing — Hybrid C example) / T1 ≤$5 (free exploration; spec 007 ships here at ~$0.025/run) / T2 $5-30 (standard) / T3 $30-100 (scaled) / T4 >$100 (capital). Use `python scripts/new_experiment.py <slug> --tier T2 --cost 15` when scaffolding.
+- **Constitution v1.4.2** governs all default-on flip considerations. Three sub-sections under Principle VIII codify (a) backward-price filter retrospective gate (v1.3.0), (b) forward-catalyst-class filter retrospective gate (v1.4.0), (c) magnitude fungibility for hybrid filters (v1.4.2). Plus Principle VI sub: spec ships its retrospective + verdict (v1.4.1). See `.specify/memory/constitution.md`.
 
 Persistent state lives under `~/.tradingagents/`:
 ```
