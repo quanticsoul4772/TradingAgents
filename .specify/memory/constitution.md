@@ -2,9 +2,9 @@
 
 **Project**: Personal experimental fork of TradingAgents — a research playground for studying multi-agent LLM debate dynamics, using equity-decision-making as the substrate because it has cheap, objective ground truth.
 
-**Version**: 1.2.2
+**Version**: 1.3.0
 **Adopted**: 2026-05-01
-**Last amended**: 2026-05-03 late-evening (Principle VII: appended Cross-period scope clarification after experiment 008 — Q4 2025 OW α flipped sign vs Q1 2026 same-config; Bayesian posterior on stable-cross-period-signal hypothesis dropped 0.64 → 0.52)
+**Last amended**: 2026-05-06 — added **Principle VIII (Retrospective Before Spec for Backward-Looking Price Filters)** after three same-day retrospective failures (spec 004 sector momentum, spec 006 bear sector-symmetry, spec 005-candidate bull sector-relative). Cost asymmetry: $0/1h retrospective vs ~6-8h spec+impl+tests; the retrospective gate must come FIRST for the filter class.
 
 This constitution governs how this project evolves. The commitments below are intentionally short and few. They are constraints, not aspirations — when in conflict with convenience, they win.
 
@@ -102,6 +102,49 @@ The framework's mode collapse to Hold ratings is empirically calibrated abstenti
 
 **Cross-period scope (added 2026-05-03 evening post-experiment-008)**: Claims about realized α (not just commit-rate distribution) must be treated as period-conditional unless validated across multiple calendar periods. Empirical basis: experiment 007 (Opus 30-pair, Q1 2026 dates) produced 21d OW α = +3.05% n=8 with hit-rate climb 56→67→75%; experiment 008 (same config, Q4 2025 dates) produced -1.81% n=11 with hit-rate pattern 55→27→45%. Same model, prompt, A3 filter, news vendor, and tickers — only calendar period changed. The discrimination behavior (per-ticker bucket distribution) replicated cleanly cross-period; the realized-α direction did not. Reasoning_evidence Bayesian update: prior 0.64 (single-period n=50 milestone) → posterior 0.52 (roughly even odds the signal is stable cross-period vs period-favored). **Operationally**: any HYPOTHESIS asserting a realized-α property at the cross-experiment level must explicitly state (a) the calendar periods covered, (b) whether the property is claimed as period-stable or period-conditional, (c) the additional cross-period evidence required to upgrade the claim. ANALYSIS.md write-ups citing "the +X% OW α at n=N" as load-bearing must state the period composition of the n=N cohort and the cross-period replication status of the claim.
 
+### VIII. Retrospective Before Spec for Backward-Looking Price Filters (added 2026-05-06)
+
+Any new rating-suppression filter whose mechanism is **backward-looking and price-derived** (i.e., consults only ticker / sector / index price history for the trade_date and prior N trading days, with no LLM call and no forward-looking signal) MUST pass a corpus retrospective showing **net Δα ≥ +1pp at the proposed default threshold** BEFORE the spec is written.
+
+The retrospective is `$0` LLM cost (offline replay against the existing `experiments/*/results.csv` corpus + yfinance price history) and runs in ~1 hour. The full spec→plan→tasks→implement cycle for a filter of this class costs ~6–8 hours of work. Today's three retrospective failures (`claudedocs/sector-momentum-retrospective-2026-05-06.md`, `claudedocs/bear-sector-symmetry-retrospective-2026-05-06.md`, `claudedocs/ticker-sector-alpha-retrospective-2026-05-06.md`) validate that the cost asymmetry is severe enough that the retrospective gate must come FIRST for this filter class.
+
+**Empirical basis** (2026-05-06):
+
+| Filter (spec) | Default threshold | Net Δα at default | Cohort hit rate | Outcome |
+|---|---|---|---|---|
+| Spec 004 sector-momentum (bull/sector ETF) | -5% | -0.45pp / n=73 | suppressed 0/5 of SC-003 Financials | Default-OFF ship |
+| Spec 006 bear-sector-symmetry (bear/ticker-vs-sector) | +5% | -0.71pp / n=36 | 5/18 of `ticker_strong`-bear cohort | Default-OFF ship; SC-008 FAILED |
+| Spec 005 candidate (bull/ticker-vs-sector) | +3% / +5% | +0.23pp / +0.18pp / n=79 | 13/27 (48%) of `ticker_weak` cohort | SKIP spec (signal-to-noise too low) |
+
+All three exhibit the same failure signature: backward-looking price patterns cannot DISCRIMINATE cohort losers from similar-pattern winners. Cohort-loser suppression (good) is roughly cancelled by winner suppression (bad). The mechanism class systematically misses cohorts whose realized α comes from forward-only catalysts (earnings, guidance, news, macro events) the filter cannot see at signal-generation time.
+
+**Operational test** (required for any filter matching the trigger criteria):
+
+1. Build the retrospective script in the same shape as `scripts/sector_momentum_retrospective.py` / `scripts/bear_sector_symmetry_retrospective.py` / `scripts/ticker_sector_alpha_retrospective.py`. Walks the corpus, computes per-commit feature, sweeps thresholds.
+2. Report: (a) per-threshold n_kept / n_fired / kept_α / fired_α / **net Δα**; (b) per-sector breakdown at the proposed default; (c) cross-tab against any motivating cohort (e.g., the `ticker_weak` / `ticker_strong` cells from `scripts/sector_alpha_attribution.py`).
+3. Write the verdict block at the bottom of the markdown output, applying the gate criteria below.
+4. Commit the retrospective script + markdown BEFORE invoking `/speckit.specify`.
+
+**Gate criteria** (both must pass for spec to be written):
+
+- **Net Δα ≥ +1pp at the proposed default threshold** (the filter actually improves the bucket on the corpus).
+- **Cohort hit rate ≥ 40% if a target cohort is named** (the filter actually catches a meaningful fraction of the failure-mode cohort it was built to address; e.g. ≥11 of 27 for spec 005 candidate).
+
+If either criterion fails, **skip the spec entirely**. Document the verdict in the retrospective markdown for future reference. The decision to ship a filter as default-off operator-opt-in (spec 004 + spec 006 outcome) is reserved for filters whose IMPLEMENTATION already exists when the retrospective runs (i.e., the spec was written BEFORE this principle landed). New filters of this class do not get default-off ship as a fallback — they get skipped.
+
+**Trigger criteria** (which filters this principle applies to):
+
+- Yes: filter inputs are exclusively price/return/volume time series for the trade_date and prior N trading days (any combination of ticker / sector ETF / index / VIX / etc.).
+- Yes: filter is deterministic given those inputs + a threshold (no LLM call, no learned model).
+- Yes: filter targets rating suppression (Buy/OW → Hold; UW/Sell → Hold) at the PM hook stage.
+- No: prose-density filters (spec 003 + spec 003.5 — operate on debate text, not price). Their mechanism class is fundamentally different and has its own validation track (within-ticker IC -0.489 finding).
+- No: forward-catalyst-aware filters (news-density signals, options-IV, LLM-extracted features). Different mechanism class; validation criteria TBD if/when proposed.
+- No: A3 (already shipped before this principle; precedent grandfathered). Future variants of A3 (e.g. different lookback / threshold) DO require pre-spec retrospective.
+
+**Why**: Without this principle, the project will keep building filters that intuitively SHOULD work (fits the failure-mode taxonomy + has clean implementation path) but empirically DON'T (because forward catalysts dominate the cohort the filter targets, and similar-pattern winners cancel the cohort-loser gain). The cost asymmetry between retrospective ($0/1h) and spec+impl+tests ($0/6-8h) makes the retrospective-first ordering a Pareto improvement: it costs nothing to run, and it prevents 6-8 hours of work on filters whose empirical case won't hold. Three failures in one day is enough evidence to codify.
+
+**Acceptable exception**: an experimental "shakeout" filter that is explicitly scoped to operator-opt-in (default-off, no SC-008-style empirical-validation gate, framed in the spec as "exploration, not commitment"). The filter still goes through `/speckit.specify` for documentation but skips the retrospective gate. Marked in `PARAMS.json` as `shakeout_filter: true`. Use sparingly — most filter ideas should pass the retrospective first.
+
 ---
 
 ## Quality Gates
@@ -152,8 +195,9 @@ This constitution is amendable. Amendments follow the spec-kit constitution flow
 
 The principles above are themselves up for amendment if they prove ceremonial rather than load-bearing. The test: after one month of use, are we honoring this principle because it's helping or because it's written down? If the latter, amend or remove.
 
-**Version**: 1.2.2
-**Last amended**: 2026-05-03 late-evening — Principle VII appended Cross-period scope clarification: realized-α claims (not commit-rate claims) must be treated as period-conditional unless validated across multiple periods. Empirical trigger: experiment 008 (same config as 007, Q4 2025 dates instead of Q1 2026) produced OW 21d α = -1.81% vs 007's +3.05%. Bayesian posterior on stable-cross-period-signal hypothesis dropped 0.64 → 0.52. ANALYSIS.md write-ups must state the period composition of any n=N cohort and the cross-period replication status of the claim.
+**Version**: 1.3.0
+**Last amended**: 2026-05-06 — added **Principle VIII (Retrospective Before Spec for Backward-Looking Price Filters)** after three same-day retrospective failures (spec 004 sector momentum -0.45pp/n=73; spec 006 bear sector-symmetry -0.71pp/n=36; spec 005-candidate bull sector-relative +0.31pp max/n=79). Cost asymmetry: $0/1h retrospective vs ~6-8h spec+impl+tests. Backward-looking price filters cannot DISCRIMINATE cohort losers from similar-pattern winners; the retrospective gate must come FIRST for this filter class. Both criteria (net Δα ≥ +1pp at default + cohort hit rate ≥ 40%) must pass for spec to be written. Three failures in one day codified the lesson.
+**Prior version**: 1.2.2 — Principle VII appended Cross-period scope clarification: realized-α claims (not commit-rate claims) must be treated as period-conditional unless validated across multiple periods. Empirical trigger: experiment 008 (same config as 007, Q4 2025 dates instead of Q1 2026) produced OW 21d α = -1.81% vs 007's +3.05%. Bayesian posterior on stable-cross-period-signal hypothesis dropped 0.64 → 0.52. ANALYSIS.md write-ups must state the period composition of any n=N cohort and the cross-period replication status of the claim.
 **Prior version**: 1.2.1 — Principle VII appended Replicability-scope clarification: bucket-level (replicable) vs date-level (single observation) evidence. Trigger: 005-vs-007 NVDA non-replication on the same dates.
 **Prior version**: 1.2.0 — Principle III restructured from single $30 ceiling to 4-tier ladder (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 $100+) reflecting Opus pricing + accumulated re-analysis tooling; added Principle VII (Calibrated Abstention is a Valid Output); sharpened Principle IV with empirical backing.
 **Prior version**: 1.1.0 — added Principle VII + sharpened IV (2026-05-03 earlier in the day)

@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (constitution v1.3.0 — Principle VIII)
+- **Constitution v1.3.0** (`.specify/memory/constitution.md`):
+  - **Principle VIII added** (Retrospective Before Spec for Backward-Looking Price Filters): any filter whose mechanism is exclusively backward-looking + price-derived MUST pass a corpus retrospective showing net Δα ≥ +1pp at the proposed default threshold + cohort hit rate ≥ 40% (when a target cohort is named) BEFORE the spec is written. Empirical basis: three same-day retrospective failures on 2026-05-06 — spec 004 sector-momentum (-0.45pp/n=73), spec 006 bear-sector-symmetry (-0.71pp/n=36), spec 005-candidate bull sector-relative (max +0.31pp/n=79). Backward-looking price filters cannot DISCRIMINATE cohort losers from similar-pattern winners; cohort-loser suppression is roughly cancelled by winner suppression. The cost asymmetry ($0/1h retrospective vs ~6-8h spec+impl+tests) makes pre-spec validation a Pareto improvement.
+  - Operational test: build retrospective in the shape of `scripts/sector_momentum_retrospective.py` / `scripts/bear_sector_symmetry_retrospective.py` / `scripts/ticker_sector_alpha_retrospective.py`; sweep thresholds; cross-tab against any motivating cohort; commit retrospective markdown BEFORE invoking `/speckit.specify`.
+  - Acceptable exception: explicit "shakeout" filters scoped to operator-opt-in (default-off, no SC-008-style empirical-validation gate, marked `shakeout_filter: true` in PARAMS.json).
+
 ### Added (research milestone — 14 experiments + n=50 OW signal)
 - Constitution **v1.2.1** (`.specify/memory/constitution.md`):
   - **Principle III restructured** from single $30 ceiling to 4-tier ladder (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100). Higher tiers require progressively more deliberation in HYPOTHESIS.md.
