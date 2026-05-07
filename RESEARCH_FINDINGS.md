@@ -140,9 +140,9 @@ The infrastructure-complete moment is the natural pause point. Whether to contin
 
 Convention: bullish ratings (Buy/OW) directionally correct when α>0; bearish (UW/Sell) correct when α<0; Hold neutral. Hit rate = % positive α.
 
-## Filter portfolio status (added 2026-05-06; expanded 1 → 5 filters)
+## Filter portfolio status (added 2026-05-06; expanded 1 → 5 → **7 sides** as of evening)
 
-The framework now ships with 5 distinct rating-suppression filters in the PM hook chain. 3 default-on, 2 default-off. Only 1 has >30 supporting empirical data points; the rest are at small-sample or empirically rejected at their motivating defaults.
+The framework now ships with 6 distinct rating-suppression filter MODULES across **7 filter sides** in the PM hook chain (Spec 007 has independent bull + bear branches counted separately). 5 sides default-on or default-shadow, 2 sides default-off. As of `v0.7.0-spec-007` tag (2026-05-06 evening): A3 has >30 supporting data points; spec 007 bull is empirically validated by Class 3 Opus retrospective DECISIVE PASS; the rest are at small-sample or empirically rejected at their motivating defaults.
 
 | Filter | Mechanism | Default | Threshold | Empirical support | Outcome |
 |---|---|---|---|---|---|
@@ -151,6 +151,8 @@ The framework now ships with 5 distinct rating-suppression filters in the PM hoo
 | **Spec 003.5 sector-baseline fallback** (same module, FR-004 amendment) | Bull-side, sector-pool percentile when per-ticker history < N=20 | ON | 80th percentile / sector pool ≥ 20 | Closes cold-start universe gap; gates the gap structurally | OK as designed. Validation finding: doesn't help SC-003 Financials cohort (sector-rotation, not prose mean-reversion — that's spec 004's domain). |
 | **Spec 004 sector-momentum filter** (`tradingagents/agents/utils/sector_momentum_filter.py`) | Bull-side, sector-ETF absolute mean-reversion | OFF | -5% / 30d | -0.45pp net Δα across 73 commits (anti-predictive); SC-008 falsified (XLF was -4.54%, suppress 0/5) | KEEP default-off; ships as operator-opt-in. Constitution VIII grandfathered. |
 | **Spec 006 bear-sector-symmetry** (`tradingagents/agents/utils/bear_sector_symmetry_filter.py`) | Bear-side, ticker-vs-sector relative-strength | OFF | +5% / 30d | -0.71pp net Δα across 36 commits (anti-predictive); SC-008 FAILED (5/18 cohort fires; target ≥8) | KEEP default-off; ships as operator-opt-in. Constitution VIII grandfathered. |
+| **Spec 007 forward-catalyst BULL** (`tradingagents/agents/utils/forward_catalyst_filter.py`; v0.7.0-spec-007) | Bull-side, LLM-extracted "bull case priced in" score | **ON @T=0.60** | 0.60 (score) / Opus default | +14.43pp discrim / 88.9% cohort hit / +2.24pp net Δα on n=33 fires (Opus retrospective DECISIVE PASS) | Default-on; first forward-catalyst filter; SC-008 PASSES at 24/27. |
+| **Spec 007 forward-catalyst BEAR** (same module; bear branch) | Bear-side, LLM-extracted "bear case priced in" score | **SHADOW @T=0.50** | 0.50 (score) / Opus default | +23.10pp discrim / 72.2% cohort hit / +0.30pp net Δα (criterion 3 just under +0.5pp gate) | Shadow-mode-first per Constitution VIII; flip to active after n≥20 fresh-propagate observation period; SC-008 PASSES at 13/18. |
 
 **Spec 005 (per-ticker-vs-sector BULL filter) was retrospectively SKIPPED** before any spec was written — the proposed mechanism showed max +0.31pp net Δα across 79 commits, well below Constitution VIII's +1pp gate. The cohort hit rate criterion passed (48% of n=27 ticker_weak commits caught at +3% threshold) but cohort-loser suppression was washed by winner suppression at indistinguishable rel-strength values. See `claudedocs/ticker-sector-alpha-retrospective-2026-05-06.md`.
 

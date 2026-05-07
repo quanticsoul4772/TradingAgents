@@ -1,6 +1,6 @@
 # ROADMAP — TradingAgents-lab
 
-_Forward-looking exploration map. Updated 2026-05-06 (post-11-work-unit research-burst day: Spec 003 default-on @80% threshold-sweep validated, Spec 003.5 sector-baseline fallback, Spec 004 sector-momentum filter retrospective-rejected default-off, Spec 006 bear-sector-symmetry filter retrospective-rejected default-off, Spec 005 candidate retrospectively SKIPPED, sector-α attribution analyzer surfaced 5th failure mode + bearish anti-calibration shock, INTC +103%-on-Hold investigation closed SC-003 follow-up arc, Constitution v1.3.0 with Principle VIII added)._
+_Forward-looking exploration map. Updated 2026-05-06 evening (post-**20-work-unit research-burst day** culminating in spec 007 forward-catalyst-aware contrarian gate + Constitution v1.4.0 + tag `v0.7.0-spec-007`). Day's arc captured in the v0.7.0-spec-007 tag annotation; CHANGELOG.md [Unreleased] section; RESEARCH_FINDINGS.md "Filter portfolio" + "5th failure mode" + "Bearish anti-calibration shock" + "Constitution Principle VIII" sections. Earlier cleanup: Spec 003 default-on @80%; Spec 003.5 sector-baseline fallback; Spec 004 + Spec 006 retrospective-rejected default-off; Spec 005 candidate retrospectively SKIPPED; sector-α attribution analyzer; INTC +103% Hold investigation; Constitution v1.3.0 Principle VIII; CHANGELOG/README/CLAUDE.md refreshes; forward-catalyst design doc; Class 3 Haiku BORDERLINE → Opus DECISIVE PASS retrospectives; Spec 007 design bundle + implementation + Constitution v1.4.0 amendment + merge into main + tag._
 
 This is a research playground, not a product. The roadmap is directions for exploration, not delivery milestones. Per Constitution Principle V ("Steal Liberally"), cross-pollination from sibling projects in the portfolio is a primary driver — many ideas listed here originate elsewhere.
 
@@ -19,7 +19,7 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 - **Spec 005 candidate (per-ticker-vs-sector BULL filter)**: retrospectively SKIPPED before any spec was written (`claudedocs/ticker-sector-alpha-retrospective-2026-05-06.md`). Max +0.31pp net Δα across 79 commits, well below Constitution VIII's +1pp gate. Saved 6-8h of empty-spec work.
 - Constitution **v1.3.0** with **Principle VIII** (Retrospective Before Spec for Backward-Looking Price Filters) added 2026-05-06 after three same-day retrospective failures. Plus Principles VII (Calibrated Abstention) + Replicability-scope + Cross-period-scope clarifications.
 - Cost-tier ladder shipped; end-to-end exercised on 008
-- **984 tests passing** (was 825) — added Spec 003.5 (10+15 tests) + Spec 004 (~29 tests) + Spec 006 (27 unit + 5 PM integration + 2 state-log regression tests). All filters' state-log persistence tests follow the `4c14d0f` precedent.
+- **1022 tests passing** (was 825 → 984 → **1022** across the 2026-05-06 research-burst day; +197 net) — added Spec 003.5 (10+15 tests) + Spec 004 (~29 tests) + Spec 006 (27 unit + 5 PM integration + 2 state-log regression tests) + **Spec 007 (29 unit + 7 PM integration + 2 state-log + 1 default-config + 1 SC-008 integration)**. All 7 filter sides' state-log persistence tests follow the `4c14d0f` precedent. Suite tagged at v0.7.0-spec-007.
 - **Load-bearing claim still stands post-NVDA-Q3 + SC-003 50-ticker validation**: framework's Buy/OW commits at 21d show **+1.23% α (n=71, ~61% hit)** in the legacy 9-ticker cohort + **+5.96% mean α (n=15, 53% hit) on the SC-003 50-ticker bullish bucket** (single-date 2026-04-03 — bullish bucket nearly 5× the 9-ticker headline magnitude, but per-sector breakdown shows the signal is structurally Tech-concentrated: Tech n=7 +17.80% mean; Financials n=5 -7.07% on bullish picks). Scenario B per HYPOTHESIS decision tree.
 - **5th failure mode discovered (2026-05-06)** — bullish commits underperforming a rising sector (stock-specific α-vs-sector miss). Affects 27 of 79 bullish commits; 88.9% Tech-concentrated. Backward-price-only signals (Spec 005 candidate) cannot catch it; gap remains for forward-catalyst-aware mechanism. See `RESEARCH_FINDINGS.md` "5th failure mode" section.
 - **Bearish anti-calibration shock (2026-05-06)** — 18 of 37 bearish commits at +28.02% mean α-vs-SPY in `ticker_strong` cell. A3 misses; spec 006 was built to catch but failed empirically. Largest single-metric anti-calibration finding in the corpus.
@@ -30,7 +30,23 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 
 ---
 
-## Active branch — 11-work-unit research-burst day (2026-05-06)
+## Active branch — 20-work-unit research-burst day (2026-05-06; tagged v0.7.0-spec-007)
+
+The day expanded from the original 11 work units (documented below) to **20 work units total** by end of session. The additional 9 work units (in commit order):
+
+12. RESEARCH_FINDINGS + ROADMAP refresh (commit `9b5b829`)
+13. CHANGELOG refresh (`e803119`)
+14. README refresh (`2f9b8ae`)
+15. Forward-catalyst mechanism exploration design doc (`21b0a1f`) — recommended Class 3 LLM-extracted feature as starting point
+16. Class 3 Haiku retrospective (`f564e3a`) — BORDERLINE verdict; Opus rerun recommended
+17. Class 3 Opus retrospective (`0169e2b`) — DECISIVE PASS bull-side; shadow-mode-first bear-side
+18. Spec 007 design bundle (1750 LOC, branch `006-forward-catalyst-gate`) — full speckit Phase 0+1+2
+19. Spec 007 implementation + Constitution v1.4.0 amendment (`dc95746`, then merged via `0186507`) — 38 tasks complete; SC-008 PASSES
+20. Spec 007 merge to main + tag `v0.7.0-spec-007`
+
+Full arc captured in the tag annotation. Filter portfolio at v0.7.0-spec-007: 7 sides total (5 default-on/shadow, 2 default-off — see CLAUDE.md "Empirical filters" section). Constitution v1.4.0 Principle VIII has both backward-price + forward-catalyst gates.
+
+## Original active branch — 11-work-unit research-burst day (2026-05-06; pre-Spec 007)
 
 Today's arc (in commit order on main):
 
