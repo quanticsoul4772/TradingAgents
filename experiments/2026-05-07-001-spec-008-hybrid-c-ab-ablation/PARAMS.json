@@ -1,0 +1,25 @@
+{
+  "config_overrides": {
+    "hybrid_c_calendar_boost_enabled": true,
+    "hybrid_c_calendar_boost_window_days": 14,
+    "hybrid_c_calendar_boost_magnitude": 0.5,
+    "forward_catalyst_bull_mode": "active",
+    "forward_catalyst_bear_mode": "shadow",
+    "forward_catalyst_bull_threshold": 0.6,
+    "forward_catalyst_bear_threshold": 0.5,
+    "forward_catalyst_model": "claude-opus-4-7"
+  },
+  "explicit_flags": {
+    "tickers": "NVDA,MSFT,AAPL,WFC,MA,COP,INTC,GOOGL,AMD,AMZN,AVGO,BAC,CSCO,GS,JPM,LLY,CVX,HON",
+    "start": "2026-04-15",
+    "end": "2026-04-30",
+    "frequency": "W",
+    "deep_model": "claude-sonnet-4-6",
+    "quick_model": "claude-haiku-4-5",
+    "debate_rounds": 1,
+    "max_runs": 40,
+    "news_vendor": "exa"
+  },
+  "baseline": "spec 007 production-default behavior (boost OFF; bull_case_priced_in > 0.60 fire decision)",
+  "notes": "Spec 008 SC-009 live A/B ablation. Boost-OFF comparison is POST-HOC from state logs (bull_case_priced_in > 0.60), not a separate run. 18 tickers × 2 Fridays (2026-04-17, 2026-04-24) = 36 propagates. Forward window closes ~2026-05-22; ANALYSIS.md scheduled for ~2026-05-22-25."
+}
