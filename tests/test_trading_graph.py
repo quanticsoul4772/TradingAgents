@@ -534,3 +534,113 @@ def test_state_log_sector_momentum_is_none_when_field_absent(mocked_graph, tmp_p
     )
     persisted = json.loads(log_path.read_text(encoding="utf-8"))
     assert persisted["sector_momentum"] is None
+
+
+@pytest.mark.unit
+def test_state_log_persists_bear_sector_symmetry_field(mocked_graph, tmp_path):
+    """Spec 006 regression-guard mirroring test_state_log_persists_sector_momentum_field.
+
+    Per spec 006 R-5, the state-log writer in trading_graph.py:_log_state
+    must include `bear_sector_symmetry` in its whitelist or shadow-mode
+    annotations are silently dropped (the same bug commit `4c14d0f` fixed
+    for `contrarian_gate` and spec 004 fixed for `sector_momentum`).
+    """
+    final_state = {
+        "company_of_interest": "NVDA",
+        "trade_date": "2026-04-03",
+        "market_report": "",
+        "sentiment_report": "",
+        "news_report": "",
+        "fundamentals_report": "",
+        "investment_debate_state": {
+            "bull_history": "",
+            "bear_history": "",
+            "history": "",
+            "current_response": "",
+            "judge_decision": "",
+        },
+        "trader_investment_plan": "",
+        "risk_debate_state": {
+            "aggressive_history": "",
+            "conservative_history": "",
+            "neutral_history": "",
+            "history": "",
+            "judge_decision": "",
+        },
+        "investment_plan": "",
+        "final_trade_decision": "**Rating**: Hold",
+        "bear_sector_symmetry": {
+            "mode": "active",
+            "sector": "Technology",
+            "etf": "XLK",
+            "ticker_30d_return_pct": 18.32,
+            "etf_30d_return_pct": 6.40,
+            "relative_strength_pct": 11.92,
+            "threshold_pct": 5.0,
+            "lookback_days": 30,
+            "would_fire": True,
+            "fired": True,
+            "pre_rating": "Underweight",
+            "post_rating": "Hold",
+            "skipped": None,
+        },
+    }
+    mocked_graph.ticker = "NVDA"
+    mocked_graph._log_state("2026-04-03", final_state)
+    log_path = (
+        tmp_path
+        / "results"
+        / "NVDA"
+        / "TradingAgentsStrategy_logs"
+        / "full_states_log_2026-04-03.json"
+    )
+    persisted = json.loads(log_path.read_text(encoding="utf-8"))
+    assert "bear_sector_symmetry" in persisted, (
+        "bear_sector_symmetry field missing from persisted state log "
+        "(would silently lose shadow-mode filter annotations)"
+    )
+    assert persisted["bear_sector_symmetry"]["fired"] is True
+    assert persisted["bear_sector_symmetry"]["etf"] == "XLK"
+    assert persisted["bear_sector_symmetry"]["relative_strength_pct"] == 11.92
+
+
+@pytest.mark.unit
+def test_state_log_bear_sector_symmetry_is_none_when_field_absent(mocked_graph, tmp_path):
+    """When mode='off' the PM doesn't add bear_sector_symmetry; persisted value is None."""
+    final_state = {
+        "company_of_interest": "NVDA",
+        "trade_date": "2026-04-03",
+        "market_report": "",
+        "sentiment_report": "",
+        "news_report": "",
+        "fundamentals_report": "",
+        "investment_debate_state": {
+            "bull_history": "",
+            "bear_history": "",
+            "history": "",
+            "current_response": "",
+            "judge_decision": "",
+        },
+        "trader_investment_plan": "",
+        "risk_debate_state": {
+            "aggressive_history": "",
+            "conservative_history": "",
+            "neutral_history": "",
+            "history": "",
+            "judge_decision": "",
+        },
+        "investment_plan": "",
+        "final_trade_decision": "**Rating**: Hold",
+        # No bear_sector_symmetry key
+    }
+    mocked_graph.ticker = "NVDA"
+    mocked_graph._log_state("2026-04-03", final_state)
+    log_path = (
+        tmp_path
+        / "results"
+        / "NVDA"
+        / "TradingAgentsStrategy_logs"
+        / "full_states_log_2026-04-03.json"
+    )
+    persisted = json.loads(log_path.read_text(encoding="utf-8"))
+    assert persisted["bear_sector_symmetry"] is None

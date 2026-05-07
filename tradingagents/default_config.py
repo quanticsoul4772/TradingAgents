@@ -54,6 +54,9 @@ class TradingAgentsConfig(TypedDict):
     sector_momentum_filter_mode: Literal["off", "shadow", "active"]
     sector_momentum_filter_threshold_pct: float | None
     sector_momentum_filter_lookback_days: int
+    bear_sector_symmetry_filter_mode: Literal["off", "shadow", "active"]
+    bear_sector_symmetry_filter_threshold_pct: float | None
+    bear_sector_symmetry_filter_lookback_days: int
     bot_models: dict[str, str]
     data_vendors: dict[str, str]
     tool_vendors: dict[str, str]
@@ -177,6 +180,19 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     "sector_momentum_filter_mode": "off",
     "sector_momentum_filter_threshold_pct": None,
     "sector_momentum_filter_lookback_days": 30,
+    # Spec 006 (specs/005-bear-sector-symmetry/spec.md): suppress UW/Sell
+    # commits to Hold when the ticker has outperformed its sector ETF by
+    # more than threshold% over the prior N trading days (counter-trend bear
+    # suppression). Empirical motivation: today's sector-α attribution found
+    # 18 of 37 bearish commits (48.6%) landed in ticker_strong with mean
+    # α-vs-SPY = +28.02% — a cohort A3 misses entirely (A3 only fires on
+    # ticker DOWN absolute; spec 006 fires on ticker UP relative to sector).
+    # Default-off per Constitution II ablation discipline; corpus retrospective
+    # gate (scripts/bear_sector_symmetry_retrospective.py + SC-008) before any
+    # default-on flip. Threshold = None IS the off switch.
+    "bear_sector_symmetry_filter_mode": "off",
+    "bear_sector_symmetry_filter_threshold_pct": None,
+    "bear_sector_symmetry_filter_lookback_days": 30,
     # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
     # (str). When set, the framework instantiates a per-bot client for that
     # model using the configured llm_provider; bots not in this dict use the

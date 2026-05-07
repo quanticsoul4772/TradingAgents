@@ -422,3 +422,209 @@ def test_default_config_has_sector_momentum_filter_off():
     assert DEFAULT_CONFIG["sector_momentum_filter_mode"] == "off"
     assert DEFAULT_CONFIG["sector_momentum_filter_threshold_pct"] is None
     assert DEFAULT_CONFIG["sector_momentum_filter_lookback_days"] == 30
+
+
+# ---- Spec 006 bear-sector-symmetry filter wiring tests ---------------------
+# Mirror the spec 004 wiring-test pattern; mocks bear_sector_symmetry_filter
+# helpers so the tests don't hit yfinance.
+
+
+# Standard frame inputs for spec 006 scenarios. Reuses _frame() defined above.
+# Ticker frame: 100 → 118 → +18% return over the prior 31-row window
+_BSS_TICKER_UP_18 = _frame([100.0] * 5 + [118.0] * 30)
+# ETF frame: 100 → 106 → +6% return (delta vs ticker = +12%; above default +5% threshold)
+_BSS_ETF_UP_6 = _frame([100.0] * 5 + [106.0] * 30)
+# ETF frame: 100 → 114 → +14% return (delta vs ticker = +4%; below threshold)
+_BSS_ETF_UP_14 = _frame([100.0] * 5 + [114.0] * 30)
+
+
+@pytest.mark.unit
+def test_bear_sector_symmetry_filter_disabled_by_default_threshold_none(
+    llm_returning_underweight,
+):
+    """SC-006: when bear_sector_symmetry_filter_threshold_pct is None (default),
+    filter does not modify the rating."""
+    node = create_portfolio_manager(llm_returning_underweight)
+    with patch(
+        "tradingagents.dataflows.config.get_config",
+        return_value={
+            "output_language": "English",
+            "uw_momentum_filter_threshold": None,  # disable A3 to isolate spec 006
+            "bear_sector_symmetry_filter_threshold_pct": None,
+            "bear_sector_symmetry_filter_mode": "off",
+        },
+    ):
+        result = node(_state())
+    assert "**Rating**: Underweight" in result["final_trade_decision"]
+    if "bear_sector_symmetry" in result:
+        assert result["bear_sector_symmetry"]["mode"] == "off"
+        assert result["bear_sector_symmetry"]["fired"] is False
+
+
+@pytest.mark.unit
+def test_bear_sector_symmetry_filter_active_downgrades_underweight_when_relative_strength_above_threshold(
+    llm_returning_underweight,
+):
+    """Ticker +18%, ETF +6%, delta +12%, threshold +5%, active mode → UW → Hold."""
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": None,  # disable A3 to isolate spec 006
+                "bear_sector_symmetry_filter_threshold_pct": 5.0,
+                "bear_sector_symmetry_filter_mode": "active",
+                "bear_sector_symmetry_filter_lookback_days": 30,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter._ticker_history",
+            return_value=_BSS_TICKER_UP_18,
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter._etf_history",
+            return_value=_BSS_ETF_UP_6,
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter.get_sector",
+            new=_make_sector_lookup("Technology"),
+            create=True,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_underweight)
+        result = node(_state(ticker="NVDA"))
+    assert "**Rating**: Hold" in result["final_trade_decision"]
+    assert "[Bear-sector-symmetry filter]" in result["final_trade_decision"]
+    assert result["bear_sector_symmetry"]["fired"] is True
+    assert result["bear_sector_symmetry"]["pre_rating"] == "Underweight"
+    assert result["bear_sector_symmetry"]["post_rating"] == "Hold"
+    assert result["bear_sector_symmetry"]["relative_strength_pct"] == pytest.approx(12.0, abs=0.5)
+
+
+@pytest.mark.unit
+def test_bear_sector_symmetry_filter_active_keeps_underweight_when_relative_strength_below_threshold(
+    llm_returning_underweight,
+):
+    """Ticker +18%, ETF +14%, delta +4%, threshold +5%, active mode → no override."""
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": None,
+                "bear_sector_symmetry_filter_threshold_pct": 5.0,
+                "bear_sector_symmetry_filter_mode": "active",
+                "bear_sector_symmetry_filter_lookback_days": 30,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter._ticker_history",
+            return_value=_BSS_TICKER_UP_18,
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter._etf_history",
+            return_value=_BSS_ETF_UP_14,
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter.get_sector",
+            new=_make_sector_lookup("Technology"),
+            create=True,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_underweight)
+        result = node(_state(ticker="NVDA"))
+    assert "**Rating**: Underweight" in result["final_trade_decision"]
+    assert result["bear_sector_symmetry"]["fired"] is False
+    assert result["bear_sector_symmetry"]["would_fire"] is False
+
+
+@pytest.mark.unit
+def test_bear_sector_symmetry_filter_does_not_act_on_non_bearish_ratings(
+    llm_returning_buy,
+):
+    """Ticker +18%, ETF +6%, delta +12% (would fire), but PM rating is Buy → filter skips."""
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "bear_sector_symmetry_filter_threshold_pct": 5.0,
+                "bear_sector_symmetry_filter_mode": "active",
+                "bear_sector_symmetry_filter_lookback_days": 30,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter._ticker_history",
+            return_value=_BSS_TICKER_UP_18,
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter._etf_history",
+            return_value=_BSS_ETF_UP_6,
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter.get_sector",
+            new=_make_sector_lookup("Technology"),
+            create=True,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_buy)
+        result = node(_state(ticker="NVDA"))
+    assert "**Rating**: Buy" in result["final_trade_decision"]
+    assert "[Bear-sector-symmetry filter]" not in result["final_trade_decision"]
+    assert result["bear_sector_symmetry"]["skipped"] == "rating_not_bearish"
+
+
+@pytest.mark.unit
+def test_bear_sector_symmetry_filter_runs_after_a3_in_pm_hook_chain(
+    llm_returning_underweight,
+):
+    """When A3 has already downgraded UW to Hold (ticker -10% absolute), the
+    spec 006 filter sees Hold and skips with 'rating_not_bearish'.
+    Covers FR-012 ordering + SC-009 disjoint-conditions guard."""
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": -5.0,  # A3 active
+                "bear_sector_symmetry_filter_threshold_pct": 5.0,
+                "bear_sector_symmetry_filter_mode": "active",
+                "bear_sector_symmetry_filter_lookback_days": 30,
+            },
+        ),
+        patch(
+            "tradingagents.agents.utils.momentum_filter.trailing_momentum_pct",
+            return_value=-10.0,  # ticker DOWN absolute → A3 fires
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter._ticker_history",
+            return_value=_BSS_TICKER_UP_18,  # would NOT fire if reached
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter._etf_history",
+            return_value=_BSS_ETF_UP_6,
+        ),
+        patch(
+            "tradingagents.agents.utils.bear_sector_symmetry_filter.get_sector",
+            new=_make_sector_lookup("Technology"),
+            create=True,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_underweight)
+        result = node(_state(ticker="NVDA"))
+    # A3 fired first → rating became Hold → spec 006 saw Hold → skipped
+    assert "**Rating**: Hold" in result["final_trade_decision"]
+    assert "[A3 momentum filter]" in result["final_trade_decision"]
+    assert "[Bear-sector-symmetry filter]" not in result["final_trade_decision"]
+    assert result["bear_sector_symmetry"]["skipped"] == "rating_not_bearish"
+    assert result["bear_sector_symmetry"]["fired"] is False
+
+
+@pytest.mark.unit
+def test_default_config_has_bear_sector_symmetry_filter_off():
+    """SC-006 regression-guard: DEFAULT_CONFIG ships with the filter off."""
+    from tradingagents.default_config import DEFAULT_CONFIG
+
+    assert DEFAULT_CONFIG["bear_sector_symmetry_filter_mode"] == "off"
+    assert DEFAULT_CONFIG["bear_sector_symmetry_filter_threshold_pct"] is None
+    assert DEFAULT_CONFIG["bear_sector_symmetry_filter_lookback_days"] == 30

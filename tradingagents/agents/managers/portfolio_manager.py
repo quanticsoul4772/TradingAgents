@@ -226,6 +226,50 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
                 exc,
             )
 
+        # Spec 006: bear-sector-symmetry filter. When active, downgrades
+        # Underweight/Sell commits to Hold if the ticker has outperformed
+        # its sector ETF by more than threshold% (default +5%) in the prior
+        # N trading days (counter-trend bear suppression). Default off; set
+        # `bear_sector_symmetry_filter_threshold_pct` (e.g. 5.0) + mode to enable.
+        # Wired AFTER A3 (per FR-012 ordering); the two bear filters fire on
+        # near-disjoint price-condition cohorts (A3 needs ticker DOWN absolute,
+        # spec 006 needs ticker UP relative to sector).
+        # See specs/005-bear-sector-symmetry/spec.md.
+        bear_sector_symmetry_dict: dict | None = None
+        try:
+            from tradingagents.agents.utils.bear_sector_symmetry_filter import (
+                maybe_suppress_bear_rating as bss_suppress_bear,
+            )
+
+            bss_threshold = get_config().get("bear_sector_symmetry_filter_threshold_pct")
+            bss_mode = get_config().get("bear_sector_symmetry_filter_mode", "off")
+            bss_lookback = int(get_config().get("bear_sector_symmetry_filter_lookback_days", 30))
+            paper_state_dir = get_config().get("paper_state_dir")
+            bss_sectors_cache = (
+                Path(paper_state_dir) / "sectors.json"
+                if paper_state_dir
+                else Path.home() / ".tradingagents" / "paper" / "sectors.json"
+            )
+            modified_decision, bear_sector_symmetry_dict = bss_suppress_bear(
+                final_trade_decision,
+                state["company_of_interest"],
+                state["trade_date"],
+                threshold_pct=float(bss_threshold) if bss_threshold is not None else None,
+                lookback_days=bss_lookback,
+                mode=bss_mode,
+                sectors_cache_path=bss_sectors_cache,
+            )
+            final_trade_decision = modified_decision
+        except Exception as exc:
+            # Never let filter failure break the PM pipeline.
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "bear_sector_symmetry_filter: unexpected failure in PM hook (%s); "
+                "proceeding with unmodified decision",
+                exc,
+            )
+
         new_risk_debate_state = {
             "judge_decision": final_trade_decision,
             "history": risk_debate_state["history"],
@@ -247,6 +291,8 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
             result["contrarian_gate"] = contrarian_gate_dict
         if sector_momentum_dict is not None:
             result["sector_momentum"] = sector_momentum_dict
+        if bear_sector_symmetry_dict is not None:
+            result["bear_sector_symmetry"] = bear_sector_symmetry_dict
         return result
 
     return portfolio_manager_node
