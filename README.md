@@ -12,17 +12,20 @@ After 24 experiments + cross-experiment horizon sweep + per-ticker breakdown + O
 
 Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadmap in [`ROADMAP.md`](ROADMAP.md). Per-experiment summaries auto-aggregated in [`findings.md`](findings.md). 2026-05-06 research-burst day summary in [`CHANGELOG.md`](CHANGELOG.md) [Unreleased] section. Sector-α attribution + filter portfolio findings in [`claudedocs/sector-alpha-attribution-2026-05-06.md`](claudedocs/sector-alpha-attribution-2026-05-06.md). A3 filter forensics in [`claudedocs/a3-filter-forensics-007.md`](claudedocs/a3-filter-forensics-007.md). Cross-period validation in [`experiments/2026-05-03-008-opus47-cross-period/ANALYSIS.md`](experiments/2026-05-03-008-opus47-cross-period/ANALYSIS.md) and [`experiments/2026-05-04-001-nvda-q3-2025-micro/ANALYSIS.md`](experiments/2026-05-04-001-nvda-q3-2025-micro/ANALYSIS.md).
 
-## Filter portfolio (5 filters as of 2026-05-06)
+## Filter portfolio (8 filters as of 2026-05-06 — research-burst day shipped 3 new)
 
-| Filter | Mechanism | Default | Empirical support |
+| Filter | Mechanism class | Default | Empirical support |
 |---|---|---|---|
-| [A3 momentum](tradingagents/agents/utils/momentum_filter.py) | Bear-side, per-ticker absolute mean-reversion | ON @ -5%/30d | +0.70pp/n=43 (in-sample) |
-| [Spec 003 contrarian gate](tradingagents/signals/contrarian_gate.py) | Bull-side, per-ticker `bull_keyword_count` percentile | ON @ 80th pct, N≥20 | +0.65pp/n=11 (threshold-sweep validated 2026-05-06) |
-| [Spec 003.5 sector-baseline fallback](specs/003-sector-baseline-gate/) | Bull-side, sector-pool percentile when per-ticker history < N=20 | ON | Closes cold-start universe gap |
-| [Spec 004 sector-momentum](specs/004-sector-momentum-filter/) | Bull-side, sector-ETF absolute mean-reversion | OFF | -0.45pp/n=73 anti-predictive (Constitution VIII grandfathered) |
-| [Spec 006 bear-sector-symmetry](specs/005-bear-sector-symmetry/) | Bear-side, ticker-vs-sector relative-strength | OFF | -0.71pp/n=36 anti-predictive; SC-008 FAILED (Constitution VIII grandfathered) |
+| [A3 momentum](tradingagents/agents/utils/momentum_filter.py) | backward-price (per-ticker) | ON @ -5%/30d | +0.70pp/n=43 (in-sample) |
+| [Spec 003 contrarian gate](tradingagents/signals/contrarian_gate.py) | prose-density (per-ticker IC) | ON @ 80th pct, N≥20 | +0.65pp/n=11 (threshold-sweep validated 2026-05-06) |
+| [Spec 003.5 sector-baseline fallback](specs/003-sector-baseline-gate/) | prose-density (sector-pool fallback) | ON | Closes cold-start universe gap |
+| [Spec 004 sector-momentum](specs/004-sector-momentum-filter/) | backward-price (sector ETF) | OFF | -0.45pp/n=73 anti-predictive (Constitution VIII grandfathered) |
+| [Spec 006 bear-sector-symmetry](specs/005-bear-sector-symmetry/) | backward-price (ticker vs sector) | OFF | -0.71pp/n=36 anti-predictive; SC-008 FAILED |
+| [Spec 007 forward-catalyst (bull)](specs/006-forward-catalyst-gate/) | LLM-extracted feature | ACTIVE @ T=0.60 | +14.43pp discrim / 88.9% hit / +2.24pp net Δα on n=33 fires |
+| [Spec 007 forward-catalyst (bear)](specs/006-forward-catalyst-gate/) | LLM-extracted feature | SHADOW @ T=0.50 | +23.10pp discrim / 72.2% hit / +0.30pp net Δα; shadow-mode-first |
+| [Spec 008 Hybrid C calendar boost](specs/007-calendar-boost-filter/) | hybrid (Class 3 × Class 6 calendar) | OFF (operator opt-in) | +3.35pp Δα improvement vs Class 3 alone @ window=14d magnitude=0.5x |
 
-3 of 5 default-on; only A3 has > 30 supporting data points. **Spec 005 candidate (per-ticker-vs-sector BULL filter) was retrospectively SKIPPED** before any spec was written — pre-spec validation per Constitution Principle VIII saved ~6-8h of empty-spec implementation.
+4 of 8 default-active (A3, spec 003, spec 003.5, spec 007 bull). 2 retrospectively SKIPPED before any spec written: **Spec 005 candidate** (per-ticker-vs-sector BULL retrospective, max +0.31pp) and **Spec 009 candidate** (bear-inverted Hybrid C, +0.00pp at every config) — pre-spec validation per Constitution Principle VIII saved ~12-16h of empty-spec implementation. See [`claudedocs/research-burst-2026-05-06.md`](claudedocs/research-burst-2026-05-06.md) for the meta-retrospective documenting today's 14-work-unit day (9 ship-quality units, ~$5 LLM cost, ~17h wall-clock).
 
 ## What's local
 
@@ -42,7 +45,7 @@ Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadma
 - `claudedocs/uw-debate-diagnostic.md` — debate-quality features for correct vs wrong UW commits
 - `claudedocs/uw-suppression-filter.md` — A3 mean-reversion filter retrospective
 - `claudedocs/a3-filter-forensics-007.md` — A3 filter validated as correctly inert on regime-mismatch (post-007)
-- `.specify/memory/constitution.md` — **eight** principles governing research approach (v1.3.0; **Principle VIII added 2026-05-06**)
+- `.specify/memory/constitution.md` — **eight** principles governing research approach (v1.4.2; Principle VIII added 2026-05-06 then extended 4 amendments same day: v1.4.0 forward-catalyst-class gate / v1.4.1 spec ships its retrospective / v1.4.2 magnitude fungibility for hybrid filters)
 - `specs/004-sector-momentum-filter/` + `specs/005-bear-sector-symmetry/` — full speckit bundles for the two grandfathered backward-price filters (cross-referenced against Principle VIII)
 - `specs/003-sector-baseline-gate/` — Spec 003.5 sector-baseline fallback bundle
 - `.specify/specs/001-bots-architecture/` + `.specify/specs/002-signal-lifecycle/` + `.specify/specs/003-analyst-contrarian-gate/` — formal specs (001/002 unimplemented refactors; 003 implemented + default-on)
