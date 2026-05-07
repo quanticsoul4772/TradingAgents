@@ -262,6 +262,9 @@ def evaluate_forward_catalyst(
     model: str,
     max_rationale_chars: int = 2000,
     llm: Any | None = None,
+    hybrid_c_calendar_boost_enabled: bool = False,
+    hybrid_c_calendar_boost_window_days: int = 14,
+    hybrid_c_calendar_boost_magnitude: float = 0.5,
 ) -> tuple[str, dict]:
     """Apply the forward-catalyst filter to a PM decision.
 
@@ -370,19 +373,55 @@ def evaluate_forward_catalyst(
             error=str(exc),
         )
 
-    # 6. Compute would_fire flags (strict greater-than per R-3)
+    # 5b. Spec 008 Hybrid C calendar boost (FR-001..FR-009). When enabled,
+    #     multiply bull_case_priced_in by (1 + magnitude * boost). Bull-only
+    #     per FR-004; effective_bear_score equals bear_case_priced_in.
+    #     Annotation fields added ONLY when boost enabled (FR-011 backward-compat).
+    hybrid_c_annotation: dict | None = None
+    if hybrid_c_calendar_boost_enabled:
+        from tradingagents.agents.utils.calendar_boost import (
+            apply_calendar_boost,
+            days_to_next_earnings,
+        )
+        from tradingagents.agents.utils.calendar_boost import (
+            calendar_boost as _calendar_boost,
+        )
+
+        days = days_to_next_earnings(ticker, trade_date)
+        boost = _calendar_boost(days, hybrid_c_calendar_boost_window_days)
+        effective_bull_score = apply_calendar_boost(
+            score.bull_case_priced_in,
+            days,
+            hybrid_c_calendar_boost_window_days,
+            hybrid_c_calendar_boost_magnitude,
+        )
+        effective_bear_score = score.bear_case_priced_in  # FR-004 bull-only
+        hybrid_c_annotation = {
+            "days_to_earnings": days,
+            "calendar_boost": boost,
+            "effective_bull_score": effective_bull_score,
+            "effective_bear_score": effective_bear_score,
+        }
+    else:
+        effective_bull_score = score.bull_case_priced_in
+        effective_bear_score = score.bear_case_priced_in
+
+    # 6. Compute would_fire flags (strict greater-than per R-3) using effective scores
     would_fire_bull = (
-        score.bull_case_priced_in > bull_threshold
+        effective_bull_score > bull_threshold
         and pre_rating in _BULLISH_RATINGS
         and bull_mode != "off"
     )
     would_fire_bear = (
-        score.bear_case_priced_in > bear_threshold
+        effective_bear_score > bear_threshold
         and pre_rating in _BEARISH_RATINGS
         and bear_mode != "off"
     )
 
-    # 7. Build annotation with all 16 fields
+    # 7. Build annotation with all 16 fields. Spec 008: when Hybrid C boost
+    #    enabled, append 4 additional keys (days_to_earnings, calendar_boost,
+    #    effective_bull_score, effective_bear_score) per FR-012. When boost
+    #    disabled, dict shape stays byte-equivalent to spec 007 baseline (FR-011).
     annotation: dict[str, Any] = {
         "model": model,
         "bull_case_priced_in": score.bull_case_priced_in,
@@ -401,6 +440,8 @@ def evaluate_forward_catalyst(
         "skipped": None,
         "error": None,
     }
+    if hybrid_c_annotation is not None:
+        annotation.update(hybrid_c_annotation)
 
     # 8. Active-mode override (mutually exclusive — pre_rating can't be both bullish AND bearish)
     if would_fire_bull and bull_mode == "active":

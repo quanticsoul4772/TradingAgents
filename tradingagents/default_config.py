@@ -63,6 +63,9 @@ class TradingAgentsConfig(TypedDict):
     forward_catalyst_bear_threshold: float
     forward_catalyst_model: str
     forward_catalyst_max_rationale_chars: int
+    hybrid_c_calendar_boost_enabled: bool
+    hybrid_c_calendar_boost_window_days: int
+    hybrid_c_calendar_boost_magnitude: float
     bot_models: dict[str, str]
     data_vendors: dict[str, str]
     tool_vendors: dict[str, str]
@@ -214,6 +217,18 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     "forward_catalyst_bear_threshold": 0.50,
     "forward_catalyst_model": "claude-opus-4-7",
     "forward_catalyst_max_rationale_chars": 2000,
+    # Spec 008: Hybrid C calendar boost — enhances spec 007's bull-side
+    # by multiplying bull_case_priced_in by (1 + magnitude * boost) where
+    # boost = max(0, 1 - days_to_next_earnings / window). Default OFF
+    # (FR-007); operator opts in via PARAMS.json. When enabled,
+    # window=14d + magnitude=0.5 are the empirically-grounded defaults
+    # from claudedocs/forward-catalyst-hybrid-c-retrospective-2026-05-06.md
+    # (+3.35pp bull-side net Δα improvement vs Class 3 alone, n=37 fires
+    # @ 92.6% cohort hit). Bull-only per FR-004; bear-side unchanged.
+    # Zero LLM cost (Constitution III T0). See specs/007-calendar-boost-filter/.
+    "hybrid_c_calendar_boost_enabled": False,
+    "hybrid_c_calendar_boost_window_days": 14,
+    "hybrid_c_calendar_boost_magnitude": 0.5,
     # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
     # (str). When set, the framework instantiates a per-bot client for that
     # model using the configured llm_provider; bots not in this dict use the
