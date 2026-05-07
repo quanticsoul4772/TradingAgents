@@ -4,6 +4,8 @@
 
 Operator-facing walkthrough: enable in shadow mode, inspect annotations, run the SC-008 retrospective, set up an ablation experiment, prerequisites for default-on flip.
 
+> **Constitution VIII status**: this filter ships **default-off as operator-opt-in only**. Corpus retrospective (`claudedocs/bear-sector-symmetry-retrospective-2026-05-06.md`) showed (a) SC-008 FAILED at +5% (5 of 18 ticker_strong-bear cohort fires; target was ≥8); (b) net Δα = -0.71pp at +5% (anti-predictive across n=36 commits). Default-on flip is NOT justified by the empirical evidence and is NOT planned. Under Constitution v1.3.0 Principle VIII, future filters of this class (backward-looking + price-derived) require a passing pre-spec retrospective; this filter is grandfathered as a pre-principle artifact.
+
 ---
 
 ## What's new

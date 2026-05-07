@@ -2,8 +2,10 @@
 
 **Feature Branch**: `004-sector-momentum-filter`
 **Created**: 2026-05-06
-**Status**: Draft
+**Status**: Draft (implementation shipped default-off after retrospective verdict)
 **Input**: User description: "Sector-momentum filter (Spec 004). Analogous to A3 momentum filter but operating at SECTOR level instead of per-ticker. Empirical motivation: claudedocs/sc003-financials-gate-check-spec-003-5-validation-2026-05-06.md showed the SC-003 Financials losers (-7.07% mean α on 5 OW commits) came from sector-rotation. Mechanism: when a ticker's GICS sector maps to a sector ETF (Technology→XLK, Financials→XLF, ...) and that ETF is down more than a configurable threshold in the prior 30 trading days, suppress the ticker's Buy/Overweight commit to Hold."
+
+> **Constitution VIII note (added 2026-05-06)**: this spec was authored BEFORE Constitution Principle VIII (Retrospective Before Spec for Backward-Looking Price Filters, v1.3.0) was codified. Retrospective for this filter ran AFTER implementation and showed net Δα = -0.45pp at the proposed default -5% threshold (anti-predictive), so the filter ships **default-off** as an operator-opt-in tool. Under Principle VIII the spec would have been skipped entirely; the implementation is grandfathered + retained as an example in the codebase. See `claudedocs/sector-momentum-retrospective-2026-05-06.md` and `.specify/memory/constitution.md` Principle VIII for the codified lesson.
 
 ## Why this exists
 
@@ -124,7 +126,7 @@ The operator inspects the contrarian/momentum filter activity across a corpus an
 - **SC-005 (No new LLM cost)**: This feature adds zero LLM API calls. Verified by running with all provider API keys unset and observing no failures attributable to missing keys.
 - **SC-006 (Default-off honored)**: When `sector_momentum_filter_threshold_pct` is `None` (the default), the filter MUST emit `state["sector_momentum"] = None` or omit the key entirely; PM ratings MUST be byte-identical to the no-filter baseline. Verified by a regression-guard unit test.
 - **SC-007 (Test coverage)**: New code in `tradingagents/agents/utils/sector_momentum_filter.py` AND the wiring in `portfolio_manager.py` MUST reach at least 90% line coverage. All 4 acceptance scenarios for User Story 1 are encoded as unit tests.
-- **SC-008 (Validation against SC-003 Financials)**: After landing, an offline diagnostic script MUST be created (or `scripts/sc003_financials_gate_check.py` extended) to compute what the sector-momentum filter WOULD have done on the SC-003 Financials cohort with the default `-5%` threshold. Documented expected result: at least 3 of the 5 Financials Overweight commits would have been suppressed (XLF was empirically down >5% in 30d before 2026-04-03; verify at implementation time). This is the empirical-validation gate for the spec — closes the loop on the spec 003.5 validation findings.
+- **SC-008 (Validation against SC-003 Financials)**: After landing, an offline diagnostic script MUST be created (or `scripts/sc003_financials_gate_check.py` extended) to compute what the sector-momentum filter WOULD have done on the SC-003 Financials cohort with the default `-5%` threshold. Documented expected result: at least 3 of the 5 Financials Overweight commits would have been suppressed (XLF was empirically down >5% in 30d before 2026-04-03; verify at implementation time). This is the empirical-validation gate for the spec — closes the loop on the spec 003.5 validation findings. **Empirical outcome (verified 2026-05-06)**: SC-008 **FAILED** — XLF was -4.54% (above -5% threshold), filter would suppress 0 of 5 (not ≥3 of 5). See `claudedocs/spec-004-sc008-validation-2026-05-06.md` + the corpus retrospective `claudedocs/sector-momentum-retrospective-2026-05-06.md` (which also showed -0.45pp net Δα across n=73 commits at -5%). The SC-008 failure was one of three same-day empirical findings that drove **Constitution Principle VIII** (Retrospective Before Spec for Backward-Looking Price Filters, v1.3.0).
 
 ## Assumptions
 

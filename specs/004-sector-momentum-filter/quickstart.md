@@ -4,6 +4,8 @@
 
 Operator-facing walkthrough: enable in shadow mode, inspect annotations, run the SC-008 retrospective, set up an ablation experiment, prerequisites for default-on flip.
 
+> **Constitution VIII status**: this filter ships **default-off as operator-opt-in only**. Corpus retrospective (`claudedocs/sector-momentum-retrospective-2026-05-06.md`) showed net Δα = -0.45pp at the proposed default -5% threshold (anti-predictive across n=73 commits). Default-on flip is NOT justified by the empirical evidence and is NOT planned. Under Constitution v1.3.0 Principle VIII, future filters of this class (backward-looking + price-derived) require a passing pre-spec retrospective; this filter is grandfathered as a pre-principle artifact.
+
 ---
 
 ## What's new
