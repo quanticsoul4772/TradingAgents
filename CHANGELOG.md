@@ -6,11 +6,80 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added (constitution v1.3.0 — Principle VIII)
+### Added (2026-05-06 research-burst day — 14 work units)
+
+**Filter portfolio expanded 1 → 5; Constitution v1.3.0; pre-spec retrospective methodology validated 4× across mechanism classes.**
+
+#### Specs landed
+
+- **Spec 003.5 sector-baseline fallback** (`specs/003-sector-baseline-gate/`, PR #3 merged): when per-ticker `bull_keyword_count` history is below FR-004 N≥20 floor, gate aggregates across same-sector tickers from the yfinance cache. Default-on. Closes the cold-start universe gap structurally. Module: `tradingagents/signals/sector_baseline.py`. 10+15 unit tests.
+
+- **Spec 004 sector-momentum filter** (`specs/004-sector-momentum-filter/`, PR #4 merged): suppresses Buy/OW when sector ETF is in mean-reversion zone (down >threshold% in prior 30d). New module `tradingagents/agents/utils/sector_momentum_filter.py` with 11-entry SECTOR_ETF_MAP (XLK/XLF/XLV/XLE/XLY/XLP/XLI/XLC/XLU/XLRE/XLB) covering both yfinance-canonical + GICS-canonical sector names. ~29 tests. Default-off after retrospective verdict (see below).
+
+- **Spec 006 bear-sector-symmetry filter** (`specs/005-bear-sector-symmetry/`, branch merged via `4d0401d` --no-ff; user-facing name "Spec 006" — directory auto-numbered to `005-bear-sector-symmetry`): suppresses UW/Sell when ticker has outperformed its sector ETF by >threshold% in prior 30d (counter-trend bear suppression). New module `tradingagents/agents/utils/bear_sector_symmetry_filter.py`. Reuses `SECTOR_ETF_MAP` + `_etf_history` from spec 004 (FR-004; single source of truth); new `_ticker_history` LRU cache. 27 unit + 5 PM-integration + 2 state-log regression tests. Default-off after SC-008 FAIL (see below).
+
+#### Retrospective verdicts (Constitution VIII basis)
+
+- **Spec 004 retrospective** (`claudedocs/sector-momentum-retrospective-2026-05-06.md`): -0.45pp net Δα across 73 commits at -5% threshold (anti-predictive). SC-008 also FALSIFIED (`claudedocs/spec-004-sc008-validation-2026-05-06.md`): XLF was -4.54% (above -5% threshold), filter would suppress 0/5 of SC-003 Financials (not ≥3/5). **Default-off; ships as operator-opt-in.**
+
+- **Spec 003 contrarian gate threshold sweep** (`claudedocs/contrarian-gate-threshold-sweep-2026-05-06.md`): walks 228 propagate state logs, sweeps 75/80/85/90/95th percentile thresholds. 11 of 82 bullish commits eligible (above N≥20 floor + α available). At default 80%: net Δα = +0.65pp. **Verdict: KEEP default-on at 80%** — tightening doesn't help (gate never fires at 85+); loosening to 75% gives +1.36pp but more incorrect-suppression risk. Validates the 2026-05-06 morning default-on flip.
+
+- **Spec 006 retrospective** (`claudedocs/bear-sector-symmetry-retrospective-2026-05-06.md`): SC-008 FAILED at +5% (5 of 18 ticker_strong-bearish cohort fire; target was ≥8) AND -0.71pp net Δα anti-predictive across 36 commits. Mirrors spec 004's outcome. **Default-off; ships as operator-opt-in.**
+
+- **Spec 005 candidate retrospective** (`scripts/ticker_sector_alpha_retrospective.py`, `claudedocs/ticker-sector-alpha-retrospective-2026-05-06.md`): pre-spec validation of the per-ticker-vs-sector BULL filter hypothesis. Max +0.31pp net Δα across 79 commits, well below Constitution VIII +1pp gate. Cohort hit rate 48% at +3% but cohort-loser suppression washed by winner suppression at indistinguishable rel-strength values. **Verdict: SKIP spec entirely** — saved ~6-8h of empty-spec implementation.
+
+- **Class 3 forward-catalyst retrospective (Haiku)** (`scripts/forward_catalyst_class3_retrospective.py`, `claudedocs/forward-catalyst-class3-retrospective-2026-05-06.md`): pre-spec validation of LLM-extracted "bull/bear case priced in" feature on 94 commits via Haiku at ~$0.19. **Verdict: BORDERLINE** — discrimination passes strongly (+10-37pp) but per-class means show only weak separation (cohort_a vs control_bull_winner +5pp; cohort_b vs control_bear_winner essentially zero) and Haiku score distribution too tight (mean 0.72, std 0.07 for bull). Recommend Opus rerun before any spec invocation.
+
+#### Empirical findings
+
+- **Sector-α attribution analyzer** (`scripts/sector_alpha_attribution.py`, `claudedocs/sector-alpha-attribution-2026-05-06.md`): walks 194 corpus commits, computes (raw_return, α-vs-SPY, α-vs-sector-ETF) at 21d, cross-tabs sign(α-vs-SPY) × sign(α-vs-sector) into 4 cells.
+
+  - **5th failure mode discovered**: 27 of 79 bullish commits (34.2%) land in `ticker_weak` (α<0 vs both) with mean realized α-vs-SPY = -5.34%; **88.9% Tech-concentrated** (24/27 are Technology). 81.8% of LOSING bullish commits are 5th-failure-mode — vast majority of bullish-commit losses are stock-specific, NOT sector-rotation.
+
+  - **Bearish anti-calibration shock**: 18 of 37 bearish commits (48.6%) landed in `ticker_strong` (α>0 vs both) with mean α-vs-SPY = **+28.02%** — largest single-metric anti-calibration finding in the corpus. A3 misses entirely; spec 006 was built to catch but failed empirically.
+
+- **INTC +103% on Hold investigation** (`claudedocs/sc003-intc-hold-investigation-2026-05-06.md`): INTC went +103.14% in 21 trading days from 2026-04-03 (driven by April 23 earnings catalyst). Framework rated Hold; calibrated abstention per Constitution VII validated. Surfaced spec 003 default-on as a hypothetical counter-example: if PM had committed Buy/OW, the spec 003 contrarian gate would have suppressed back to Hold. Closes the SC-003 follow-up arc.
+
+#### Forward-catalyst design exploration
+
+- **Forward-catalyst mechanism design doc** (`claudedocs/forward-catalyst-mechanism-exploration-2026-05-06.md`): 6 candidate signal classes evaluated (news-density / options-IV / LLM-extracted "case priced in" feature / cross-asset / fundamentals delta / calendar features). Class 3 (LLM-extracted) recommended as starting point for cheapest highest-ceiling test. Proposes validation methodology that extends Principle VIII for forward-catalyst class (discrimination ≥ +5pp + cohort hit rate ≥ 60% + net Δα ≥ +0.5pp OR shadow-mode-first). Decision tree for $0.10-5 + ~12-20h to definitively answer "is forward-catalyst tractable on this corpus?"
+
+#### Constitution v1.3.0 — Principle VIII
+
 - **Constitution v1.3.0** (`.specify/memory/constitution.md`):
   - **Principle VIII added** (Retrospective Before Spec for Backward-Looking Price Filters): any filter whose mechanism is exclusively backward-looking + price-derived MUST pass a corpus retrospective showing net Δα ≥ +1pp at the proposed default threshold + cohort hit rate ≥ 40% (when a target cohort is named) BEFORE the spec is written. Empirical basis: three same-day retrospective failures on 2026-05-06 — spec 004 sector-momentum (-0.45pp/n=73), spec 006 bear-sector-symmetry (-0.71pp/n=36), spec 005-candidate bull sector-relative (max +0.31pp/n=79). Backward-looking price filters cannot DISCRIMINATE cohort losers from similar-pattern winners; cohort-loser suppression is roughly cancelled by winner suppression. The cost asymmetry ($0/1h retrospective vs ~6-8h spec+impl+tests) makes pre-spec validation a Pareto improvement.
   - Operational test: build retrospective in the shape of `scripts/sector_momentum_retrospective.py` / `scripts/bear_sector_symmetry_retrospective.py` / `scripts/ticker_sector_alpha_retrospective.py`; sweep thresholds; cross-tab against any motivating cohort; commit retrospective markdown BEFORE invoking `/speckit.specify`.
   - Acceptable exception: explicit "shakeout" filters scoped to operator-opt-in (default-off, no SC-008-style empirical-validation gate, marked `shakeout_filter: true` in PARAMS.json).
+  - Constitution-VIII follow-up: spec 004 + spec 006 spec.md preambles + quickstart.md "What's new" sections + SC-008 measurable-outcome entries cross-referenced against Principle VIII; future readers immediately see (a) default-off status, (b) empirical verdict with numbers, (c) Principle VIII pointer, (d) grandfathered status.
+
+#### Filter portfolio status (post-day)
+
+| Filter | Default | Empirical support |
+|---|---|---|
+| A3 momentum (bear/per-ticker absolute) | ON @-5% | +0.70pp/n=43 (in-sample, validated 2026-05-06 default flip) |
+| Spec 003 contrarian gate (bull/per-ticker prose) | ON @80% | +0.65pp/n=11 (threshold sweep validates default flip) |
+| Spec 003.5 sector-baseline fallback (bull/sector prose) | ON | Closes cold-start universe gap structurally |
+| Spec 004 sector-momentum (bull/sector ETF absolute) | OFF | -0.45pp/n=73 anti-predictive (Constitution VIII grandfathered) |
+| Spec 006 bear-sector-symmetry (bear/ticker-vs-sector) | OFF | -0.71pp/n=36 anti-predictive; SC-008 failed (Constitution VIII grandfathered) |
+
+3 of 5 default-on; only A3 has > 30 supporting data points.
+
+#### Documentation refreshes
+
+- `RESEARCH_FINDINGS.md`: header updated; new sections added for "Filter portfolio status" + "5th failure mode discovered" + "Bearish anti-calibration shock" + "Constitution Principle VIII added".
+- `ROADMAP.md`: header date 2026-05-05 → 2026-05-06; Current state bumped (test count 825 → 984, all 5 filters listed); Active branch section replaced with full numbered list of 14 work units in commit order; 3 new open data questions added (forward-catalyst-aware mechanism, multi-window SC-003 replication, Spec 005 percentile-variant at expanded corpus).
+- `CLAUDE.md`: Empirical filters section gained spec 004 + spec 006 entries; principles count 7 → 8 in constitution reading guide.
+- `CHANGELOG.md`: this entry.
+
+#### Test count
+
+- 825 → **984 tests passing** — added Spec 003.5 (10+15 tests) + Spec 004 (~29 tests) + Spec 006 (27 unit + 5 PM integration + 2 state-log regression tests). All filters' state-log persistence tests follow the `4c14d0f` precedent.
+
+#### Cost summary
+
+- **3 LLM-cost work units**: Class 3 Haiku retrospective (~$0.19) + Opus rerun pending (~$2 budgeted).
+- **All other work units**: $0 LLM cost (offline retrospectives + design docs + spec writing).
+- **Spec-writing cost AVOIDED via Principle VIII**: ~12-16h that would have gone into spec 005 + a default-on flip for spec 004 + spec 006 if the retrospective gate didn't exist.
 
 ### Added (research milestone — 14 experiments + n=50 OW signal)
 - Constitution **v1.2.1** (`.specify/memory/constitution.md`):
