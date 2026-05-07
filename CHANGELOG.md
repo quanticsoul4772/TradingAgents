@@ -6,6 +6,32 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (2026-05-06 late-evening — Constitution v1.4.2 + meta-retrospective)
+
+**Constitution v1.4.2** (`.specify/memory/constitution.md`): added "Magnitude fungibility for hybrid filters" sub-section to Principle VIII (forward-catalyst-class gate). Empirical basis: Spec 008 Hybrid C bull retrofit + Spec 009-candidate bear-inverted retrofit BOTH produced identical fire patterns across magnitude={0.5, 1.0, 2.0} within fixed window. Operational test: sweep window first; sweep magnitude only if smallest doesn't cross threshold; pick smallest as production default if fungible. Saves 60-66% of retrospective sweep time. v1.4.1 → v1.4.2 (PATCH per clarification rule). Fourth constitution amendment of the day.
+
+**Spec 009 candidate (bear-inverted Hybrid C) — SKIP** (`claudedocs/forward-catalyst-hybrid-c-bear-retrospective-2026-05-06.md`): tested inverted boost direction for bear cohort (`effective_bear = max(0, base × (1 - magnitude × boost))` — boost DECREASES bear score near earnings on hypothesis that earnings often rally → priced-in bear cases fade). Result: +0.00pp Δα at every (window × magnitude) config across {7,14,21}d × {0.5,1.0,2.0}. n_fired identical to baseline at all 9 configs — the inverted boost has no measurable effect because the bear cohort's days-to-earnings distribution doesn't intersect with the boost window enough to flip any fire decisions. Spec 008's bull-only configuration remains the recommended Hybrid C stance.
+
+**Meta-retrospective** (`claudedocs/research-burst-2026-05-06.md`): canonical entry point documenting today's 14-work-unit research-burst day. 9 ship-quality units shipped: 2 specs implemented + 6 retrospectives (2 PASS + 4 SKIP) + 1 candidate SKIP + 4 constitution amendments + 3 cross-session memories. Total cost ~$5.05 LLM, ~17h wall-clock. ROI on retrospective methodology: ~10-13× wall-clock leverage on the spec invocations that DID launch. Documents 4 methodology lessons (L-1..L-4) cross-referenced to the constitution amendments that codified them.
+
+### Added (2026-05-06 evening — Spec 008 Hybrid C calendar boost + v0.8.0 tag)
+
+**Spec 008 Hybrid C calendar boost** (`specs/007-calendar-boost-filter/`, branch `007-calendar-boost-filter` merged via PR #6, tagged `v0.8.0-spec-008`): FIRST hybrid filter combining the validated Spec 007 Class 3 LLM-extracted scores (`bull_case_priced_in`) with Class 6 calendar features (days-to-next-earnings via yfinance.earnings_dates) — calendar-aware enhancement of the bull-side branch of the spec 007 forward-catalyst-aware contrarian gate. New helper module `tradingagents/agents/utils/calendar_boost.py` (~80 LOC, 4 functions + LRU cache).
+
+Mechanism: `effective_bull_score = min(1.0, bull_case_priced_in × (1 + magnitude × boost))` where `boost = max(0, 1 - days_to_next_earnings / window)`. Substituted for `bull_case_priced_in` in the Spec 007 fire-decision comparison when enabled. Bull-only (FR-004); bear-side unchanged.
+
+Defaults: **default OFF** (FR-007 — operator opts in). When enabled: window=14d + magnitude=0.5x per the empirically-grounded retrospective best config. Three new TradingAgentsConfig keys: `hybrid_c_calendar_boost_enabled`, `hybrid_c_calendar_boost_window_days`, `hybrid_c_calendar_boost_magnitude`.
+
+Empirical motivation: Hybrid C retrofit + production-config retrospectives (`claudedocs/forward-catalyst-hybrid-c-retrospective-2026-05-06.md`) DECISIVELY PASSED Constitution VIII v1.4.0 forward-catalyst-class gate at best config window=14d / magnitude=0.5x: bull-side net Δα +5.58pp at boosted threshold (+3.35pp Δα improvement vs Class 3 alone, +3.7pp cohort hit rate improvement to 92.6%, +11.30pp discrimination, n=37 fires).
+
+Cost: **$0 LLM** (Constitution III T0). Pure post-processing of Spec 007's already-paid LLM call output + free yfinance fetch (LRU-cached per ticker per process).
+
+Filter chain unchanged (FR-014); Hybrid C is structurally INSIDE Spec 007's score computation, not parallel. AgentState TypedDict unchanged (state["forward_catalyst"] already declared as Annotated[dict, ...] per spec 007). State annotation gains 4 new keys (`days_to_earnings`, `calendar_boost`, `effective_bull_score`, `effective_bear_score`) ONLY when boost is enabled — backward-compat preserved per FR-011 + SC-005.
+
+Tests: 27 unit tests (boost formula edge cases + monotonicity + LRU cache + yfinance failure paths) + 7 integration tests (default-off backward-compat, enabled-gains-4-keys, borderline-fire-via-boost, far-earnings-no-fire, yfinance-failure-fallthrough, ETF empty-calendar) = 34 net-new tests. Suite at 1121/1121 PASS with -p no:randomly. Live smoke validated end-to-end at boost > 0 (days_to_earnings=7, calendar_boost=0.5, effective=1.0 clamped per I-4) at $0.05 cost.
+
+SC-008 retrospective regression check: PASS — bull-side +3.35pp net Δα at window=14d magnitude=0.5x reproduces exactly (within ±0.5pp tolerance).
+
 ### Added (2026-05-06 evening — Constitution v1.4.1: spec ships its retrospective + verdict)
 
 **Constitution v1.4.1** (`.specify/memory/constitution.md`): appended a "Spec ships its retrospective + verdict" sub-section to Principle VI (Spec Before Structural Change). Codifies the pattern that today's 22-work-unit research-burst day demonstrated 5 times: spec invocation requires an accompanying retrospective markdown in `claudedocs/` documenting:
