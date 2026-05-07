@@ -4,27 +4,48 @@ Personal copy of [TauricResearch/TradingAgents](https://github.com/TauricResearc
 
 ## Headline finding
 
-After 24 experiments + cross-experiment horizon sweep + per-ticker breakdown + Opus 4.7 model swap (NVDA + AAPL) + Opus 30-pair mixed basket (Q1 2026) + 3-period NVDA cross-validation (Q1 2026 + Q4 2025 + Q3 2025) + Phase D substrate exploration (XLK + multi-sector + XLE) + A3 filter forensics + Spec 002 signal-lifecycle pipeline + Spec 001 bots-architecture (Phases 1-5) + Spec 003 analyst-stage contrarian gate (Phases 1+2 implemented + SC-001 + SC-002 validated):
+After 24 experiments + cross-experiment horizon sweep + per-ticker breakdown + Opus 4.7 model swap (NVDA + AAPL) + Opus 30-pair mixed basket (Q1 2026) + 3-period NVDA cross-validation (Q1 2026 + Q4 2025 + Q3 2025) + Phase D substrate exploration (XLK + multi-sector + XLE) + SC-003 50-ticker validation + A3 filter forensics + Spec 002 signal-lifecycle pipeline + Spec 001 bots-architecture (Phases 1-5) + Spec 003 analyst-stage contrarian gate (Phases 1+2 implemented + SC-001/SC-002/SC-003 validated; default-on flipped 2026-05-06) + Spec 003.5 sector-baseline fallback + Spec 004 sector-momentum filter + Spec 006 bear-sector-symmetry filter + sector-α attribution analyzer + Constitution v1.3.0 with Principle VIII:
 
-**At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) produce +1.23% mean alpha across n=71 commits (~61% hit rate) — POSITIVE AT MODERATE CONFIDENCE.** Three-period NVDA cross-validation: Q3 2025 +0.80% (n=10, 60% hit), Q4 2025 -0.47% (n=9, 22% hit), Q1 2026 ~+3.5% blended (n=15, ~80% hit). Two of three periods positive — **Q4 2025 is the negative outlier, not Q1 2026 as 008 alone suggested**. **Reasoning_evidence Bayesian posterior on "stable cross-period signal" trajectory: 0.64 → 0.52 → 0.63** (recovered after Q3 evidence). Bearish commits are **regime-asymmetric, not uniformly anti-calibrated**: UW on bear-correct tickers are directionally appropriate; UW on bull-regime tickers drive the aggregate anti-calibration. Hold ≈ 0% median at every horizon. **Mode-collapse direction is a function of (model × ticker × regime × prompt)**: Sonnet over-abstains on bull tickers + over-commits-bearish on bear tickers; Opus discriminates per-ticker. **Bucket-level claims replicate; date-level and realized-α claims do not.** Phase D substrate test: framework went 30pp more Hold-heavy on XLK vs same-date NVDA — **decision architecture is portable across substrates; commit calibration is substrate-specific (single-stock-prompt-tuned)**.
+**At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) produce +1.23% mean alpha across n=71 commits (~61% hit rate) — POSITIVE AT MODERATE CONFIDENCE.** Three-period NVDA cross-validation: Q3 2025 +0.80% (n=10, 60% hit), Q4 2025 -0.47% (n=9, 22% hit), Q1 2026 ~+3.5% blended (n=15, ~80% hit). Two of three periods positive — **Q4 2025 is the negative outlier, not Q1 2026 as 008 alone suggested**. **Reasoning_evidence Bayesian posterior on "stable cross-period signal" trajectory: 0.64 → 0.52 → 0.63** (recovered after Q3 evidence). Bearish commits are **regime-asymmetric, not uniformly anti-calibrated**: UW on bear-correct tickers are directionally appropriate; UW on bull-regime tickers drive the aggregate anti-calibration. **Bearish anti-calibration shock added 2026-05-06**: 18 of 37 bearish commits (48.6%) landed in `ticker_strong` cell with mean realized α-vs-SPY = **+28.02%** — largest single-metric anti-calibration finding in the corpus. Hold ≈ 0% median at every horizon. **Mode-collapse direction is a function of (model × ticker × regime × prompt)**: Sonnet over-abstains on bull tickers + over-commits-bearish on bear tickers; Opus discriminates per-ticker. **Bucket-level claims replicate; date-level and realized-α claims do not.** Phase D substrate test: framework went 30pp more Hold-heavy on XLK vs same-date NVDA — **decision architecture is portable across substrates; commit calibration is substrate-specific (single-stock-prompt-tuned)**.
 
-Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadmap in [`ROADMAP.md`](ROADMAP.md). Per-experiment summaries auto-aggregated in [`findings.md`](findings.md). A3 filter forensics in [`claudedocs/a3-filter-forensics-007.md`](claudedocs/a3-filter-forensics-007.md). Cross-period validation in [`experiments/2026-05-03-008-opus47-cross-period/ANALYSIS.md`](experiments/2026-05-03-008-opus47-cross-period/ANALYSIS.md) and [`experiments/2026-05-04-001-nvda-q3-2025-micro/ANALYSIS.md`](experiments/2026-05-04-001-nvda-q3-2025-micro/ANALYSIS.md).
+**5th failure mode discovered 2026-05-06** (sector-α attribution analyzer): 27 of 79 bullish commits (34.2%) underperform BOTH SPY AND their own sector at 21d (mean α-vs-SPY = -5.34%); **88.9% Tech-concentrated** (AAPL/MSFT/NVDA dominate). 81.8% of LOSING bullish commits are this 5th failure mode — vast majority of bullish-commit losses are stock-specific, NOT sector-rotation. None of the 5 current rating-suppression filters catches this cohort; 3 same-day backward-price retrospectives (spec 004 / spec 006 / spec 005-candidate) all empirically failed to discriminate. **Constitution Principle VIII** (Retrospective Before Spec for Backward-Looking Price Filters, v1.3.0) codifies the lesson: any filter whose mechanism is exclusively backward-looking + price-derived MUST pass a corpus retrospective showing net Δα ≥ +1pp at the proposed default + cohort hit rate ≥ 40% BEFORE the spec is written.
+
+Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadmap in [`ROADMAP.md`](ROADMAP.md). Per-experiment summaries auto-aggregated in [`findings.md`](findings.md). 2026-05-06 research-burst day summary in [`CHANGELOG.md`](CHANGELOG.md) [Unreleased] section. Sector-α attribution + filter portfolio findings in [`claudedocs/sector-alpha-attribution-2026-05-06.md`](claudedocs/sector-alpha-attribution-2026-05-06.md). A3 filter forensics in [`claudedocs/a3-filter-forensics-007.md`](claudedocs/a3-filter-forensics-007.md). Cross-period validation in [`experiments/2026-05-03-008-opus47-cross-period/ANALYSIS.md`](experiments/2026-05-03-008-opus47-cross-period/ANALYSIS.md) and [`experiments/2026-05-04-001-nvda-q3-2025-micro/ANALYSIS.md`](experiments/2026-05-04-001-nvda-q3-2025-micro/ANALYSIS.md).
+
+## Filter portfolio (5 filters as of 2026-05-06)
+
+| Filter | Mechanism | Default | Empirical support |
+|---|---|---|---|
+| [A3 momentum](tradingagents/agents/utils/momentum_filter.py) | Bear-side, per-ticker absolute mean-reversion | ON @ -5%/30d | +0.70pp/n=43 (in-sample) |
+| [Spec 003 contrarian gate](tradingagents/signals/contrarian_gate.py) | Bull-side, per-ticker `bull_keyword_count` percentile | ON @ 80th pct, N≥20 | +0.65pp/n=11 (threshold-sweep validated 2026-05-06) |
+| [Spec 003.5 sector-baseline fallback](specs/003-sector-baseline-gate/) | Bull-side, sector-pool percentile when per-ticker history < N=20 | ON | Closes cold-start universe gap |
+| [Spec 004 sector-momentum](specs/004-sector-momentum-filter/) | Bull-side, sector-ETF absolute mean-reversion | OFF | -0.45pp/n=73 anti-predictive (Constitution VIII grandfathered) |
+| [Spec 006 bear-sector-symmetry](specs/005-bear-sector-symmetry/) | Bear-side, ticker-vs-sector relative-strength | OFF | -0.71pp/n=36 anti-predictive; SC-008 FAILED (Constitution VIII grandfathered) |
+
+3 of 5 default-on; only A3 has > 30 supporting data points. **Spec 005 candidate (per-ticker-vs-sector BULL filter) was retrospectively SKIPPED** before any spec was written — pre-spec validation per Constitution Principle VIII saved ~6-8h of empty-spec implementation.
 
 ## What's local
 
 **Research substrate**
-- `experiments/<YYYY-MM-DD>-NNN-<slug>/` — 24 experiments with HYPOTHESIS / ANALYSIS / PARAMS.json / run.sh (latest: 2026-05-05-002 Spec 003 SC-002 — 25 propagates × 5 tickers, borderline-validated mechanism reproduction)
-- `tradingagents/signals/` — Spec 002 signal-lifecycle pipeline (registry + cache + featurization + drift + counterfactual + multi-horizon evaluation + within-ticker IC) + Spec 001 bots-architecture (Signal schema, deterministic aggregator, shadow mode, weight tuning, convergence shortcut, per-bot LLM routing) + Spec 003 contrarian gate (analyst-stage bullish-suppression filter). All shipped 2026-05-04 / 2026-05-05.
+- `experiments/<YYYY-MM-DD>-NNN-<slug>/` — 24 experiments with HYPOTHESIS / ANALYSIS / PARAMS.json / run.sh (latest: 2026-05-05-003 SC-003 50-ticker single-date validation; bullish bucket +5.96% mean α at 21d, n=15)
+- `tradingagents/signals/` — Spec 002 signal-lifecycle pipeline (registry + cache + featurization + drift + counterfactual + multi-horizon evaluation + within-ticker IC) + Spec 001 bots-architecture (Signal schema, deterministic aggregator, shadow mode, weight tuning, convergence shortcut, per-bot LLM routing) + Spec 003 contrarian gate (analyst-stage bullish-suppression filter, default-on @80th percentile + N≥20 floor as of 2026-05-06) + Spec 003.5 sector-baseline fallback (default-on; cold-start gap closure)
+- `tradingagents/agents/utils/` — A3 momentum filter (bear-side per-ticker absolute, default-on @-5%) + Spec 004 sector-momentum filter (bull-side sector-ETF absolute, default-off) + Spec 006 bear-sector-symmetry filter (bear-side ticker-vs-sector relative, default-off)
 - `findings.md` — auto-generated per-experiment one-paragraph summaries
-- `RESEARCH_FINDINGS.md` — project-level synthesis across all experiments
-- `ROADMAP.md` — sequenced phases of exploration + cross-pollination ideas
+- `RESEARCH_FINDINGS.md` — project-level synthesis across all experiments + filter portfolio + 5th failure mode + bearish anti-calibration shock + Principle VIII methodology
+- `ROADMAP.md` — sequenced phases of exploration + cross-pollination ideas + open data questions table (updated 2026-05-06)
+- `claudedocs/sector-alpha-attribution-2026-05-06.md` + `.csv` — 4-cell α-vs-SPY × α-vs-sector cross-tab analyzer; surfaced 5th failure mode + bearish anti-calibration
+- `claudedocs/sector-momentum-retrospective-2026-05-06.md` / `bear-sector-symmetry-retrospective-2026-05-06.md` / `ticker-sector-alpha-retrospective-2026-05-06.md` / `contrarian-gate-threshold-sweep-2026-05-06.md` — pre-spec corpus retrospectives (4 retrospectives validated the methodology across mechanism classes)
+- `claudedocs/forward-catalyst-mechanism-exploration-2026-05-06.md` — design exploration for forward-catalyst-aware mechanism class (gap remaining after Principle VIII grandfathering)
+- `claudedocs/forward-catalyst-class3-retrospective-2026-05-06.md` — Class 3 LLM-extracted "case priced in" feature retrospective (BORDERLINE; Opus rerun pending)
 - `claudedocs/horizon-sweep.md` + `claudedocs/horizon-sweep-007.md` — bucket alpha across 5/10/21-day windows
 - `claudedocs/bear-side-per-ticker.md` — per-ticker UW analysis (bull-regime vs bear-correct)
 - `claudedocs/uw-debate-diagnostic.md` — debate-quality features for correct vs wrong UW commits
 - `claudedocs/uw-suppression-filter.md` — A3 mean-reversion filter retrospective
 - `claudedocs/a3-filter-forensics-007.md` — A3 filter validated as correctly inert on regime-mismatch (post-007)
-- `.specify/memory/constitution.md` — seven principles governing research approach (v1.2.2)
-- `.specify/specs/001-bots-architecture/` + `.specify/specs/002-signal-lifecycle/` — formal specs for two unimplemented refactors
+- `.specify/memory/constitution.md` — **eight** principles governing research approach (v1.3.0; **Principle VIII added 2026-05-06**)
+- `specs/004-sector-momentum-filter/` + `specs/005-bear-sector-symmetry/` — full speckit bundles for the two grandfathered backward-price filters (cross-referenced against Principle VIII)
+- `specs/003-sector-baseline-gate/` — Spec 003.5 sector-baseline fallback bundle
+- `.specify/specs/001-bots-architecture/` + `.specify/specs/002-signal-lifecycle/` + `.specify/specs/003-analyst-contrarian-gate/` — formal specs (001/002 unimplemented refactors; 003 implemented + default-on)
 
 **Tooling**
 - `scripts/backtest.py` — typer CLI looping `propagate(ticker, date)` over a grid; resumable; `--news-vendor` flag
@@ -42,8 +63,11 @@ Full synthesis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadma
 - News: `tradingagents/dataflows/exa_news.py` — Exa Search API (true historical date filter via startPublishedDate/endPublishedDate). Requires `EXA_API_KEY`.
 - Stock prices / technicals / fundamentals: `tradingagents/dataflows/y_finance.py` (default) or `alpha_vantage*` modules
 
-**Production augmentation (opt-in)**
-- `tradingagents/agents/utils/momentum_filter.py` — A3 mean-reversion suppression filter for Underweight/Sell commits. Disabled by default; enable via `config["uw_momentum_filter_threshold"] = -5.0`.
+**Empirical filters (5 total; 3 default-on as of 2026-05-06)**
+- `tradingagents/agents/utils/momentum_filter.py` — A3 mean-reversion suppression filter for Underweight/Sell commits. Default-on at -5%/30d (2026-05-06 flip). Set to None to ablate.
+- `tradingagents/signals/contrarian_gate.py` — Spec 003 contrarian gate + Spec 003.5 sector-baseline fallback. Default-on at 80th percentile + N≥20 floor (FR-004). Set `contrarian_gate_mode = "off"` to ablate.
+- `tradingagents/agents/utils/sector_momentum_filter.py` — Spec 004 sector-momentum filter (bull-side sector-ETF absolute mean-reversion). **Default-off** after retrospective showed -0.45pp net Δα; ships as operator-opt-in. Set `sector_momentum_filter_threshold_pct = -5.0` + `sector_momentum_filter_mode = "active"` to enable.
+- `tradingagents/agents/utils/bear_sector_symmetry_filter.py` — Spec 006 bear-sector-symmetry filter (bear-side ticker-vs-sector relative-strength). **Default-off** after SC-008 FAILED + -0.71pp net Δα anti-predictive; ships as operator-opt-in. Set `bear_sector_symmetry_filter_threshold_pct = 5.0` + `bear_sector_symmetry_filter_mode = "active"` to enable.
 
 **Personalization**
 - `main.py` — Anthropic Sonnet 4.6 deep / Haiku 4.5 quick, 1/1 debate rounds, checkpoint enabled
@@ -90,11 +114,11 @@ All operate on existing `experiments/*/results.csv` files; zero new LLM cost.
 
 ## Constitution
 
-Seven principles in [`.specify/memory/constitution.md`](.specify/memory/constitution.md) (v1.2.2): Save Everything, One Experiment Per Change, Stay Cheap (4-tier ladder T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100, replaces single $30 ceiling), No Production Claims, Steal Liberally, Spec Before Structural Change, **Calibrated Abstention is a Valid Output** (with 2026-05-03 Replicability-scope + Cross-period-scope clarifications: claims must distinguish bucket-level / replicable from date-level / single-observation evidence; realized-α claims are period-conditional unless validated across multiple calendar periods). The principles are constraints, not aspirations.
+**Eight** principles in [`.specify/memory/constitution.md`](.specify/memory/constitution.md) (v1.3.0): Save Everything, One Experiment Per Change, Stay Cheap (4-tier ladder T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 >$100), No Production Claims, Steal Liberally, Spec Before Structural Change, **Calibrated Abstention is a Valid Output** (with 2026-05-03 Replicability-scope + Cross-period-scope clarifications), **Retrospective Before Spec for Backward-Looking Price Filters** (added 2026-05-06 after three same-day retrospective failures: any filter whose mechanism is exclusively backward-looking + price-derived MUST pass a corpus retrospective showing net Δα ≥ +1pp + cohort hit rate ≥ 40% before any spec is written; cost asymmetry between $0/1h retrospective and ~6-8h spec+impl+tests makes pre-spec validation a Pareto improvement). The principles are constraints, not aspirations.
 
 ## Tests
 
-825 tests, 81%+ coverage as of 2026-05-05. Spec 002 signal-lifecycle (registry + cache + featurization + drift + counterfactual + multi-horizon eval + within-ticker IC) + Spec 001 bots-architecture (Phases 1-5, Phase 4 BotLLMFactory live-validated) + Spec 003 contrarian gate (Phases 1+2, SC-001 + SC-002 validated).
+**984 tests** (was 825 → +159 in 2026-05-06 research-burst day), 81%+ coverage. Spec 002 signal-lifecycle (registry + cache + featurization + drift + counterfactual + multi-horizon eval + within-ticker IC) + Spec 001 bots-architecture (Phases 1-5, Phase 4 BotLLMFactory live-validated) + Spec 003 contrarian gate (Phases 1+2, SC-001 + SC-002 + SC-003 validated; default-on as of 2026-05-06) + Spec 003.5 sector-baseline fallback (10+15 tests; default-on) + Spec 004 sector-momentum filter (~29 tests; default-off after retrospective) + Spec 006 bear-sector-symmetry filter (27 unit + 5 PM-integration + 2 state-log regression tests; default-off after SC-008 FAIL).
 
 ```bash
 pytest                # full suite
