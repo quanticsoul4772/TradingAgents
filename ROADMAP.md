@@ -1,6 +1,6 @@
 # ROADMAP — TradingAgents-lab
 
-_Forward-looking exploration map. Updated 2026-05-06 late-evening (post-**14-work-unit research-burst day; 12 ship-quality units** culminating in spec 008 Hybrid C calendar-boost filter + Constitution v1.4.2 + tag `v0.8.0-spec-008`). Day's arc captured in `claudedocs/research-burst-2026-05-06.md` (canonical meta-retrospective) + CHANGELOG.md [Unreleased] section + RESEARCH_FINDINGS.md "Filter portfolio" section. Late-evening additions: spec 008 Hybrid C bull-only enhancement of spec 007 + spec 009 candidate (bear-inverted Hybrid C) retrospectively SKIPPED + Constitution v1.4.0 → v1.4.1 (spec ships its retrospective) → v1.4.2 (magnitude fungibility for hybrid filters) + meta-retrospective + spec 008.5 latency benchmark closing /speckit.analyze coverage gap._
+_Forward-looking exploration map. Updated 2026-05-07 morning. **2026-05-06**: 17-ship-quality-unit research-burst day; v0.7.0-spec-007 + v0.8.0-spec-008 + v0.8.1-spec-008.5 tags; Constitution v1.3.0 → v1.4.3 (5 amendments in one day). **2026-05-07 morning**: 8 PRs (5 merged + 3 open) covering SC-009 ablation kick-off + Class C-1 SKIP + Spec 007 v1.4.3 exemption audit + global-conftest test flake fix + Class 5 outlier investigation + bear-side mechanism design doc + analyzer prep script. SC-009 backtest in progress (3-5h ETA, 4/36 rows as of mid-morning). Canonical meta-retrospective at `claudedocs/research-burst-2026-05-06.md`._
 
 This is a research playground, not a product. The roadmap is directions for exploration, not delivery milestones. Per Constitution Principle V ("Steal Liberally"), cross-pollination from sibling projects in the portfolio is a primary driver — many ideas listed here originate elsewhere.
 
@@ -30,7 +30,28 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 
 ---
 
-## Active branch — 14-work-unit research-burst day (2026-05-06; tagged v0.8.0-spec-008)
+## Active branch — 2026-05-07 morning (8 PRs; SC-009 ablation in progress)
+
+Today's morning shipped 8 PRs (5 merged + 3 open) primarily focused on the Spec 008 SC-009 live A/B ablation kick-off + bear-side mechanism exploration:
+
+1. **SC-009 ablation kick-off** (PR #17, merged): `experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/` scaffolded with HYPOTHESIS + PARAMS + run scripts. Backtest running ~5h ETA against 18 tickers × 2 fresh Fridays (2026-04-17, 2026-04-24) = 36 propagates. Per-row pace ~9 min; ETA ~11:30 PDT for results.csv completion. ANALYSIS.md timeline ~2026-05-22 once 21d forward windows close.
+2. **Class 5 surprise outlier investigation** (PR #18, merged): identified INTC (not LLY) as the source of the surprisePercent=31.21 outlier; 3 quarters with epsEstimate near $0.01 blowing up the ratio. Documented mitigations for any future Class 5 revival.
+3. **Spec 008 Constitution v1.4.3 exemption audit** (PR #19, merged): confirmed Spec 008 is correctly exempted from the v1.4.3 additive-overlap gate (hybrid-filter exception). Sanity-check shows it WOULD pass at +3.34pp vs Spec 007 baseline if applied retroactively.
+4. **Test flake fix** (PR #20, merged): added global autouse fixture in `tests/conftest.py` patching `create_llm_client` to raise. Fixes the `test_pm_returns_rendered_markdown_with_rating` ordering flake that surfaced during yesterday's Spec 008 work. Suite at 1123/1123 PASS.
+5. **SC-009 analysis plan** (PR #21, merged): 6-phase analysis methodology committed in advance to avoid p-hacking when ANALYSIS.md is written ~2026-05-22.
+6. **Bear-side mechanism design doc** (PR #22, merged): enumerates 6 candidate mechanism classes (insider transactions, short-interest delta, analyst PT delta, institutional ownership, earnings price reaction, bear-news density) for the uncatchable +28pp `ticker_strong`-bear cohort. Recommends Class C-1 (insider transactions) as the next retrospective.
+7. **Class C-1 (insider transactions) retrospective** (PR #23, merged): SKIP verdict — only 1/18 cohort_b_bear_target rows have insider buys in prior 30d; bear-side fire at T≥1 is anti-predictive (-2.23pp). Insider purchases at large-cap tech are too rare to discriminate. Per design doc decision tree: pivot to Class C-3 (analyst PT delta) as the next bear-side candidate.
+8. **SC-009 analyzer prep script** (PR #24, OPEN): `scripts/analyze_sc009_ab.py` ready to run once realized α window closes (~2026-05-22). Mechanism: post-hoc compute boost-OFF would-fire from state-log `bull_case_priced_in` to enable single-run A/B (saved ~$15 vs naive two-branch design). 3 SC-009 acceptance gates evaluated explicitly.
+
+Plus 2 cross-session memories added today: `reference_sc009_ablation_pattern.md` + `feedback_global_conftest_autouse_for_real_llm.md`.
+
+**Open work entering 2026-05-07 mid-day**:
+- **SC-009 backtest in progress**: ~5h compute ETA, ANALYSIS.md ~2026-05-22 (after 21d forward window closes)
+- **Class C-3 (analyst PT delta) retrospective**: ~3h, $0 — next candidate per bear-side design doc decision tree
+- **Class C-5 (earnings price reaction) retrospective**: ~3h, $0 — alternative to C-3 with cleaner data structure
+- **Forward-catalyst overlap audit on Spec 007 retroactively**: ~30min, $0 — Spec 007 isn't a hybrid filter so v1.4.3 trigger criteria DO apply; verify it PASSES the additive gate against A3 + spec 003 + spec 003.5
+
+## Prior research-burst day — 14-work-unit (2026-05-06; tagged v0.8.0-spec-008)
 
 The day expanded through evening + late-evening sessions, ultimately shipping **12 ship-quality units** across **14 distinct work activities**. The post-Spec 007 work units (in commit order on the late-evening session):
 
