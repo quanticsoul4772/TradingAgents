@@ -6,6 +6,55 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (2026-05-07 — SC-009 backtest, bear-side mechanism survey, v1.4.4+v1.4.5 drafts)
+
+A multi-session day combining a long-running SC-009 backtest with extensive parallel-safe documentation, diagnostic, and tooling work. 32 PRs merged. ~$18 LLM (background backtest); foreground all $0. See `claudedocs/research-burst-2026-05-07.md` for the canonical narrative.
+
+**SC-009 ablation experiment (PRs #17, #57, #58, #61)**: Spec 008 Hybrid C live A/B ablation completed 36/36 rows. `experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/`. Final acceptance gates (PRELIMINARY — canonical 21d windows close ~2026-05-22+):
+- Gate 1 (alt suppressed-α in [-10%, +2%]): PASS at +0.43%
+- Gate 2 (n_fired_boost_on ≥ 8): PASS at 13 (61% margin above threshold)
+- Gate 3 (boost engaged ≥ 1): PASS at 18
+- Verdict line auto-emits "PASS — recommend Spec 008 v2 default-on flip" but refined per PR #56 to **PRELIMINARY PASS-by-non-counterexample**: 0 decisions changed by boost across all 36 rows; recommend SHADOW-MODE-FIRST per Constitution VIII v1.4.0, NOT direct default-on flip.
+
+**Bear-side mechanism class survey COMPLETE — 6 of 6 evaluated (PRs #23, #40, #64, #65, #66, #67)**:
+
+| Class | Verdict | Mechanism | Source |
+|---|---|---|---|
+| C-1 (insider transactions) | SKIP (empirical) | Anti-predictive on cohort | PR #23 |
+| C-2 (short-interest delta) | PARTIAL <30d | yfinance returns current + prior month only | PR #65 |
+| C-3 (analyst PT delta) | NOT FEASIBLE | yfinance has no historical PT panels | PR #40 |
+| C-4 (institutional ownership) | PARTIAL within 13F window | Quarterly 13F + 45d lag → time-bounded until ~2026-05-15 | PR #66 |
+| C-5 (earnings price reaction) | FEASIBLE | 4-25 quarters of historical data accessible | PR #64 |
+| C-6 (bear-news density) | SKIP (structural) | Strict subset of Spec 003's bear_keyword_count | PR #67 |
+
+Three SKIP-type taxonomy codified: empirical (gate FAIL), data-availability (no historical), structural (redundant with existing). Three retrospectives drafting-eligible (C-2, C-4, C-5).
+
+**Constitution amendment drafts (PRs #44, #61)**: Two amendments drafted (separate `claudedocs/` files; constitution.md NOT yet edited per defensive two-stage pattern):
+
+- **v1.4.4 — Behavioral-additive sub-case (4th interpretation)**: extends v1.4.3 additive-to-existing-filter gate with "PM-as-multi-mechanism-validator" framing. When a new filter F's operational fires appear redundant with existing portfolio fires BUT both correlate with PM commit decisions (PM has internalized F's contrarian logic via Constitution VII), F is REDUNDANT-ON-EXECUTION but COMPLEMENTARY-ON-DESIGN. Empirical basis: cross-cohort sweep finding 23 → 37 cases across all 4 mechanism classes in 10 tickers (PRs #41, #45, #53). Counter-evidence watch (PR #49) found 0 refuting rows across 247 logs.
+
+- **v1.4.5 — Quality Gate #6 Memory-log data-vs-prose discipline**: requires operators to cross-check memory log entry reflection prose against entry header data. Empirical basis: PR #54 single-case (AMD-04-17 reflection claims "captured the inflection correctly" while header records +24.9% raw return showing trim FAILED) + PR #55 sweep finding the pattern is SYSTEMATIC at 20% incidence rate. Symmetry with Constitution VII ("filters parse rating, not prose") extended to memory-log reading.
+
+Both amendments ratification-eligible; ratification not yet committed.
+
+**Tooling additions (PRs #38, #49, #55, #69)**:
+- `scripts/analyze_sc009_ab.py`: extracted `evaluate_gate_1` helper with 5-path test coverage (PR #38). Added PRELIMINARY status guard preventing analyzer from overwriting hand-edits (PR #52). Added Spec 003 baseline-coverage diagnostic surfacing cold-start gap (PR #69).
+- `scripts/v1_4_4_counter_evidence_watch.py` + 12 unit tests (PR #49): scans state logs for refuting rows. Exit 0 clean / 1 BLOCKED. CI-friendly.
+- `scripts/memory_log_integrity_check.py` + 12 unit tests (PR #55): walks any memory log file flagging rating-direction-vs-realized-return-sign mismatches. Found 3 of 15 entries (20%) hallucinated on SC-009 backtest_memory.md.
+- `scripts/behavioral_additive_sweep.py` (PR #41, refreshed in PR #45 + PR #53 + enhanced in PR #47): walks all state logs counting behavioral-additive cases per mechanism class.
+- `scripts/probe_*` (PRs #40, #64, #65, #66): yfinance probe family for bear-side mechanism class feasibility. 30min probes that determine whether 3h retrospectives are worth running.
+
+**Test count**: 1123 → **1162 PASS** (+39 net from PRs #38, #49, #55, #69).
+
+**Methodology findings**:
+- L-8 codification THRESHOLD MET (4-of-4 mechanism classes show behavioral-additive evidence)
+- Reflection-prose hallucination DISCOVERED systematic at 20% rate (cascade failure mode documented)
+- PASS-by-non-counterexample distinction (PR #56): SC-009 doesn't disprove spec 008 boost — the cohort's bull_score distribution doesn't exercise the borderline regime
+- Spec 003 cold-start coverage gap (PR #68): 22 of 36 rows (61%) had `gate_baseline=none` → Spec 003 couldn't engage on majority of cohort
+- Spec 007 calendar-INDEPENDENCE empirically validated (PRs #56, #62): 6 Financials bull-pre fires (BAC×2 + GS×2 + JPM×2) all firing at 81-88 days from earnings on bull_score alone
+
+**Cross-session memories preserved**: 14 → **19** (+5 new + 1 updated).
+
 ### Added (2026-05-06 late-evening — Constitution v1.4.2 + meta-retrospective)
 
 **Constitution v1.4.2** (`.specify/memory/constitution.md`): added "Magnitude fungibility for hybrid filters" sub-section to Principle VIII (forward-catalyst-class gate). Empirical basis: Spec 008 Hybrid C bull retrofit + Spec 009-candidate bear-inverted retrofit BOTH produced identical fire patterns across magnitude={0.5, 1.0, 2.0} within fixed window. Operational test: sweep window first; sweep magnitude only if smallest doesn't cross threshold; pick smallest as production default if fungible. Saves 60-66% of retrospective sweep time. v1.4.1 → v1.4.2 (PATCH per clarification rule). Fourth constitution amendment of the day.
