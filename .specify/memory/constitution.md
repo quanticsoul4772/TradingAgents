@@ -2,9 +2,11 @@
 
 **Project**: Personal experimental fork of TradingAgents — a research playground for studying multi-agent LLM debate dynamics, using equity-decision-making as the substrate because it has cheap, objective ground truth.
 
-**Version**: 1.4.2
+**Version**: 1.4.3
 **Adopted**: 2026-05-01
-**Last amended**: 2026-05-06 (evening, fourth amendment of the day) — added a "Magnitude fungibility for hybrid filters" sub-section to Principle VIII forward-catalyst-class gate. Empirical basis: Spec 008 Hybrid C bull + Spec 009-candidate bear-inverted retrofits BOTH showed identical fire patterns across magnitude sweep within fixed window. v1.4.1 → v1.4.2 (PATCH per clarification rule).
+**Last amended**: 2026-05-06 (late-evening, fifth amendment of the day) — added "Additive-to-existing-filter gate" sub-section to Principle VIII. Codifies the methodology lesson discovered tonight via Class 5 retrospective: a standalone PASS verdict can hide redundancy with existing default-active filters. New filter retrospectives that PASS the standalone gate must ALSO show net Δα improvement ≥ +0.5pp OR cohort hit improvement ≥ +5pp OR FP rate improvement ≥ -10pp over the union/intersection with the best-performing existing filter in the same direction. Prevents wasting ~6-8h spec+impl on filters that add nothing to the portfolio. v1.4.2 → v1.4.3 (PATCH per clarification rule).
+**Prior version**: 1.4.2 — added a "Magnitude fungibility for hybrid filters" sub-section to Principle VIII forward-catalyst-class gate. Empirical basis: Spec 008 Hybrid C bull + Spec 009-candidate bear-inverted retrofits BOTH showed identical fire patterns across magnitude sweep within fixed window. v1.4.1 → v1.4.2 (PATCH per clarification rule).
+**Prior version**: 1.4.1 — appended a "Spec ships its retrospective + verdict" sub-section to Principle VI. Codifies the pattern that today's 22-work-unit research-burst day demonstrated 5 times: spec invocation requires accompanying retrospective markdown in `claudedocs/` documenting the empirical justification + verdict + decision tree. Cost asymmetry (retrospective $0-2 / 1h vs spec+impl ~6-8h) makes "retrospective FIRST, spec SECOND" the dominant strategy. v1.4.0 → v1.4.1 (PATCH per clarification rule).
 **Prior version**: 1.4.0 — extended **Principle VIII** with a "Forward-catalyst-class validation gate" sub-section. Empirical basis: Class 3 Opus retrospective DECISIVELY PASSED bull-side gate (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp at T=0.60); bear-side passed criteria 1+2 with shadow-mode-first condition. Spec 007 ships as the first instance of this filter class.
 
 This constitution governs how this project evolves. The commitments below are intentionally short and few. They are constraints, not aspirations — when in conflict with convenience, they win.
@@ -248,6 +250,53 @@ The mechanism: at boost = 1.0 (earnings day, days_to_earnings=0), `effective = b
 
 **Why this matters operationally**: today's session demonstrated this twice (Spec 008 bull retrofit + bear-inverted retrofit). Each had 3 redundant rows. Codifying the principle now means future retrospectives skip the redundant work, freeing time for window-sweep + threshold-sweep variations that DO carry signal.
 
+### Additive-to-existing-filter gate (added 2026-05-06 late-evening; v1.4.3)
+
+For ANY new filter retrospective that PASSES the standalone Constitution VIII gate (whether backward-price OR forward-catalyst-class), an **OVERLAP analysis** against all existing default-active filters in the SAME DIRECTION (bull or bear) is REQUIRED before invoking `/speckit.specify`. The new filter must show one of:
+
+1. **Net Δα improvement ≥ +0.5pp** for the union (new filter ∪ existing) over the BEST-performing existing filter alone, **OR**
+2. **Cohort hit-rate improvement ≥ +5pp** for the union over the best-performing existing filter alone, **OR**
+3. **False-positive-rate improvement ≥ -10pp** for the intersection over the best-performing existing filter alone (intersection variant — fire only when BOTH agree)
+
+If NONE of the three improvement conditions hold, the new filter is REDUNDANT with the existing portfolio. **SKIP the spec entirely** even though the standalone gate PASSED. Document the redundancy in the overlap-analysis markdown for future reference.
+
+**Empirical basis** (2026-05-06 late-evening — discovered via Class 5 retrospective):
+
+The Class 5 (recent earnings surprise) retrospective PASSED the standalone Constitution VIII v1.4.0 forward-catalyst-class gate at threshold=0.02 with all three criteria clearing comfortably (discrim +11.92pp / hit 96.3% / net Δα +4.37pp). However, the post-hoc overlap analysis (`claudedocs/forward-catalyst-class5-vs-class3-overlap-2026-05-06.md`) revealed:
+
+| Filter | n_fired | net Δα | cohort hit% | False-positive rate |
+|---|---|---|---|---|
+| Spec 007 alone (Class 3 LLM) | 33 | +2.24pp | 88.9% | 27% |
+| Class 5 alone (surprise) | 41 | +4.37pp | 96.3% | 36% |
+| Hybrid B union (OR) | 43 | **-1.85pp** | 96.3% | **39%** |
+| Hybrid B intersection (AND) | 31 | +4.06pp | 88.9% | 22% |
+
+**89% of cohort_a (bull losers) caught by BOTH** filters; only 2 incremental losers caught by Class 5 alone — at a cost of 8 additional false-positive winners. The union HURTS net Δα by -4.09pp vs Spec 007 alone. The two filters are correlated, not complementary.
+
+**Without this gate, Spec 010 (Class 5 standalone) would have been invoked based on the standalone PASS verdict — wasting ~6-8h of spec+impl on a filter that adds nothing to Spec 007.** Cost asymmetry favors the additive test (~30min overlap analysis vs ~6-8h spec+impl).
+
+**Operational test** (mirrors the original VIII gates, with overlap-comparison criteria adapted):
+
+1. After the standalone retrospective PASSES the VIII gate, build an overlap script in the shape of `scripts/forward_catalyst_class5_vs_class3_overlap.py`. Compute the 2x2 fire-decision matrix (intersection / new-only / existing-only / neither) over the same cohort.
+2. Report: per-set n / mean α / cohort hit / FP rate; underlying-filter comparison table; union AND intersection variants; explicit improvement vs each underlying filter.
+3. Apply the 3-OR additive gate (net Δα ≥ +0.5pp OR cohort hit ≥ +5pp OR FP rate ≤ -10pp).
+4. Write the verdict block at the bottom of the markdown.
+5. Commit the overlap analysis BEFORE invoking `/speckit.specify`.
+
+**Trigger criteria** (which retrospectives this gate applies to):
+
+- Yes: ANY new bull-side filter retrospective that PASSES the standalone Constitution VIII gate AND there is at least one existing default-active bull-side filter
+- Yes: ANY new bear-side filter retrospective that PASSES the standalone Constitution VIII gate AND there is at least one existing default-active bear-side filter
+- No: A filter targeting a direction with NO existing default-active filter in the portfolio (the additive comparison is vacuous)
+- No: A filter framed as a STRICT REPLACEMENT for an existing filter (different decision tree; out of scope for additive gate)
+- No: HYBRID filters whose retrospective ALREADY uses the "improves over underlying filter" criterion (e.g., Spec 008 Hybrid C — already covered by the v1.4.2 magnitude-fungibility section's adjacent principle of "must improve at least one criterion vs underlying filter")
+
+**Why this matters now**: today's filter portfolio has 4 default-active bull-side-relevant filters (spec 003, spec 003.5, spec 007 bull). The next bull-side filter retrospective will face a non-trivial overlap-analysis burden. Without this gate codified, future operators may invoke specs based on standalone PASS verdicts that hide redundancy. The 30-min overlap script is a cheap insurance policy.
+
+**Acceptable exception**: same as VIII broader gates — explicit "shakeout" filters scoped to operator-opt-in (default-off, marked `shakeout_filter: true` in PARAMS.json) skip both the standalone gate AND the additive gate.
+
+**Why the post-hoc retroactive verdict on Class 5**: the Class 5 standalone retrospective shipped today (`claudedocs/forward-catalyst-class5-retrospective-2026-05-06.md`) is left intact as historical record. The overlap analysis (`claudedocs/forward-catalyst-class5-vs-class3-overlap-2026-05-06.md`) supersedes its verdict — Class 5 is REDUNDANT with Spec 007 on this corpus, so Spec 010 invocation is NOT permitted under v1.4.3. If a future cohort expansion (e.g., 50-ticker SC-003 cross-window replication) shifts the overlap statistics, re-run the analysis and re-evaluate.
+
 ---
 
 ## Quality Gates
@@ -298,8 +347,9 @@ This constitution is amendable. Amendments follow the spec-kit constitution flow
 
 The principles above are themselves up for amendment if they prove ceremonial rather than load-bearing. The test: after one month of use, are we honoring this principle because it's helping or because it's written down? If the latter, amend or remove.
 
-**Version**: 1.4.2
-**Last amended**: 2026-05-06 (evening, fourth amendment of the day) — added a "Magnitude fungibility for hybrid filters" sub-section to Principle VIII (forward-catalyst-class gate). Empirical basis: Spec 008 Hybrid C bull retrofit + Spec 009-candidate bear-inverted retrofit BOTH produced identical fire patterns across magnitude={0.5, 1.0, 2.0} within fixed window. Codifies the methodology improvement: magnitude is fungible within a hybrid-filter window when the smallest tested magnitude already crosses the underlying threshold. Future retrospectives skip redundant magnitude sweeps in this regime. v1.4.1 → v1.4.2 (PATCH per clarification rule).
+**Version**: 1.4.3
+**Last amended**: 2026-05-06 (late-evening, fifth amendment of the day) — added "Additive-to-existing-filter gate" sub-section to Principle VIII. Discovered when Class 5 standalone retrospective PASSED but post-hoc overlap analysis showed 89% cohort overlap with Spec 007. v1.4.2 → v1.4.3 (PATCH).
+**Prior version**: 1.4.2 — added a "Magnitude fungibility for hybrid filters" sub-section to Principle VIII (forward-catalyst-class gate). Empirical basis: Spec 008 Hybrid C bull retrofit + Spec 009-candidate bear-inverted retrofit BOTH produced identical fire patterns across magnitude={0.5, 1.0, 2.0} within fixed window. Codifies the methodology improvement: magnitude is fungible within a hybrid-filter window when the smallest tested magnitude already crosses the underlying threshold. Future retrospectives skip redundant magnitude sweeps in this regime. v1.4.1 → v1.4.2 (PATCH per clarification rule).
 **Prior version**: 1.4.1 — appended a "Spec ships its retrospective + verdict" sub-section to Principle VI. Codifies the pattern that today's 22-work-unit research-burst day demonstrated 5 times: spec invocation requires accompanying retrospective markdown in `claudedocs/` documenting the empirical justification + verdict + decision tree. Cost asymmetry (retrospective $0-2 / 1h vs spec+impl ~6-8h) makes "retrospective FIRST, spec SECOND" the dominant strategy. v1.4.0 → v1.4.1 (PATCH per clarification rule).
 **Prior version**: 1.4.0 — extended **Principle VIII** with a "Forward-catalyst-class validation gate" sub-section. Empirical basis: Class 3 Opus retrospective DECISIVELY PASSED bull-side (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp at T=0.60 on n=33 fires); bear-side passed criteria 1+2 with shadow-mode-first condition (discrim +23.10pp / hit rate 72.2% / net Δα +0.30pp). Forward-catalyst signals follow a separate gate (discrim ≥ +5pp PRIMARY + cohort hit rate ≥ 60% + net Δα ≥ +0.5pp OR shadow-mode-first) calibrated to their different statistical properties. Spec 007 ships as the first instance of this filter class.
 **Prior version**: 1.3.0 — added **Principle VIII (Retrospective Before Spec for Backward-Looking Price Filters)** after three same-day retrospective failures (spec 004 sector momentum -0.45pp/n=73; spec 006 bear sector-symmetry -0.71pp/n=36; spec 005-candidate bull sector-relative +0.31pp max/n=79). Cost asymmetry: $0/1h retrospective vs ~6-8h spec+impl+tests. Backward-looking price filters cannot DISCRIMINATE cohort losers from similar-pattern winners; the retrospective gate must come FIRST for this filter class. Both criteria (net Δα ≥ +1pp at default + cohort hit rate ≥ 40%) must pass for spec to be written. Three failures in one day codified the lesson.
