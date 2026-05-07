@@ -2,9 +2,9 @@
 
 **Project**: Personal experimental fork of TradingAgents — a research playground for studying multi-agent LLM debate dynamics, using equity-decision-making as the substrate because it has cheap, objective ground truth.
 
-**Version**: 1.4.1
+**Version**: 1.4.2
 **Adopted**: 2026-05-01
-**Last amended**: 2026-05-06 (evening, third amendment of the day) — appended a "Spec ships its retrospective + verdict" sub-section to Principle VI. Codifies the pattern that today's 22-work-unit research-burst day demonstrated 5 times: spec invocation requires accompanying retrospective markdown in `claudedocs/` documenting the empirical justification + verdict + decision tree. Cost asymmetry (retrospective $0-2 / 1h vs spec+impl ~6-8h) makes "retrospective FIRST, spec SECOND" the dominant strategy. v1.4.0 → v1.4.1 (PATCH per clarification rule).
+**Last amended**: 2026-05-06 (evening, fourth amendment of the day) — added a "Magnitude fungibility for hybrid filters" sub-section to Principle VIII forward-catalyst-class gate. Empirical basis: Spec 008 Hybrid C bull + Spec 009-candidate bear-inverted retrofits BOTH showed identical fire patterns across magnitude sweep within fixed window. v1.4.1 → v1.4.2 (PATCH per clarification rule).
 **Prior version**: 1.4.0 — extended **Principle VIII** with a "Forward-catalyst-class validation gate" sub-section. Empirical basis: Class 3 Opus retrospective DECISIVELY PASSED bull-side gate (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp at T=0.60); bear-side passed criteria 1+2 with shadow-mode-first condition. Spec 007 ships as the first instance of this filter class.
 
 This constitution governs how this project evolves. The commitments below are intentionally short and few. They are constraints, not aspirations — when in conflict with convenience, they win.
@@ -218,6 +218,36 @@ If criterion 1 fails → SKIP spec entirely (mirrors backward-price-only gate fa
 
 **Acceptable exception** (same as backward-price gate): explicit "shakeout" filters scoped to operator-opt-in (default-off, no validation gate, marked `shakeout_filter: true` in PARAMS.json).
 
+### Magnitude fungibility for hybrid filters (added 2026-05-06 evening; v1.4.2)
+
+For HYBRID filters (filters whose mechanism is a multiplicative or additive modulation of an underlying continuous-score filter), the **magnitude parameter is empirically fungible within a fixed window** when the modulation is large enough to cross the underlying threshold at the smallest tested magnitude. In that regime, sweeping magnitude is wasted compute — pick the most-conservative magnitude that produces the optimal fire pattern.
+
+**Empirical basis** (2026-05-06):
+
+| Retrospective | Sweep | Bull-side fire pattern at window=14d |
+|---|---|---|
+| Spec 008 Hybrid C bull (positive direction) | window={7,14,21}d × magnitude={0.5,1.0,2.0} | IDENTICAL across all magnitudes within window |
+| Spec 009-candidate Hybrid C bear (inverted direction) | window={7,14,21}d × magnitude={0.5,1.0,2.0} | IDENTICAL across all magnitudes (no fires flipped at any config) |
+
+The mechanism: at boost = 1.0 (earnings day, days_to_earnings=0), `effective = base × (1 + magnitude × 1.0)`. For a borderline-below-threshold base (e.g., 0.50, T=0.60), the smallest magnitude that pushes effective above T satisfies `0.50 × (1 + m) > 0.60` → `m > 0.20`. ANY magnitude > 0.2 produces an identical fire pattern at boost = 1.0. Sweeping magnitudes 0.5, 1.0, 2.0 all hit the same set of bordering scores.
+
+**Operational test** (when applicable to a hybrid filter retrospective):
+1. Sweep window first (the structural parameter that determines WHICH commits get any boost at all)
+2. Sweep magnitude ONLY if the smallest tested magnitude doesn't satisfy `m × max_boost > (T - base) / base` for the borderline-cohort base scores
+3. If magnitude sweep produces identical fire counts at every value: pick the SMALLEST tested magnitude as the production default (most conservative; minimizes saturation-clamp behavior at the [0, 1] boundary)
+4. Document in the retrospective markdown: "magnitude is fungible within window=Nd at production thresholds; choosing M=X conservatively"
+
+**Why**: Saves 60-66% of retrospective sweep time + reasoning. Spec 008's window=14d magnitude={0.5, 1.0, 2.0} sweep had three identical rows; only ONE row was needed once the fungibility was established. Future hybrid-filter retrospectives can default to a single magnitude (the smallest plausible) and only widen the sweep if results show variation.
+
+**Non-applicability**: This principle applies ONLY to HYBRID filters whose modulation crosses the threshold at the smallest tested magnitude. For filters where:
+- Magnitude affects fire patterns differently across cohort subgroups (some flip at m=0.5, some at m=1.0): KEEP the magnitude sweep
+- Magnitude affects post-fire behavior beyond the binary fire decision (e.g., affects the suppressed rating's downstream cost): KEEP the magnitude sweep
+- The retrospective is the FIRST instance of a hybrid filter class: KEEP the magnitude sweep to establish the fungibility regime
+
+**Acceptable exception**: explicit "shakeout" sweeps that test magnitude as a hypothesis (e.g., does m=0.1 produce a DIFFERENT result than m=0.5?) — keep the sweep, document the hypothesis in the retrospective preamble.
+
+**Why this matters operationally**: today's session demonstrated this twice (Spec 008 bull retrofit + bear-inverted retrofit). Each had 3 redundant rows. Codifying the principle now means future retrospectives skip the redundant work, freeing time for window-sweep + threshold-sweep variations that DO carry signal.
+
 ---
 
 ## Quality Gates
@@ -268,8 +298,9 @@ This constitution is amendable. Amendments follow the spec-kit constitution flow
 
 The principles above are themselves up for amendment if they prove ceremonial rather than load-bearing. The test: after one month of use, are we honoring this principle because it's helping or because it's written down? If the latter, amend or remove.
 
-**Version**: 1.4.1
-**Last amended**: 2026-05-06 (evening, third amendment of the day) — appended a "Spec ships its retrospective + verdict" sub-section to Principle VI. Codifies the pattern that today's 22-work-unit research-burst day demonstrated 5 times: spec invocation requires accompanying retrospective markdown in `claudedocs/` documenting the empirical justification + verdict + decision tree. Cost asymmetry (retrospective $0-2 / 1h vs spec+impl ~6-8h) makes "retrospective FIRST, spec SECOND" the dominant strategy. v1.4.0 → v1.4.1 (PATCH per clarification rule).
+**Version**: 1.4.2
+**Last amended**: 2026-05-06 (evening, fourth amendment of the day) — added a "Magnitude fungibility for hybrid filters" sub-section to Principle VIII (forward-catalyst-class gate). Empirical basis: Spec 008 Hybrid C bull retrofit + Spec 009-candidate bear-inverted retrofit BOTH produced identical fire patterns across magnitude={0.5, 1.0, 2.0} within fixed window. Codifies the methodology improvement: magnitude is fungible within a hybrid-filter window when the smallest tested magnitude already crosses the underlying threshold. Future retrospectives skip redundant magnitude sweeps in this regime. v1.4.1 → v1.4.2 (PATCH per clarification rule).
+**Prior version**: 1.4.1 — appended a "Spec ships its retrospective + verdict" sub-section to Principle VI. Codifies the pattern that today's 22-work-unit research-burst day demonstrated 5 times: spec invocation requires accompanying retrospective markdown in `claudedocs/` documenting the empirical justification + verdict + decision tree. Cost asymmetry (retrospective $0-2 / 1h vs spec+impl ~6-8h) makes "retrospective FIRST, spec SECOND" the dominant strategy. v1.4.0 → v1.4.1 (PATCH per clarification rule).
 **Prior version**: 1.4.0 — extended **Principle VIII** with a "Forward-catalyst-class validation gate" sub-section. Empirical basis: Class 3 Opus retrospective DECISIVELY PASSED bull-side (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp at T=0.60 on n=33 fires); bear-side passed criteria 1+2 with shadow-mode-first condition (discrim +23.10pp / hit rate 72.2% / net Δα +0.30pp). Forward-catalyst signals follow a separate gate (discrim ≥ +5pp PRIMARY + cohort hit rate ≥ 60% + net Δα ≥ +0.5pp OR shadow-mode-first) calibrated to their different statistical properties. Spec 007 ships as the first instance of this filter class.
 **Prior version**: 1.3.0 — added **Principle VIII (Retrospective Before Spec for Backward-Looking Price Filters)** after three same-day retrospective failures (spec 004 sector momentum -0.45pp/n=73; spec 006 bear sector-symmetry -0.71pp/n=36; spec 005-candidate bull sector-relative +0.31pp max/n=79). Cost asymmetry: $0/1h retrospective vs ~6-8h spec+impl+tests. Backward-looking price filters cannot DISCRIMINATE cohort losers from similar-pattern winners; the retrospective gate must come FIRST for this filter class. Both criteria (net Δα ≥ +1pp at default + cohort hit rate ≥ 40%) must pass for spec to be written. Three failures in one day codified the lesson.
 **Prior version**: 1.2.2 — Principle VII appended Cross-period scope clarification: realized-α claims (not commit-rate claims) must be treated as period-conditional unless validated across multiple periods. Empirical trigger: experiment 008 (same config as 007, Q4 2025 dates instead of Q1 2026) produced OW 21d α = -1.81% vs 007's +3.05%. Bayesian posterior on stable-cross-period-signal hypothesis dropped 0.64 → 0.52. ANALYSIS.md write-ups must state the period composition of any n=N cohort and the cross-period replication status of the claim.
