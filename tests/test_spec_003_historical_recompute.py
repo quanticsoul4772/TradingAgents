@@ -99,3 +99,27 @@ def test_list_state_logs_skips_dirs_without_strategy_logs(tmp_path, monkeypatch)
     result = mod._list_state_logs(None)
     assert len(result) == 1
     assert result[0][0] == "REAL"
+
+
+# ---- Cache-collision guard (added 2026-05-07 after PR #71 finding) ---------
+
+
+def test_collision_guard_string_appears_in_module():
+    """Smoke check that the cache-collision guard survives refactors.
+
+    PR #71 followup discovered the cache PK overwrite footgun: writing a
+    different feature under the same signal_id+date OVERWRITES the prior
+    value. The guard refuses non-default --feature against the production
+    signal_id without --write-to override.
+    """
+    src = (SCRIPTS_DIR / "spec_003_historical_recompute.py").read_text(encoding="utf-8")
+    assert "Cache-collision guard" in src, (
+        "Guard comment must remain in the script per PR #71 followup."
+    )
+    assert "would CLOBBER" in src, (
+        "Error message must remain to communicate the footgun to operators."
+    )
+    assert "--write-to" in src, (
+        "Workaround --write-to flag must remain available to allow non-default "
+        "features to write under a separate cache key."
+    )
