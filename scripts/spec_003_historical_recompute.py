@@ -80,7 +80,20 @@ def main() -> int:
     parser.add_argument(
         "--signal-id",
         default="market_report",
-        help="State-log key to extract prose from (default: market_report)",
+        help=(
+            "State-log key to extract prose from AND default cache key to write "
+            "under (default: market_report). Use --write-to to write under a "
+            "different cache key while reading from the same state-log source."
+        ),
+    )
+    parser.add_argument(
+        "--write-to",
+        default=None,
+        help=(
+            "Optional override for the cache signal_id when writing (default: "
+            "same as --signal-id). Use this with non-default --feature to avoid "
+            "clobbering the production bull_keyword_count cache."
+        ),
     )
     parser.add_argument(
         "--tickers",
@@ -107,6 +120,49 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
+
+    # Resolve write-target key (defaults to read-source if --write-to not given)
+    write_signal_id = args.write_to or args.signal_id
+
+    # Cache-collision guard (PR #71 followup discovered 2026-05-07): the
+    # cache PK is (signal_id, ticker, date, fetcher_version) — writing a
+    # different feature under the same signal_id+date OVERWRITES the prior
+    # value. Spec 003 production reads bull_keyword_count under
+    # signal_id="market_report"; running this script with --feature
+    # bear_keyword_count would clobber the bull cache. Refuse non-default
+    # features against the default WRITE signal_id until the schema supports
+    # per-feature storage.
+    if (
+        args.feature != "bull_keyword_count"
+        and write_signal_id == "market_report"
+        and not args.dry_run
+    ):
+        print(
+            f"ERROR: --feature {args.feature!r} would CLOBBER the production "
+            f"bull_keyword_count cache values under signal_id={args.signal_id!r} "
+            f"because the cache PK is (signal_id, ticker, date, fetcher_version) — "
+            f"different features overwrite each other under the same key.",
+            file=sys.stderr,
+        )
+        print(
+            "  Workarounds (pick one):",
+            file=sys.stderr,
+        )
+        print(
+            "    1. --dry-run to compute values without writing.",
+            file=sys.stderr,
+        )
+        print(
+            f"    2. --write-to market_report__{args.feature} to write under a "
+            f"different cache key (preserves --signal-id as the prose source; "
+            f"spec 003 production won't read the new key but the data is preserved).",
+            file=sys.stderr,
+        )
+        print(
+            "    3. Wait until the cache schema supports per-feature storage.",
+            file=sys.stderr,
+        )
+        return 3
 
     ticker_filter = {t.strip().upper() for t in args.tickers.split(",")} if args.tickers else None
 
@@ -155,16 +211,16 @@ def main() -> int:
             continue
 
         if args.skip_existing:
-            existing = query_value(args.signal_id, ticker, date)
+            existing = query_value(write_signal_id, ticker, date)
             if existing is not None:
                 n_skipped_existing += 1
                 continue
 
         if args.dry_run:
-            print(f"  [DRY] {ticker}/{date}: {args.feature}={value}")
+            print(f"  [DRY] {ticker}/{date}: {args.feature}={value} → cache[{write_signal_id}]")
         else:
             record_value(
-                signal_id=args.signal_id,
+                signal_id=write_signal_id,
                 ticker=ticker,
                 date=date,
                 value=value,
