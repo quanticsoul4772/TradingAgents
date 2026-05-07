@@ -1,0 +1,25 @@
+{
+  "config_overrides": {
+    "hybrid_c_calendar_boost_enabled": true,
+    "hybrid_c_calendar_boost_window_days": 14,
+    "hybrid_c_calendar_boost_magnitude": 0.5,
+    "forward_catalyst_bull_mode": "active",
+    "forward_catalyst_bear_mode": "shadow",
+    "forward_catalyst_bull_threshold": 0.6,
+    "forward_catalyst_bear_threshold": 0.5,
+    "forward_catalyst_model": "claude-opus-4-7"
+  },
+  "explicit_flags": {
+    "tickers": "TSLA,BA,PARA,NIO,F,NFLX,META,COIN,PYPL,SNAP,LLY,INTC,COP",
+    "start": "2026-04-08",
+    "end": "2026-04-30",
+    "frequency": "W",
+    "deep_model": "claude-sonnet-4-6",
+    "quick_model": "claude-haiku-4-5",
+    "debate_rounds": 1,
+    "max_runs": 30,
+    "news_vendor": "exa"
+  },
+  "baseline": "spec 007 production-default behavior + spec 008 boost ON; combined SC-009 evaluation = original 2026-05-07-001 cohort + this expansion cohort",
+  "notes": "Spec 008 SC-009 expansion contingency. CONDITIONAL kick-off: only run if original 2026-05-07-001 backtest confirms gate-2 risk (≥30/36 Hold AND n_fired_boost_on < 4). 13 tickers x 2 Fridays (2026-04-10, 2026-04-24) = 26 propagates. Boost-OFF comparison post-hoc from state logs. Combined ANALYSIS.md scheduled ~2026-05-22."
+}
