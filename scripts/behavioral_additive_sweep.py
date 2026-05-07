@@ -75,12 +75,17 @@ def sweep_log(log_path: Path) -> dict:
         "pm_rating": pm_rating,
     }
 
-    # Spec 003
+    # Spec 003 (per spec 003.5 instrumentation: feature_value + n_history*
+    # are populated; useful for diagnosing percentile movement vs pool changes)
     cg = d.get("contrarian_gate") or {}
     out["spec_003_percentile"] = cg.get("percentile")
     out["spec_003_baseline"] = cg.get("gate_baseline")
     out["spec_003_fired"] = cg.get("fired")
     out["spec_003_pre_rating"] = cg.get("pre_rating")
+    out["spec_003_feature_value"] = cg.get("feature_value")
+    out["spec_003_n_history"] = cg.get("n_history")
+    out["spec_003_n_history_per_ticker"] = cg.get("n_history_per_ticker")
+    out["spec_003_n_history_sector"] = cg.get("n_history_sector")
 
     # Spec 007 / 008
     fc = d.get("forward_catalyst") or {}
