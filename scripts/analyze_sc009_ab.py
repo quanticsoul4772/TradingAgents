@@ -88,12 +88,16 @@ def _enrich_row(row: pd.Series, holding_days: int) -> dict:
     fc = state.get("forward_catalyst", {}) or {}
 
     # Realized α (21-day forward)
+    # fetch_returns returns (raw_return, alpha_return, actual_holding_days)
+    # both decimals (e.g. 0.015 for 1.5%) — or (None, None, None) if unavailable.
     alpha_pct: float | None = None
     alpha_pending = False
     try:
-        ret = fetch_returns(ticker, trade_date, holding_days=holding_days)
-        if ret is not None and ret.get("alpha") is not None:
-            alpha_pct = float(ret["alpha"]) * 100  # convert fraction to %
+        raw_ret, alpha_ret, _actual_days = fetch_returns(
+            ticker, trade_date, holding_days=holding_days
+        )
+        if alpha_ret is not None:
+            alpha_pct = float(alpha_ret) * 100  # convert fraction to %
         else:
             alpha_pending = True
     except Exception as exc:  # noqa: BLE001
@@ -218,12 +222,16 @@ def main():
         else None
     )
 
-    # Boost engagement
+    # Boost engagement: count over ALL rows (boost can engage regardless of α availability)
+    engaged_all = df[df["calendar_boost"] > 0]
+    n_engaged = len(engaged_all)
+    # For per-row breakdown table: prefer engaged-with-α; fall back to engaged-all
     engaged = df_with_alpha[df_with_alpha["calendar_boost"] > 0]
-    n_engaged = len(engaged)
+    if engaged.empty:
+        engaged = engaged_all  # fallback for early-diagnostic runs
 
-    # Decisions changed by boost
-    decisions_changed = df_with_alpha[df_with_alpha["boost_changed_decision"]]
+    # Decisions changed by boost: count over ALL rows
+    decisions_changed = df[df["boost_changed_decision"]]
     n_decisions_changed = len(decisions_changed)
 
     # SC-009 gate
