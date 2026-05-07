@@ -122,12 +122,21 @@ Single-package Python project. New files go to existing directories:
 
 ## Phase N: Polish & Cross-Cutting Concerns
 
-- [ ] T050 [P] Run full test suite: `pytest tests/ -q`. Confirm: total test count = previous + ≥17 (13 unit + 4 integration); zero new failures.
-- [ ] T051 [P] Run `ruff check tradingagents/ tests/` — confirm zero new violations vs the baseline (current 0 errors per CLAUDE.md).
-- [ ] T052 [P] Run `mypy tradingagents/agents/utils/calendar_boost.py tradingagents/agents/utils/forward_catalyst_filter.py tradingagents/default_config.py` — confirm no NEW mypy errors introduced (the project baseline is 126 errors, none in the modified files).
-- [ ] T053 [P] Update `CLAUDE.md` "Empirical filters" section to document the new Hybrid C boost layer (default-off, opt-in pattern, +3.35pp empirical evidence reference).
-- [ ] T054 [P] Update `CHANGELOG.md` with a new entry for Spec 008 (date 2026-05-06, version bump per current convention).
-- [ ] T055 Run `pytest tests/test_calendar_boost.py tests/test_forward_catalyst_filter_calendar_boost.py -v --tb=short` one final time to confirm green.
+- [X] T050 [P] Run full test suite: `pytest tests/ -q`. Confirm: total test count = previous + ≥17 (13 unit + 4 integration); zero new failures.
+- [X] T051 [P] Run `ruff check tradingagents/ tests/` — confirm zero new violations vs the baseline (current 0 errors per CLAUDE.md).
+- [X] T052 [P] Run `mypy tradingagents/agents/utils/calendar_boost.py tradingagents/agents/utils/forward_catalyst_filter.py tradingagents/default_config.py` — confirm no NEW mypy errors introduced (the project baseline is 126 errors, none in the modified files).
+- [X] T053 [P] Update `CLAUDE.md` "Empirical filters" section to document the new Hybrid C boost layer (default-off, opt-in pattern, +3.35pp empirical evidence reference).
+- [X] T054 [P] Update `CHANGELOG.md` with a new entry for Spec 008 (date 2026-05-06, version bump per current convention).
+- [X] T055 Run `pytest tests/test_calendar_boost.py tests/test_forward_catalyst_filter_calendar_boost.py -v --tb=short` one final time to confirm green.
+
+## Phase N+1: Spec 008.5 amendment (added 2026-05-06 late-evening)
+
+Closes the 1 coverage gap from `/speckit.analyze` (SC-012 latency benchmark not previously tested).
+
+- [X] T056 Add `tests/test_calendar_boost_latency.py` with 2 wall-clock assertions:
+  - `test_cache_warm_latency_under_5ms_p99`: 100-iteration p99 < 5 ms with mocked yfinance + warm cache
+  - `test_cache_warm_arithmetic_only_under_1ms`: 1000-iteration per-call cost < 100 µs for boost math
+- [X] T057 Update `spec.md` SC-012 to mark VERIFIED with reference to the new test file. Document cache-cold path as operator-validated via `scripts/smoke_spec_008.py` (network-dependent, not CI-testable).
 
 ---
 
