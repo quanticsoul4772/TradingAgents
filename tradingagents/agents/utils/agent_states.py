@@ -86,3 +86,11 @@ class AgentState(MessagesState):
     bear_sector_symmetry: Annotated[
         dict, "Spec 006 bear-sector-symmetry-filter annotation; None when mode=='off'"
     ]
+
+    # Spec 007 forward-catalyst-aware contrarian gate: PM emits this block when
+    # at least one of forward_catalyst_{bull,bear}_mode != "off". Keys per
+    # specs/006-forward-catalyst-gate/contracts/annotation_schema.md.
+    # Must be declared here so LangGraph propagates it from PM's return dict to final_state.
+    forward_catalyst: Annotated[
+        dict, "Spec 007 forward-catalyst-filter annotation; None when both modes=='off'"
+    ]

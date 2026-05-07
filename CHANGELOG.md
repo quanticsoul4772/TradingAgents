@@ -6,6 +6,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (2026-05-06 evening — Spec 007 + Constitution v1.4.0)
+
+**Spec 007 forward-catalyst-aware contrarian gate** (`specs/006-forward-catalyst-gate/`, branch `006-forward-catalyst-gate` merged via TBD): FIRST forward-catalyst-aware filter in the framework. New module `tradingagents/agents/utils/forward_catalyst_filter.py` invokes an LLM (Opus default; configurable to Haiku) per propagate to score how widely the bull/bear case is already absorbed by the market via the existing analyst reports + bull/bear debate.
+
+Empirical motivation: Class 3 Opus retrospective (2026-05-06) DECISIVELY PASSED the bull-side gate (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp on n=33 fires at T=0.60). Bear-side passed criteria 1+2 with shadow-mode-first condition (discrim +23.10pp / hit rate 72.2% / net Δα +0.30pp just below +0.5pp gate).
+
+Defaults per the empirical evidence:
+- `forward_catalyst_bull_mode = "active"`, `bull_threshold = 0.60`
+- `forward_catalyst_bear_mode = "shadow"`, `bear_threshold = 0.50`
+- `forward_catalyst_model = "claude-opus-4-7"`
+- Operator can disable via setting BOTH modes to `"off"` (zero LLM cost)
+
+Per-propagate Opus cost ~$0.025 (~$0.25/day for typical 10-ticker workflow); Haiku alternative is ~10× cheaper with documented score-distribution degradation.
+
+Filter ordering (FR-012 amended): A3 → spec 006 → spec 003/003.5 → spec 004 → **spec 007 LAST** (consumes the same analyst reports as inputs to the prior filters).
+
+State annotation: new `state["forward_catalyst"]` field with 16 fields (model / bull+bear scores / rationale / both thresholds / both modes / would_fire+fired per side / pre+post rating / skipped / error). Persisted via `_log_state` whitelist + AgentState TypedDict extensions (precedent: spec 003 + spec 004 + spec 006).
+
+Tests: 29 unit tests (mocked LLM via injection point) + 7 PM-integration tests (mocks the factory + the structured-output call) + 2 state-log persistence regression tests + 1 SC-008 integration test + 1 default-config regression test. Total +40 tests; suite at ~1024.
+
+**Constitution v1.4.0** (`.specify/memory/constitution.md`): Principle VIII extended with a "Forward-catalyst-class validation gate" sub-section codifying the discrim ≥ +5pp (PRIMARY) + cohort hit rate ≥ 60% + net Δα ≥ +0.5pp OR shadow-mode-first criteria for forward-catalyst-aware filters. Empirical basis: Class 3 Opus retrospective DECISIVE PASS unblocked spec 007. v1.3.0 → v1.4.0 (MINOR per amended-principle rule). Future forward-catalyst filters follow this gate; backward-price filters continue to follow the original v1.3.0 gate.
+
 ### Added (2026-05-06 research-burst day — 14 work units)
 
 **Filter portfolio expanded 1 → 5; Constitution v1.3.0; pre-spec retrospective methodology validated 4× across mechanism classes.**

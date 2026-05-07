@@ -22,6 +22,28 @@ from tradingagents.agents.managers.portfolio_manager import create_portfolio_man
 from tradingagents.agents.schemas import PortfolioDecision, PortfolioRating
 
 
+@pytest.fixture(autouse=True)
+def _disable_spec_007_in_legacy_tests():
+    """Disable spec 007 forward-catalyst filter for all tests in this file
+    by short-circuiting the LLM call to a fast no-op skip. Tests in
+    test_forward_catalyst_filter.py exercise spec 007 directly via the
+    `llm` injection point and bypass this patch.
+
+    Without this fixture, every existing test triggers a real Opus call
+    via the factory (spec 007 default-on at active mode + Opus model),
+    which hits the API + adds 5-10s latency per test + can produce
+    non-deterministic rating overrides that break tests asserting
+    specific pre-spec-007 behavior.
+    """
+    # Patch the factory to raise; the spec 007 filter degrades to
+    # skipped="llm_failed" + rating unchanged per FR-010 resilience pattern.
+    with patch(
+        "tradingagents.llm_clients.factory.create_llm_client",
+        side_effect=RuntimeError("disabled by test fixture"),
+    ):
+        yield
+
+
 def _state(ticker: str = "NVDA", trade_date: str = "2026-02-06") -> dict:
     """Minimal AgentState shape that portfolio_manager_node reads from."""
     return {
@@ -628,3 +650,231 @@ def test_default_config_has_bear_sector_symmetry_filter_off():
     assert DEFAULT_CONFIG["bear_sector_symmetry_filter_mode"] == "off"
     assert DEFAULT_CONFIG["bear_sector_symmetry_filter_threshold_pct"] is None
     assert DEFAULT_CONFIG["bear_sector_symmetry_filter_lookback_days"] == 30
+
+
+# ---- Spec 007 forward-catalyst filter wiring tests --------------------------
+# Mirror the spec 004 / spec 006 wiring-test pattern; mocks the LLM client
+# at the factory level so tests don't hit real Opus.
+
+
+def _make_fc_llm(bull: float, bear: float, rationale: str = "test rationale"):
+    """Build a mocked LLM that returns a CasePricedInScore."""
+    from tradingagents.agents.utils.forward_catalyst_filter import CasePricedInScore
+
+    llm = MagicMock()
+    structured = MagicMock()
+    structured.invoke.return_value = CasePricedInScore(
+        bull_case_priced_in=bull, bear_case_priced_in=bear, rationale=rationale
+    )
+    llm.with_structured_output.return_value = structured
+    return llm
+
+
+@pytest.fixture
+def llm_returning_overweight():
+    llm = MagicMock()
+    structured = MagicMock()
+    structured.invoke.return_value = _decision(PortfolioRating.OVERWEIGHT)
+    llm.with_structured_output.return_value = structured
+    return llm
+
+
+@pytest.mark.unit
+def test_forward_catalyst_disabled_when_both_modes_off(llm_returning_overweight):
+    """SC-006: when both modes off, filter does not modify the rating + no LLM call."""
+    node = create_portfolio_manager(llm_returning_overweight)
+    with patch(
+        "tradingagents.dataflows.config.get_config",
+        return_value={
+            "output_language": "English",
+            "uw_momentum_filter_threshold": None,
+            "forward_catalyst_bull_mode": "off",
+            "forward_catalyst_bear_mode": "off",
+        },
+    ):
+        result = node(_state())
+    assert "**Rating**: Overweight" in result["final_trade_decision"]
+    if "forward_catalyst" in result:
+        assert result["forward_catalyst"]["bull_mode"] == "off"
+        assert result["forward_catalyst"]["bear_mode"] == "off"
+        assert result["forward_catalyst"]["fired_bull"] is False
+        assert result["forward_catalyst"]["fired_bear"] is False
+
+
+@pytest.mark.unit
+def test_forward_catalyst_active_downgrades_overweight_when_bull_priced_in_above_threshold(
+    llm_returning_overweight,
+):
+    """Bull score above threshold + active mode + Overweight → downgrade to Hold."""
+    fc_llm = _make_fc_llm(bull=0.78, bear=0.45)
+    fc_client = MagicMock()
+    fc_client.get_llm.return_value = fc_llm
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": None,
+                "forward_catalyst_bull_mode": "active",
+                "forward_catalyst_bear_mode": "shadow",
+                "forward_catalyst_bull_threshold": 0.60,
+                "forward_catalyst_bear_threshold": 0.50,
+                "forward_catalyst_model": "claude-opus-4-7",
+                "forward_catalyst_max_rationale_chars": 2000,
+            },
+        ),
+        patch(
+            "tradingagents.llm_clients.factory.create_llm_client",
+            return_value=fc_client,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_overweight)
+        result = node(_state(ticker="NVDA"))
+    assert "**Rating**: Hold" in result["final_trade_decision"]
+    assert "[Forward-catalyst filter]" in result["final_trade_decision"]
+    assert result["forward_catalyst"]["fired_bull"] is True
+    assert result["forward_catalyst"]["pre_rating"] == "Overweight"
+    assert result["forward_catalyst"]["post_rating"] == "Hold"
+
+
+@pytest.mark.unit
+def test_forward_catalyst_active_downgrades_buy_above_threshold(llm_returning_buy):
+    """Buy variant of bull-side fire."""
+    fc_llm = _make_fc_llm(bull=0.78, bear=0.45)
+    fc_client = MagicMock()
+    fc_client.get_llm.return_value = fc_llm
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": None,
+                "forward_catalyst_bull_mode": "active",
+                "forward_catalyst_bear_mode": "shadow",
+                "forward_catalyst_bull_threshold": 0.60,
+                "forward_catalyst_bear_threshold": 0.50,
+                "forward_catalyst_model": "claude-opus-4-7",
+                "forward_catalyst_max_rationale_chars": 2000,
+            },
+        ),
+        patch(
+            "tradingagents.llm_clients.factory.create_llm_client",
+            return_value=fc_client,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_buy)
+        result = node(_state(ticker="NVDA"))
+    assert "**Rating**: Hold" in result["final_trade_decision"]
+    assert result["forward_catalyst"]["fired_bull"] is True
+    assert result["forward_catalyst"]["pre_rating"] == "Buy"
+
+
+@pytest.mark.unit
+def test_forward_catalyst_active_keeps_overweight_when_bull_priced_in_below_threshold(
+    llm_returning_overweight,
+):
+    """Bull score below threshold → no fire; Overweight remains."""
+    fc_llm = _make_fc_llm(bull=0.55, bear=0.45)  # below 0.60 threshold
+    fc_client = MagicMock()
+    fc_client.get_llm.return_value = fc_llm
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": None,
+                "forward_catalyst_bull_mode": "active",
+                "forward_catalyst_bear_mode": "shadow",
+                "forward_catalyst_bull_threshold": 0.60,
+                "forward_catalyst_bear_threshold": 0.50,
+                "forward_catalyst_model": "claude-opus-4-7",
+                "forward_catalyst_max_rationale_chars": 2000,
+            },
+        ),
+        patch(
+            "tradingagents.llm_clients.factory.create_llm_client",
+            return_value=fc_client,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_overweight)
+        result = node(_state(ticker="NVDA"))
+    assert "**Rating**: Overweight" in result["final_trade_decision"]
+    assert result["forward_catalyst"]["fired_bull"] is False
+    assert result["forward_catalyst"]["would_fire_bull"] is False
+
+
+@pytest.mark.unit
+def test_forward_catalyst_bear_active_downgrades_underweight(llm_returning_underweight):
+    """Bear score above threshold + bear mode active + UW → downgrade to Hold."""
+    fc_llm = _make_fc_llm(bull=0.45, bear=0.65)  # bear > 0.50 threshold
+    fc_client = MagicMock()
+    fc_client.get_llm.return_value = fc_llm
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": None,
+                "forward_catalyst_bull_mode": "active",
+                "forward_catalyst_bear_mode": "active",
+                "forward_catalyst_bull_threshold": 0.60,
+                "forward_catalyst_bear_threshold": 0.50,
+                "forward_catalyst_model": "claude-opus-4-7",
+                "forward_catalyst_max_rationale_chars": 2000,
+            },
+        ),
+        patch(
+            "tradingagents.llm_clients.factory.create_llm_client",
+            return_value=fc_client,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_underweight)
+        result = node(_state(ticker="NVDA"))
+    assert "**Rating**: Hold" in result["final_trade_decision"]
+    assert result["forward_catalyst"]["fired_bear"] is True
+    assert result["forward_catalyst"]["pre_rating"] == "Underweight"
+
+
+@pytest.mark.unit
+def test_forward_catalyst_bear_shadow_default_no_override(llm_returning_underweight):
+    """Bear score above threshold + bear mode shadow (DEFAULT) → would_fire_bear=True; rating unchanged."""
+    fc_llm = _make_fc_llm(bull=0.45, bear=0.65)
+    fc_client = MagicMock()
+    fc_client.get_llm.return_value = fc_llm
+    with (
+        patch(
+            "tradingagents.dataflows.config.get_config",
+            return_value={
+                "output_language": "English",
+                "uw_momentum_filter_threshold": None,
+                "forward_catalyst_bull_mode": "active",
+                "forward_catalyst_bear_mode": "shadow",  # the DEFAULT
+                "forward_catalyst_bull_threshold": 0.60,
+                "forward_catalyst_bear_threshold": 0.50,
+                "forward_catalyst_model": "claude-opus-4-7",
+                "forward_catalyst_max_rationale_chars": 2000,
+            },
+        ),
+        patch(
+            "tradingagents.llm_clients.factory.create_llm_client",
+            return_value=fc_client,
+        ),
+    ):
+        node = create_portfolio_manager(llm_returning_underweight)
+        result = node(_state(ticker="NVDA"))
+    assert "**Rating**: Underweight" in result["final_trade_decision"]
+    assert result["forward_catalyst"]["would_fire_bear"] is True
+    assert result["forward_catalyst"]["fired_bear"] is False
+
+
+@pytest.mark.unit
+def test_default_config_has_forward_catalyst_bull_active_bear_shadow():
+    """SC-009 regression-guard: DEFAULT_CONFIG ships with bull-active + bear-shadow."""
+    from tradingagents.default_config import DEFAULT_CONFIG
+
+    assert DEFAULT_CONFIG["forward_catalyst_bull_mode"] == "active"
+    assert DEFAULT_CONFIG["forward_catalyst_bear_mode"] == "shadow"
+    assert DEFAULT_CONFIG["forward_catalyst_bull_threshold"] == 0.60
+    assert DEFAULT_CONFIG["forward_catalyst_bear_threshold"] == 0.50
+    assert DEFAULT_CONFIG["forward_catalyst_model"] == "claude-opus-4-7"
+    assert DEFAULT_CONFIG["forward_catalyst_max_rationale_chars"] == 2000

@@ -270,6 +270,50 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
                 exc,
             )
 
+        # Spec 007: forward-catalyst-aware contrarian gate. FIRST forward-
+        # catalyst-aware filter — invokes an LLM (Opus default) to score how
+        # widely the bull/bear case is already absorbed by the market.
+        # Bull-side default-on @T=0.60 (Class 3 Opus retrospective DECISIVE
+        # PASS: discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp on n=33
+        # fires). Bear-side default-shadow per Constitution VIII shadow-mode-
+        # first condition. Wired LAST in the chain per FR-012; consumes ALL
+        # pre-filter outputs as input via the analyst reports + debate.
+        # Adds ~$0.025/propagate Opus cost; set BOTH modes to "off" to
+        # disable + zero cost (FR-013 escape hatch).
+        # See specs/006-forward-catalyst-gate/spec.md.
+        forward_catalyst_dict: dict | None = None
+        try:
+            from tradingagents.agents.utils.forward_catalyst_filter import (
+                evaluate_forward_catalyst,
+            )
+
+            fc_bull_mode = get_config().get("forward_catalyst_bull_mode", "active")
+            fc_bear_mode = get_config().get("forward_catalyst_bear_mode", "shadow")
+            fc_bull_threshold = float(get_config().get("forward_catalyst_bull_threshold", 0.60))
+            fc_bear_threshold = float(get_config().get("forward_catalyst_bear_threshold", 0.50))
+            fc_model = get_config().get("forward_catalyst_model", "claude-opus-4-7")
+            fc_max_chars = int(get_config().get("forward_catalyst_max_rationale_chars", 2000))
+            modified_decision, forward_catalyst_dict = evaluate_forward_catalyst(
+                final_trade_decision,
+                state,
+                bull_mode=fc_bull_mode,
+                bear_mode=fc_bear_mode,
+                bull_threshold=fc_bull_threshold,
+                bear_threshold=fc_bear_threshold,
+                model=fc_model,
+                max_rationale_chars=fc_max_chars,
+            )
+            final_trade_decision = modified_decision
+        except Exception as exc:
+            # Never let filter failure break the PM pipeline.
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "forward_catalyst_filter: unexpected failure in PM hook (%s); "
+                "proceeding with unmodified decision",
+                exc,
+            )
+
         new_risk_debate_state = {
             "judge_decision": final_trade_decision,
             "history": risk_debate_state["history"],
@@ -293,6 +337,8 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
             result["sector_momentum"] = sector_momentum_dict
         if bear_sector_symmetry_dict is not None:
             result["bear_sector_symmetry"] = bear_sector_symmetry_dict
+        if forward_catalyst_dict is not None:
+            result["forward_catalyst"] = forward_catalyst_dict
         return result
 
     return portfolio_manager_node

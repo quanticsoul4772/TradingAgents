@@ -57,6 +57,12 @@ class TradingAgentsConfig(TypedDict):
     bear_sector_symmetry_filter_mode: Literal["off", "shadow", "active"]
     bear_sector_symmetry_filter_threshold_pct: float | None
     bear_sector_symmetry_filter_lookback_days: int
+    forward_catalyst_bull_mode: Literal["off", "shadow", "active"]
+    forward_catalyst_bear_mode: Literal["off", "shadow", "active"]
+    forward_catalyst_bull_threshold: float
+    forward_catalyst_bear_threshold: float
+    forward_catalyst_model: str
+    forward_catalyst_max_rationale_chars: int
     bot_models: dict[str, str]
     data_vendors: dict[str, str]
     tool_vendors: dict[str, str]
@@ -193,6 +199,21 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     "bear_sector_symmetry_filter_mode": "off",
     "bear_sector_symmetry_filter_threshold_pct": None,
     "bear_sector_symmetry_filter_lookback_days": 30,
+    # Spec 007 (specs/006-forward-catalyst-gate/spec.md): forward-catalyst-aware
+    # contrarian gate. FIRST forward-catalyst-aware filter — invokes an LLM (Opus
+    # default) per propagate to score how widely the bull/bear case is already
+    # absorbed by the market. Bull-side default-on @T=0.60 per Class 3 Opus
+    # retrospective DECISIVE PASS (claudedocs/forward-catalyst-class3-opus-
+    # retrospective-2026-05-06.md). Bear-side default-shadow per Constitution VIII
+    # shadow-mode-first condition (n>=20 propagates before active flip). Adds
+    # ~$0.025/propagate Opus cost (~$0.25/day for typical 10-ticker workflow).
+    # Set BOTH modes to "off" to disable + zero cost (FR-013 escape hatch).
+    "forward_catalyst_bull_mode": "active",
+    "forward_catalyst_bear_mode": "shadow",
+    "forward_catalyst_bull_threshold": 0.60,
+    "forward_catalyst_bear_threshold": 0.50,
+    "forward_catalyst_model": "claude-opus-4-7",
+    "forward_catalyst_max_rationale_chars": 2000,
     # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
     # (str). When set, the framework instantiates a per-bot client for that
     # model using the configured llm_provider; bots not in this dict use the

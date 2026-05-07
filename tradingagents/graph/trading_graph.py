@@ -462,6 +462,10 @@ class TradingAgentsGraph:
             # mirrors the contrarian_gate + sector_momentum persistence paths
             # above per spec 006 R-5; same precedent as commit 4c14d0f.
             "bear_sector_symmetry": final_state.get("bear_sector_symmetry"),
+            # Spec 007 forward-catalyst filter annotation (None when both modes=='off');
+            # mirrors the contrarian_gate / sector_momentum / bear_sector_symmetry
+            # persistence paths above per spec 007 R-5; same precedent as commit 4c14d0f.
+            "forward_catalyst": final_state.get("forward_catalyst"),
         }
 
         # Save to file
