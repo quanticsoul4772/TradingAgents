@@ -54,6 +54,45 @@ BULLISH_RATINGS = {"Buy", "Overweight"}
 T_BULL = DEFAULT_CONFIG["forward_catalyst_bull_threshold"]
 
 
+def evaluate_gate_1(
+    net_dalpha_improvement: float | None,
+    alt_gate_1_pass: bool | None,
+) -> dict:
+    """Resolve SC-009 gate-1 status using standard or alternative evaluator.
+
+    Standard gate-1 (boost-ON kept α minus boost-OFF kept α in
+    [+2.35pp, +4.35pp]) is preferred when computable. Alternative gate-1
+    (suppressed commits' α in [-10%, +2%]) is the fallback when standard
+    is undefined (100% fire rate → both kept sets empty).
+
+    Returns dict with keys: effective (bool), method (str), status (str).
+    """
+    if net_dalpha_improvement is not None:
+        passes = 2.35 <= net_dalpha_improvement <= 4.35
+        return {
+            "effective": passes,
+            "method": "standard",
+            "status": "PASS" if passes else "FAIL",
+        }
+    if alt_gate_1_pass is True:
+        return {
+            "effective": True,
+            "method": "alternative (100%-fire-rate fallback)",
+            "status": "PASS",
+        }
+    if alt_gate_1_pass is False:
+        return {
+            "effective": False,
+            "method": "alternative (100%-fire-rate fallback)",
+            "status": "FAIL",
+        }
+    return {
+        "effective": False,
+        "method": "neither (no fires + no suppressed α)",
+        "status": "INCONCLUSIVE",
+    }
+
+
 def _load_state_log(ticker: str, trade_date: str) -> dict | None:
     """Load full_states_log_<DATE>.json for (ticker, trade_date)."""
     log_path = (
@@ -256,24 +295,10 @@ def main():
     gate_2_pass = n_fired_boost_on >= 8
     gate_3_pass = n_engaged >= 1
 
-    # Effective gate-1: standard (kept-α delta) OR alternative (suppressed-α direction)
-    # when standard is undefined due to 100% fire rate.
-    if net_dalpha_improvement is not None:
-        effective_gate_1 = gate_1_pass
-        gate_1_method = "standard"
-        gate_1_status = "PASS" if gate_1_pass else "FAIL"
-    elif alt_gate_1_pass is True:
-        effective_gate_1 = True
-        gate_1_method = "alternative (100%-fire-rate fallback)"
-        gate_1_status = "PASS"
-    elif alt_gate_1_pass is False:
-        effective_gate_1 = False
-        gate_1_method = "alternative (100%-fire-rate fallback)"
-        gate_1_status = "FAIL"
-    else:
-        effective_gate_1 = False
-        gate_1_method = "neither (no fires + no suppressed α)"
-        gate_1_status = "INCONCLUSIVE"
+    g1 = evaluate_gate_1(net_dalpha_improvement, alt_gate_1_pass)
+    effective_gate_1 = g1["effective"]
+    gate_1_method = g1["method"]
+    gate_1_status = g1["status"]
 
     print("## SC-009 acceptance gate")
     print()
