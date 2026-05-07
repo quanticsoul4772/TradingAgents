@@ -51,9 +51,24 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 LOGS_DIR = Path.home() / ".tradingagents" / "logs"
 ATTRIBUTION_CSV = Path("claudedocs/sector-alpha-attribution-2026-05-06.csv")
-OUT_CSV = Path("claudedocs/forward-catalyst-class3-retrospective-2026-05-06.csv")
-OUT_MD = Path("claudedocs/forward-catalyst-class3-retrospective-2026-05-06.md")
-RESUME_CSV = OUT_CSV  # Used to skip already-scored rows on re-run
+DEFAULT_MODEL = "claude-haiku-4-5"
+
+# Per-model output paths so Haiku and Opus runs don't clobber each other.
+_MODEL_SLUGS = {
+    "claude-haiku-4-5": "",  # default: paths without slug (original Haiku run)
+    "claude-opus-4-7": "-opus",
+    "claude-sonnet-4-6": "-sonnet",
+}
+
+
+def _output_paths(model: str) -> tuple[Path, Path]:
+    """Return (csv_path, md_path) for the given model. Uses a slug so different
+    models write to distinct paths and don't clobber prior runs."""
+    slug = _MODEL_SLUGS.get(model, f"-{model.replace('claude-', '').replace('.', '_')}")
+    csv = Path(f"claudedocs/forward-catalyst-class3{slug}-retrospective-2026-05-06.csv")
+    md = Path(f"claudedocs/forward-catalyst-class3{slug}-retrospective-2026-05-06.md")
+    return csv, md
+
 
 BULLISH_RATINGS = {"Buy", "Overweight"}
 BEARISH_RATINGS = {"Underweight", "Sell"}
@@ -95,15 +110,15 @@ class CasePricedInScore(BaseModel):
 # ---- LLM client helpers ---------------------------------------------------
 
 
-def _get_haiku_llm():
-    """Build a Haiku client using the existing factory. Requires ANTHROPIC_API_KEY."""
+def _get_anthropic_llm(model: str):
+    """Build an Anthropic client for the given model. Requires ANTHROPIC_API_KEY."""
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise RuntimeError(
             "ANTHROPIC_API_KEY not set. Export your key or run with --dry-run to skip LLM calls."
         )
     from tradingagents.llm_clients.factory import create_llm_client
 
-    client = create_llm_client("anthropic", "claude-haiku-4-5")
+    client = create_llm_client("anthropic", model)
     return client.get_llm()
 
 
@@ -260,12 +275,12 @@ def _load_state_log(ticker: str, trade_date: str) -> dict | None:
 # ---- Resume support -------------------------------------------------------
 
 
-def _load_resume_csv() -> pd.DataFrame | None:
+def _load_resume_csv(csv_path: Path) -> pd.DataFrame | None:
     """Load the existing output CSV if present, for resume."""
-    if not RESUME_CSV.exists():
+    if not csv_path.exists():
         return None
     try:
-        return pd.read_csv(RESUME_CSV)
+        return pd.read_csv(csv_path)
     except Exception:
         return None
 
@@ -430,13 +445,25 @@ def main():
         action="store_true",
         help="Re-score every commit even if already in the output CSV",
     )
+    parser.add_argument(
+        "--model",
+        default=DEFAULT_MODEL,
+        help=(
+            f"Anthropic model to use. Default: {DEFAULT_MODEL}. Override with "
+            "claude-opus-4-7 for more discriminating scoring (~10x cost)."
+        ),
+    )
     args = parser.parse_args()
 
     bull_thresholds = tuple(sorted(float(t) for t in args.bull_thresholds.split(",")))
     bear_thresholds = tuple(sorted(float(t) for t in args.bear_thresholds.split(",")))
+    out_csv, out_md = _output_paths(args.model)
 
     print("# Class 3 forward-catalyst retrospective — LLM-extracted 'case priced in' feature")
     print()
+    print(f"Model: {args.model}")
+    print(f"Output CSV: {out_csv}")
+    print(f"Output MD: {out_md}")
     print(f"Max controls per class: {args.max_controls}")
     print(f"Bull thresholds: {bull_thresholds}")
     print(f"Bear thresholds: {bear_thresholds}")
@@ -457,21 +484,22 @@ def main():
     print(f"    control_hold: {(df['sample_class'] == 'control_hold').sum()}")
 
     # Resume support
-    resume = _load_resume_csv() if not args.no_resume else None
+    resume = _load_resume_csv(out_csv) if not args.no_resume else None
     if resume is not None:
-        print(f"  Resume: {len(resume)} rows already in {RESUME_CSV}")
+        print(f"  Resume: {len(resume)} rows already in {out_csv}")
         already_done = set(
             zip(resume["ticker"].astype(str), resume["trade_date"].astype(str), strict=False)
         )
     else:
         already_done = set()
 
-    # Cost estimate
+    # Cost estimate (Haiku ~$0.002/call ceiling; Opus ~10x more)
     n_to_call = len(df) - sum(
         1 for _, r in df.iterrows() if (r["ticker"], r["trade_date"]) in already_done
     )
-    est_cost = n_to_call * 0.002  # Haiku ceiling
-    print(f"  LLM calls to make: {n_to_call} (est cost ~${est_cost:.2f})")
+    cost_per_call = 0.002 if "haiku" in args.model.lower() else 0.025
+    est_cost = n_to_call * cost_per_call
+    print(f"  LLM calls to make: {n_to_call} (est cost ~${est_cost:.2f} at {args.model})")
 
     if args.dry_run:
         print()
@@ -481,10 +509,10 @@ def main():
     if n_to_call == 0:
         print("  All rows already scored; skipping LLM calls.")
     else:
-        # Initialize Haiku
+        # Initialize the configured Anthropic model
         print()
-        print("Initializing Haiku client...")
-        llm = _get_haiku_llm()
+        print(f"Initializing {args.model} client...")
+        llm = _get_anthropic_llm(args.model)
         print("  Ready.")
 
         # Build/extend the results
@@ -529,7 +557,7 @@ def main():
                     }
                 )
             # Save after every call (success OR failure) — cheap insurance against crashes
-            pd.DataFrame(results).to_csv(OUT_CSV, index=False)
+            pd.DataFrame(results).to_csv(out_csv, index=False)
 
         scored = pd.DataFrame(results)
     # If resume only (no new calls), use the resume frame directly
@@ -537,7 +565,7 @@ def main():
         scored = resume
 
     print()
-    print(f"  Total rows in {OUT_CSV}: {len(scored)}")
+    print(f"  Total rows in {out_csv}: {len(scored)}")
     valid_scored = scored.dropna(subset=["bull_case_priced_in", "bear_case_priced_in"])
     print(f"  Successfully scored: {len(valid_scored)} (skipped {len(scored) - len(valid_scored)})")
 
@@ -608,8 +636,8 @@ def main():
         "",
         f"**Scored**: {len(valid_scored)} commits (cohort A bullish ticker_weak + cohort B "
         f"bearish ticker_strong + bull/bear winner controls + Hold baselines)",
-        "**LLM**: claude-haiku-4-5",
-        f"**Cost**: ~${len(valid_scored) * 0.002:.2f} (Haiku ceiling)",
+        f"**LLM**: {args.model}",
+        f"**Cost**: ~${len(valid_scored) * cost_per_call:.2f} (per-call ceiling)",
         "",
         "## Per-sample-class mean scores",
         "",
@@ -712,15 +740,15 @@ def main():
             "Reads `claudedocs/sector-alpha-attribution-2026-05-06.csv` for cohort + controls;",
             "loads cached state logs from `~/.tradingagents/logs/<ticker>/...`; calls Haiku via",
             "`tradingagents.llm_clients.factory.create_llm_client`; saves per-row scores to",
-            f"`{OUT_CSV}`. Resume-on-rerun supported (only re-scores rows missing from CSV).",
+            f"`{out_csv}`. Resume-on-rerun supported (only re-scores rows missing from CSV).",
             "Cost: ~$0.10-0.20 in Haiku at default ~95-commit sample.",
         ]
     )
 
-    OUT_MD.parent.mkdir(parents=True, exist_ok=True)
-    OUT_MD.write_text("\n".join(md), encoding="utf-8")
+    out_md.parent.mkdir(parents=True, exist_ok=True)
+    out_md.write_text("\n".join(md), encoding="utf-8")
     print()
-    print(f"Wrote {OUT_MD}")
+    print(f"Wrote {out_md}")
 
 
 if __name__ == "__main__":
