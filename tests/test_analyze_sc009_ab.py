@@ -130,3 +130,21 @@ def test_returned_dict_has_all_three_keys(net_dalpha, alt_pass):
     assert isinstance(result["method"], str)
     assert isinstance(result["status"], str)
     assert result["status"] in {"PASS", "FAIL", "INCONCLUSIVE"}
+
+
+# ---- PRELIMINARY status guard (added 2026-05-07 evening) -------------------
+
+
+def test_preliminary_marker_string_appears_in_module():
+    """Smoke check that the analyzer recognizes the PRELIMINARY status guard.
+
+    Avoids subprocess-running main() in unit tests; validates the marker
+    string is present in the analyzer source so refactors can't silently
+    remove it without test failure.
+    """
+    src = (SCRIPTS_DIR / "analyze_sc009_ab.py").read_text(encoding="utf-8")
+    assert "**Status**: PRELIMINARY" in src, (
+        "Analyzer must check for the **Status**: PRELIMINARY guard string "
+        "before overwriting ANALYSIS.md (added 2026-05-07 evening to "
+        "preserve operator hand-edits during mid-flight backtests)."
+    )

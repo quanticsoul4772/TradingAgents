@@ -455,9 +455,21 @@ def main():
     )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text("\n".join(md_lines), encoding="utf-8")
-    print()
-    print(f"Wrote {out_path}")
+    # Guard: don't overwrite a file an operator has manually marked PRELIMINARY.
+    # Surfaced 2026-05-07 evening when ANALYSIS.md was hand-edited to add
+    # canonical-21d-window caveats while SC-009 was mid-flight; subsequent
+    # analyzer runs would have stomped the manual edits.
+    skip_overwrite = out_path.exists() and "**Status**: PRELIMINARY" in out_path.read_text(
+        encoding="utf-8"
+    )
+    if skip_overwrite:
+        print()
+        print(f"[skipped] {out_path} has manual PRELIMINARY status — analyzer output NOT written.")
+        print("          To force overwrite, remove the PRELIMINARY status line and re-run.")
+    else:
+        out_path.write_text("\n".join(md_lines), encoding="utf-8")
+        print()
+        print(f"Wrote {out_path}")
 
 
 if __name__ == "__main__":
