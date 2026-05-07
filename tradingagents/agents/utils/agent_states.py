@@ -78,3 +78,11 @@ class AgentState(MessagesState):
     sector_momentum: Annotated[
         dict, "Spec 004 sector-momentum-filter annotation; None when mode=='off'"
     ]
+
+    # Spec 006 bear-sector-symmetry filter: PM emits this block when
+    # bear_sector_symmetry_filter_mode != "off". Keys per
+    # specs/005-bear-sector-symmetry/contracts/annotation_schema.md.
+    # Must be declared here so LangGraph propagates it from PM's return dict to final_state.
+    bear_sector_symmetry: Annotated[
+        dict, "Spec 006 bear-sector-symmetry-filter annotation; None when mode=='off'"
+    ]

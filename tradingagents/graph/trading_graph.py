@@ -458,6 +458,10 @@ class TradingAgentsGraph:
             # mirrors the contrarian_gate persistence path above per spec
             # 004 R-5 to avoid silently dropping shadow-mode annotations.
             "sector_momentum": final_state.get("sector_momentum"),
+            # Spec 006 bear-sector-symmetry filter annotation (None when mode=='off');
+            # mirrors the contrarian_gate + sector_momentum persistence paths
+            # above per spec 006 R-5; same precedent as commit 4c14d0f.
+            "bear_sector_symmetry": final_state.get("bear_sector_symmetry"),
         }
 
         # Save to file
