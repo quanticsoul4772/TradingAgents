@@ -26,7 +26,7 @@ What spec 007 did NOT validate:
 
 ## 2. Remaining forward-catalyst classes
 
-### Class 2 — Options-implied volatility (HIGHEST priority candidate)
+### Class 2 — Options-implied volatility (HIGHEST priority candidate; **DATA-BLOCKED 2026-05-06 evening**)
 
 **Mechanism**: At signal-generation time, fetch options chain via yfinance:
 - IV percentile (current 30-day-IV vs trailing 1-year-IV distribution)
@@ -37,13 +37,18 @@ What spec 007 did NOT validate:
 
 **Updated prior** (post-spec-007): **HIGHER than the original design doc estimated** because:
 - The original design doc gave Class 2 a 50-70% prior on bear-cohort discrimination specifically. Spec 007's bear-side gap = 0 means Class 3 alone CAN'T catch the bear cohort cleanly. Class 2's options-IV signal is the natural complement (options markets often pre-price expected upside even when prose doesn't reflect it).
-- Cost is comparable to Class 3 ($0-5 retrofit if cached; $5-10 if fetching fresh options data).
+- Cost was originally estimated at $0-5 retrofit (yfinance options data is free).
 
-**Spec 008 fit candidate**: VERY STRONG. Class 2 directly addresses the gap Class 3 left (bear-side cohort not separable on prose features alone).
+**🚫 BLOCKED — yfinance does NOT cache historical options chains** (verified 2026-05-06 evening; commit `ada8ebb`). The `yf.Ticker(...).options` attribute returns ONLY the current snapshot of expirations; `option_chain(expiration)` returns the current option chain for that expiration. There is no historical-by-trade-date lookup for `2026-04-03` or any other historical date in the cohort. The 45-commit cohort spans 2025-08 through 2026-04; none of those dates have cached options chains accessible via yfinance.
 
-**Implementation cost**: ~5h to wire featurizers (IV percentile / term structure / skew / put-call); $0-5 retrofit cost (yfinance options data is free but slow; cached snapshots may be missing for old dates).
+**Implications**:
+- Class 2 retrofit as originally designed is **infeasible without a paid 3rd-party historical options data provider** (e.g., OptionMetrics, OPRA, Polygon.io). Out of scope per Constitution III T1/T2 cost gating.
+- A LIVE Class 2 implementation (production filter that fetches the CURRENT options chain at signal-generation time) is still feasible — but cannot be retrospectively validated against the historical cohort, so Constitution VIII v1.4.0's pre-spec retrospective gate cannot be satisfied. Spec 008 invocation for Class 2 is **NOT permitted** without cohort-validation evidence.
+- Possible workaround: **shadow-mode-first** for live Class 2 (collect annotations on n≥20 fresh propagates, evaluate after the holding window closes). This is the slow path; it doesn't unblock spec writing today.
 
-**Pre-spec retrospective methodology**: identical to Class 3 — load the 45-commit cohort + ~50 controls, fetch options data, compute features, sweep thresholds, evaluate against Constitution VIII v1.4.0 gate (discrim ≥ +5pp + cohort hit rate ≥ 60% + net Δα ≥ +0.5pp OR shadow-mode-first).
+**Spec 008 fit candidate**: ~~VERY STRONG~~ → **DEFERRED until historical options data is available** OR shadow-mode-first observation period yields enough fresh data (~21+ trading days minimum to score realized α on n≥20 fresh propagates).
+
+**Substitute path forward (not Spec 008)**: Hybrid C (Class 3 × Class 6 calendar) is the cheapest retrofit-feasible alternative — both Class 3 + Class 6 data are historically available; Hybrid C combines them into a calendar-aware enhancement of the validated Class 3 filter without requiring options data.
 
 ### Class 4 — Cross-asset / regime signals
 
@@ -150,17 +155,31 @@ The strongest single-class candidate is **Class 2 (options-IV)**. The strongest 
 
 Per Constitution VIII v1.4.0 forward-catalyst-class validation gate + cost-asymmetry discipline:
 
-### Spec 008 candidate (NEXT) — Class 2 retrofit + spec
+### Spec 008 candidate (NEXT) — Class 2 retrofit + spec ~~RECOMMENDED~~ → **DATA-BLOCKED; PIVOT TO HYBRID C** (2026-05-06 evening)
 
-1. **Build `scripts/forward_catalyst_class2_retrospective.py`** — load 45-commit cohort + 50 controls; fetch options chain via yfinance for each (ticker, trade_date); compute IV percentile / term structure / skew / put-call; sweep thresholds; evaluate against Constitution VIII v1.4.0 gate.
-2. **Cost**: ~$0-5 yfinance fetch (caching may be partial); ~5h script.
+~~1. **Build `scripts/forward_catalyst_class2_retrospective.py`** — load 45-commit cohort + 50 controls; fetch options chain via yfinance for each (ticker, trade_date); compute IV percentile / term structure / skew / put-call; sweep thresholds; evaluate against Constitution VIII v1.4.0 gate.~~
+~~2. **Cost**: ~$0-5 yfinance fetch (caching may be partial); ~5h script.~~
+
+**Outcome of attempted Class 2 retrofit (2026-05-06 evening)**: yfinance probe confirmed options data is CURRENT-SNAPSHOT-ONLY; no historical lookups for 2025-08 through 2026-04 cohort dates. Retrofit-feasibility blocked. See "Class 2 — DATA-BLOCKED" section above for details.
+
+### Spec 008 candidate (revised) — Hybrid C (Class 3 × Class 6 calendar boost)
+
+The cheapest retrofit-feasible path forward — both Class 3 (LLM-extracted, already validated + shipped) + Class 6 (calendar features: days-to-earnings, days-to-Fed, OpEx) data ARE historically available via yfinance + cached calendar.
+
+1. **Build `scripts/forward_catalyst_hybrid_c_retrospective.py`** — load the 94-commit Class 3 retrospective CSV (forward-catalyst-class3-opus-retrospective-2026-05-06.csv); for each row, compute days-to-next-earnings (from `yf.Ticker(t).earnings_dates`); apply calendar boost: `effective_score = bull_case_priced_in × (1 + boost)` where `boost = max(0, 1 - days_to_earnings / 14)` so tickers within 14 days of earnings get up to 2× weighting; sweep boost-curve params; evaluate against Constitution VIII v1.4.0 gate (delta vs Class 3 alone).
+2. **Cost**: ~$0 (reuses cached Class 3 scores + free yfinance earnings calendar); ~3h script.
 3. **Decision tree**:
-   - If passes both bull AND bear gates → write Spec 008 (Class 2 standalone filter)
-   - If passes bear-side only → write Spec 008 with bull-side off-by-default + bear-side default-on (THE GAP CLASS 3 LEFT)
-   - If passes bull-side only → SKIP spec; Class 3 already catches bull-side; redundant
-   - If fails both → SKIP spec; document negative finding; consider Hybrid A (Class 3 + Class 2 combined fire)
+   - If Hybrid C improves bull-side discrimination AND/OR bear-side cohort hit rate vs Class 3 alone → write Spec 008 as the calendar-aware enhancement
+   - If Hybrid C is no better than Class 3 alone → SKIP spec; document the negative finding; calendar features are too crude to discriminate
+   - If Hybrid C is WORSE than Class 3 (calendar boost over-weights bad commits near earnings) → SKIP + document
 
-**Highest-info-value next step.** Mirrors today's spec 007 retrofit-then-spec workflow.
+**Why this is the right substitute**:
+- Tests an empirically-grounded hypothesis (forward catalysts within 14 trading days are more "priced in" than distant catalysts)
+- Zero new LLM cost (reuses cached Class 3 scores)
+- Zero data-availability risk (earnings_dates IS in yfinance historical)
+- Quick decision (~3h not ~5h)
+
+### Spec 009 candidate (FUTURE) — Class 5 (fundamentals delta) standalone OR Hybrid B
 
 ### Spec 009 candidate (FUTURE) — Hybrid A (Class 3 + Class 2)
 
