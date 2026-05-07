@@ -644,3 +644,116 @@ def test_state_log_bear_sector_symmetry_is_none_when_field_absent(mocked_graph, 
     )
     persisted = json.loads(log_path.read_text(encoding="utf-8"))
     assert persisted["bear_sector_symmetry"] is None
+
+
+@pytest.mark.unit
+def test_state_log_persists_forward_catalyst_field(mocked_graph, tmp_path):
+    """Spec 007 regression-guard mirroring test_state_log_persists_bear_sector_symmetry_field.
+
+    Per spec 007 R-5, the state-log writer in trading_graph.py:_log_state
+    must include `forward_catalyst` in its whitelist or annotations are
+    silently dropped (the same bug commit `4c14d0f` fixed for
+    `contrarian_gate`, spec 004 fixed for `sector_momentum`, and spec 006
+    fixed for `bear_sector_symmetry`).
+    """
+    final_state = {
+        "company_of_interest": "NVDA",
+        "trade_date": "2026-04-03",
+        "market_report": "",
+        "sentiment_report": "",
+        "news_report": "",
+        "fundamentals_report": "",
+        "investment_debate_state": {
+            "bull_history": "",
+            "bear_history": "",
+            "history": "",
+            "current_response": "",
+            "judge_decision": "",
+        },
+        "trader_investment_plan": "",
+        "risk_debate_state": {
+            "aggressive_history": "",
+            "conservative_history": "",
+            "neutral_history": "",
+            "history": "",
+            "judge_decision": "",
+        },
+        "investment_plan": "",
+        "final_trade_decision": "**Rating**: Hold",
+        "forward_catalyst": {
+            "model": "claude-opus-4-7",
+            "bull_case_priced_in": 0.78,
+            "bear_case_priced_in": 0.45,
+            "rationale": "test rationale",
+            "bull_threshold": 0.60,
+            "bear_threshold": 0.50,
+            "bull_mode": "active",
+            "bear_mode": "shadow",
+            "would_fire_bull": True,
+            "would_fire_bear": False,
+            "fired_bull": True,
+            "fired_bear": False,
+            "pre_rating": "Overweight",
+            "post_rating": "Hold",
+            "skipped": None,
+            "error": None,
+        },
+    }
+    mocked_graph.ticker = "NVDA"
+    mocked_graph._log_state("2026-04-03", final_state)
+    log_path = (
+        tmp_path
+        / "results"
+        / "NVDA"
+        / "TradingAgentsStrategy_logs"
+        / "full_states_log_2026-04-03.json"
+    )
+    persisted = json.loads(log_path.read_text(encoding="utf-8"))
+    assert "forward_catalyst" in persisted, (
+        "forward_catalyst field missing from persisted state log (would silently lose annotations)"
+    )
+    assert persisted["forward_catalyst"]["fired_bull"] is True
+    assert persisted["forward_catalyst"]["model"] == "claude-opus-4-7"
+    assert persisted["forward_catalyst"]["bull_case_priced_in"] == 0.78
+
+
+@pytest.mark.unit
+def test_state_log_forward_catalyst_is_none_when_field_absent(mocked_graph, tmp_path):
+    """When both modes off OR forward_catalyst key is absent, persisted value is None."""
+    final_state = {
+        "company_of_interest": "NVDA",
+        "trade_date": "2026-04-03",
+        "market_report": "",
+        "sentiment_report": "",
+        "news_report": "",
+        "fundamentals_report": "",
+        "investment_debate_state": {
+            "bull_history": "",
+            "bear_history": "",
+            "history": "",
+            "current_response": "",
+            "judge_decision": "",
+        },
+        "trader_investment_plan": "",
+        "risk_debate_state": {
+            "aggressive_history": "",
+            "conservative_history": "",
+            "neutral_history": "",
+            "history": "",
+            "judge_decision": "",
+        },
+        "investment_plan": "",
+        "final_trade_decision": "**Rating**: Hold",
+        # No forward_catalyst key
+    }
+    mocked_graph.ticker = "NVDA"
+    mocked_graph._log_state("2026-04-03", final_state)
+    log_path = (
+        tmp_path
+        / "results"
+        / "NVDA"
+        / "TradingAgentsStrategy_logs"
+        / "full_states_log_2026-04-03.json"
+    )
+    persisted = json.loads(log_path.read_text(encoding="utf-8"))
+    assert persisted["forward_catalyst"] is None

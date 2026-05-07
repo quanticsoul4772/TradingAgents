@@ -2,9 +2,9 @@
 
 **Project**: Personal experimental fork of TradingAgents — a research playground for studying multi-agent LLM debate dynamics, using equity-decision-making as the substrate because it has cheap, objective ground truth.
 
-**Version**: 1.3.0
+**Version**: 1.4.0
 **Adopted**: 2026-05-01
-**Last amended**: 2026-05-06 — added **Principle VIII (Retrospective Before Spec for Backward-Looking Price Filters)** after three same-day retrospective failures (spec 004 sector momentum, spec 006 bear sector-symmetry, spec 005-candidate bull sector-relative). Cost asymmetry: $0/1h retrospective vs ~6-8h spec+impl+tests; the retrospective gate must come FIRST for the filter class.
+**Last amended**: 2026-05-06 (later) — extended **Principle VIII** with a "Forward-catalyst-class validation gate" sub-section. Empirical basis: Class 3 Opus retrospective DECISIVELY PASSED bull-side gate (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp at T=0.60); bear-side passed criteria 1+2 with shadow-mode-first condition. Spec 007 ships as the first instance of this filter class. v1.3.0 → v1.4.0 (MINOR per amended-principle rule).
 
 This constitution governs how this project evolves. The commitments below are intentionally short and few. They are constraints, not aspirations — when in conflict with convenience, they win.
 
@@ -145,6 +145,48 @@ If either criterion fails, **skip the spec entirely**. Document the verdict in t
 
 **Acceptable exception**: an experimental "shakeout" filter that is explicitly scoped to operator-opt-in (default-off, no SC-008-style empirical-validation gate, framed in the spec as "exploration, not commitment"). The filter still goes through `/speckit.specify` for documentation but skips the retrospective gate. Marked in `PARAMS.json` as `shakeout_filter: true`. Use sparingly — most filter ideas should pass the retrospective first.
 
+### Forward-catalyst-class validation gate (added 2026-05-06; v1.4.0)
+
+The original VIII gate (above) covers backward-looking + price-derived filters. **Forward-catalyst-aware filters** (mechanism class includes LLM-extracted features synthesizing analyst evidence, options-implied-volatility signals, news-density signals, fundamentals-delta features, cross-asset / regime features) follow a separate gate calibrated to their different signal characteristics:
+
+1. **Discrimination ≥ +5pp in correct direction (PRIMARY)**. Among the suppressed cohort, the suppressed-cohort α magnitude must exceed the suppressed-non-cohort α magnitude by ≥ 5pp. This is the criterion spec 005 candidate FAILED catastrophically (-15pp wrong-sign discrimination) and that Class 3 Opus PASSED at +14.43pp (bull-side) / +23.10pp (bear-side).
+2. **Cohort hit rate ≥ 60%** (tightened from VIII's 40%; forward-catalyst signals should be MORE specific because they have more information).
+3. **Net Δα ≥ +0.5pp at the proposed default** (loosened from VIII's +1pp; smaller corpus + smaller discrimination is acceptable when criterion 1 is strong) **OR shadow-mode-first** for n ≥ 20 fresh propagates before active-mode flip if criterion 3 is unmeasurable on the small retrospective corpus.
+
+**Empirical basis** (2026-05-06): Class 3 Opus retrospective on 94 cohort + control commits (`claudedocs/forward-catalyst-class3-opus-retrospective-2026-05-06.md`):
+
+| Side | Cohort | Discrim | Hit rate | Net Δα | Outcome |
+|---|---|---|---|---|---|
+| Bull (T=0.60) | 27 ticker_weak | **+14.43pp** | **88.9%** | **+2.24pp** (n=33 fires) | DECISIVE PASS — bull default-on |
+| Bear (T=0.50) | 18 ticker_strong | **+23.10pp** | **72.2%** | +0.30pp (n=24 fires) | Criteria 1+2 pass; shadow-mode-first per criterion 3 fail |
+
+**Spec 007** (`specs/006-forward-catalyst-gate/`) ships as the first instance of this filter class, embodying the criteria above as `forward_catalyst_bull_mode = "active"` (default) + `forward_catalyst_bear_mode = "shadow"` (default).
+
+**Operational test** (mirrors the original VIII gate, with criteria adapted):
+1. Build the retrospective script in the same shape as `scripts/forward_catalyst_class3_retrospective.py`. Walks the corpus, computes per-commit feature, evaluates fire decisions at one or more thresholds.
+2. Report: per-threshold n_kept / n_fired / kept α / fired α / **net Δα** + per-class mean scores + **discrimination magnitude** (suppressed-cohort α vs suppressed-non-cohort α) + cohort hit rate.
+3. Write the verdict block at the bottom of the markdown applying the gate criteria.
+4. Commit the retrospective + markdown BEFORE invoking `/speckit.specify`.
+
+**Gate criteria** (all three must pass for spec to be permitted at default-on; OR criteria 1+2 must pass with shadow-mode-first condition for the failing side):
+- Discrimination ≥ +5pp in correct direction
+- Cohort hit rate ≥ 60% (when target cohort named)
+- Net Δα ≥ +0.5pp OR shadow-mode-first if (3) is unmeasurable
+
+If criterion 1 fails → SKIP spec entirely (mirrors backward-price-only gate failure pattern). If criteria 1+2 pass but criterion 3 fails → spec permitted with shadow-mode-first condition documented in the spec.
+
+**Trigger criteria** (which filters this gate applies to):
+- Yes: filter inputs include LLM-extracted features (synthesized from analyst evidence, prose, etc.)
+- Yes: filter inputs include forward-looking signals (options-IV, news-density, fundamentals-delta, calendar features)
+- Yes: filter inputs include cross-asset / regime features that aren't pure backward-price-only
+- No: pure backward-price-only filters (use the original VIII gate above)
+- No: prose-density filters operating on the framework's own debate text (use spec 003's IC-based validation; different mechanism class entirely)
+- No: A3 (grandfathered; pre-dates Principle VIII)
+
+**Why the separate gate**: forward-catalyst signals have different statistical properties than backward-price-only signals. The discrimination criterion is more load-bearing because forward-catalyst signals have (in principle) higher ceiling on per-commit information content; the net Δα threshold can be looser because corpus sizes for retrospective validation are often smaller (LLM scoring is more expensive than price-math). The shadow-mode-first condition lets operators observe production behavior on fresh data before committing to default-on, which is critical for LLM-feature filters where the retrospective sample may be small.
+
+**Acceptable exception** (same as backward-price gate): explicit "shakeout" filters scoped to operator-opt-in (default-off, no validation gate, marked `shakeout_filter: true` in PARAMS.json).
+
 ---
 
 ## Quality Gates
@@ -195,8 +237,9 @@ This constitution is amendable. Amendments follow the spec-kit constitution flow
 
 The principles above are themselves up for amendment if they prove ceremonial rather than load-bearing. The test: after one month of use, are we honoring this principle because it's helping or because it's written down? If the latter, amend or remove.
 
-**Version**: 1.3.0
-**Last amended**: 2026-05-06 — added **Principle VIII (Retrospective Before Spec for Backward-Looking Price Filters)** after three same-day retrospective failures (spec 004 sector momentum -0.45pp/n=73; spec 006 bear sector-symmetry -0.71pp/n=36; spec 005-candidate bull sector-relative +0.31pp max/n=79). Cost asymmetry: $0/1h retrospective vs ~6-8h spec+impl+tests. Backward-looking price filters cannot DISCRIMINATE cohort losers from similar-pattern winners; the retrospective gate must come FIRST for this filter class. Both criteria (net Δα ≥ +1pp at default + cohort hit rate ≥ 40%) must pass for spec to be written. Three failures in one day codified the lesson.
+**Version**: 1.4.0
+**Last amended**: 2026-05-06 (later) — extended **Principle VIII** with a "Forward-catalyst-class validation gate" sub-section. Empirical basis: Class 3 Opus retrospective DECISIVELY PASSED bull-side (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp at T=0.60 on n=33 fires); bear-side passed criteria 1+2 with shadow-mode-first condition (discrim +23.10pp / hit rate 72.2% / net Δα +0.30pp). Forward-catalyst signals follow a separate gate (discrim ≥ +5pp PRIMARY + cohort hit rate ≥ 60% + net Δα ≥ +0.5pp OR shadow-mode-first) calibrated to their different statistical properties. Spec 007 ships as the first instance of this filter class.
+**Prior version**: 1.3.0 — added **Principle VIII (Retrospective Before Spec for Backward-Looking Price Filters)** after three same-day retrospective failures (spec 004 sector momentum -0.45pp/n=73; spec 006 bear sector-symmetry -0.71pp/n=36; spec 005-candidate bull sector-relative +0.31pp max/n=79). Cost asymmetry: $0/1h retrospective vs ~6-8h spec+impl+tests. Backward-looking price filters cannot DISCRIMINATE cohort losers from similar-pattern winners; the retrospective gate must come FIRST for this filter class. Both criteria (net Δα ≥ +1pp at default + cohort hit rate ≥ 40%) must pass for spec to be written. Three failures in one day codified the lesson.
 **Prior version**: 1.2.2 — Principle VII appended Cross-period scope clarification: realized-α claims (not commit-rate claims) must be treated as period-conditional unless validated across multiple periods. Empirical trigger: experiment 008 (same config as 007, Q4 2025 dates instead of Q1 2026) produced OW 21d α = -1.81% vs 007's +3.05%. Bayesian posterior on stable-cross-period-signal hypothesis dropped 0.64 → 0.52. ANALYSIS.md write-ups must state the period composition of any n=N cohort and the cross-period replication status of the claim.
 **Prior version**: 1.2.1 — Principle VII appended Replicability-scope clarification: bucket-level (replicable) vs date-level (single observation) evidence. Trigger: 005-vs-007 NVDA non-replication on the same dates.
 **Prior version**: 1.2.0 — Principle III restructured from single $30 ceiling to 4-tier ladder (T1 ≤$5 / T2 $5-30 / T3 $30-100 / T4 $100+) reflecting Opus pricing + accumulated re-analysis tooling; added Principle VII (Calibrated Abstention is a Valid Output); sharpened Principle IV with empirical backing.
