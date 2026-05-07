@@ -1,6 +1,6 @@
-# Research-burst day — 2026-05-07 (morning + early-afternoon extension session)
+# Research-burst day — 2026-05-07 (morning + early-afternoon + late-afternoon extension session)
 
-**Day-in-progress tally** (~07:30 PDT mid-flight): **20 PRs shipped** (19 merged + 1 open) + SC-009 backtest running in background (11/36 rows, ~3h ETA, 100% bull-fire rate so far) + 5 new cross-session memories.
+**Day-in-progress tally** (late-afternoon): **24 PRs shipped** (24 merged) + SC-009 backtest running in background (16/36 rows, ~3h ETA remaining) + 5 cross-session memories. Pattern continues: parallel-safe $0 work while backtest burns ~$18 LLM in background.
 
 **Pattern**: parallel-safe documentation + diagnostic + risk-mitigation + filter-audit work while a long-running experiment runs in background. Foreground LLM cost: $0. Background backtest cost: ~$18 (estimated). Wall-clock: ~5.5h foreground + parallel ~5h compute.
 
@@ -29,7 +29,12 @@ This document is the canonical entry point for today's session. Companion to `cl
 | 17 | #33 | early-afternoon | SC-009 ANALYSIS.md skeleton | 126-line placeholder with most-likely-outcome framing |
 | 18 | #34 | early-afternoon | Spec 003 fire pattern probe + behavioral-additive insight | PM-as-implicit-Spec-003 + 4th interpretation captured |
 | 19 | #35 | early-afternoon | Analyzer bug fixes (fetch_returns + boost-engagement) | 100% bull-fire rate finding surfaced |
-| 20 | #36 (open) | mid-afternoon | Alternative gate-1 evaluator for 100%-fire-rate | suppressed-α direction check; alt gate-1 PASS at -4.29% |
+| 20 | #36 | mid-afternoon | Alternative gate-1 evaluator for 100%-fire-rate | suppressed-α direction check; alt gate-1 PASS at -4.29% |
+| 21 | #37 | mid-afternoon | Standalone meta-retrospective doc | session continuity restored after compaction |
+| 22 | #38 | late-afternoon | Unit tests for `evaluate_gate_1` helper | 15 tests, 5 paths covered; refactor + tests in one PR |
+| 23 | #39 | late-afternoon | Bear-side mid-flight diagnostic on COP+INTC UW commits | 5 findings; F-3 = 2nd behavioral-additive class (Spec 007) |
+| 24 | #40 | late-afternoon | Class C-3 (analyst PT delta) feasibility probe | NOT FEASIBLE on $0 budget — yfinance has no historical PT panels; pivot recommended |
+| 25 | #41 | late-afternoon | Cross-cohort behavioral-additive sweep | ALL 4 mechanism classes show evidence; reframes L-8 to PM-as-multi-mechanism-validator; v1.4.4 codification threshold MET |
 
 ## Cross-session memories added today (5)
 
@@ -121,23 +126,24 @@ Unchanged from yesterday: 8 filters, 4 default-active, 4 operator-opt-in. SC-009
 **Yesterday (2026-05-06)**: v1.3.0 → v1.4.0 → v1.4.1 → v1.4.2 → v1.4.3 (5 amendments).
 
 **Today (2026-05-07)**: no constitution amendments. 2 candidate v1.4.4 amendments captured for future codification:
-- L-8: codify behavioral-additive 4th interpretation of v1.4.3
-- L-9: codify alt gate-1 methodology for 100%-fire-rate filters in SC-009 pattern
-
-Defer until 2-3 more empirical cases accumulate (currently n=1 from today's SC-009 probe).
+- L-8: codify behavioral-additive 4th interpretation of v1.4.3 — **threshold MET** as of PR #41 (4/4 mechanism classes have evidence; 23 cases across 6 tickers). Reframed from "PM-as-implicit-Spec-003" to **PM-as-multi-mechanism-validator**. Drafting eligible; ratification still gated on 1 more session of pattern holding to avoid over-fitting.
+- L-9: codify alt gate-1 methodology for 100%-fire-rate filters in SC-009 pattern. Still n=1 (SC-009 only); defer until pattern recurs in another spec.
 
 ## Open work entering tomorrow
 
-- **SC-009 backtest completes** (~3h ETA from now, ~10:30-11:00 PDT)
-- **Re-run analyzer on full 36-row data** with `--allow-partial` to see updated gate trajectory
+- **SC-009 backtest completes** (~3h ETA remaining, ~end-of-day PDT)
+- **Re-run analyzer on full 36-row data** with the merged `evaluate_gate_1` helper to see final gate trajectory
 - **Realized α window for 2026-04-17 closes ~2026-05-15** (8 days from now)
 - **Realized α window for 2026-04-24 closes ~2026-05-22** (15 days from now)
 - **Final SC-009 ANALYSIS.md** writable ~2026-05-22 onward
 - **Expansion contingency**: kick off `experiments/2026-05-07-002-sc-009-expansion/` IF backtest completes with ≥30/36 Hold AND `n_fired_boost_on < 4`
-- **Class C-3 (analyst PT delta) retrospective** deferred (~3h)
-- **Class C-5 (earnings price reaction) retrospective** deferred (~3h)
-- **Spec 003 historical-recompute script** deferred (~2h)
-- **Constitution v1.4.4 candidate amendments** if patterns recur
+- **Constitution v1.4.4 amendment draft** (L-8 behavioral-additive only — L-9 still defers): threshold MET per PR #41; can draft text-only with no flip yet. Risk: retraction needed if SC-009 finishing rows refute the multi-mechanism-validator framing (modest — framing is descriptive not predictive).
+- **Hybrid D feasibility design doc**: ~5 candidate both-sides-priced-in cases identified by PR #41 (NVDA-04-24 + MSFT-04-24 + WFC-04-17 + COP-04-24 + COP-04-17). Cohort too small for retrospective today; design doc + retrospective sketch only.
+- **C-5 (earnings price reaction) feasibility probe**: same de-risking pattern that worked for C-1 + C-3. ~30min, $0.
+- **Path C snapshot wiring PoC**: add `analyst_pt_snapshot` to `state['forward_catalyst']` persistence; unlocks future C-3 retrospectives at zero LLM cost. ~1h, $0.
+- **Bear-side sample-size update**: SC-009 cohort grew INTC-04-24 UW (3rd UW commit); quick mid-flight update. ~20min, $0.
+- **Spec 003 historical-recompute script** still deferred (~2h)
+- **CHANGELOG.md update for PRs #29-#41 + sweep verdict** still deferred (~30min)
 
 ## What did NOT happen today
 
@@ -150,12 +156,12 @@ Defer until 2-3 more empirical cases accumulate (currently n=1 from today's SC-0
 ## Cumulative state across 2 days
 
 - **Filter portfolio**: 8 sides (unchanged from 2026-05-06 evening)
-- **Constitution version**: v1.4.3 (5 amendments yesterday; 2 candidates captured today)
+- **Constitution version**: v1.4.3 (5 amendments yesterday; v1.4.4 candidate L-8 drafting-eligible after PR #41 evidence change)
 - **Cross-session memories**: 14 total
-- **PRs merged across 2026-05-06 + 2026-05-07**: 39 (15 yesterday + 19 today merged + 1 today open)
+- **PRs merged across 2026-05-06 + 2026-05-07**: 41+ (15 yesterday + 25+ today)
 - **Tags**: v0.7.0/v0.8.0/v0.8.1 (no new today; SC-009 verdict pending ~2026-05-22)
-- **Tests**: 1123/1123 PASS
-- **Backtest**: 11/36 rows complete + ~25 more pending; ANALYSIS.md ~2026-05-22
+- **Tests**: 1138/1138 PASS (was 1123 → +15 from PR #38 SC-009 analyzer unit tests)
+- **Backtest**: 16/36 rows complete + ~20 more pending; ANALYSIS.md ~2026-05-22
 
 ## Methodology cost-benefit summary across both days
 
