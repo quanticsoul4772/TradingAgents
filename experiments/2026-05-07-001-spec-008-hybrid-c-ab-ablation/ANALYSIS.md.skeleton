@@ -1,0 +1,126 @@
+# ANALYSIS — 2026-05-07-001-spec-008-hybrid-c-ab-ablation
+
+**Status**: SKELETON (data not yet collected). Replace placeholders [BRACKETED] when:
+1. Backtest completes (results.csv has 36 rows) — fills compute-time + commit pattern fields
+2. Realized α window closes (~2026-05-22) — fills α + verdict fields
+3. Expansion experiment 2026-05-07-002 either skipped or completed — fills combined-cohort fields
+
+Rename to `ANALYSIS.md` when promoting to FINAL. Keep this skeleton in git history for the ANALYSIS_PLAN.md cross-reference.
+
+---
+
+## Headline (one-line verdict)
+
+**[VERDICT]**: [PASS / FAIL / INCONCLUSIVE / REGRESSION] per SC-009 acceptance gate.
+
+Most-likely outcome based on mid-flight diagnostic (`claudedocs/sc-009-hold-rate-root-cause-2026-05-07.md`): **INCONCLUSIVE on original cohort + EXPANSION TRIGGERED → combined verdict deferred to expansion analysis ~2026-05-22**.
+
+## Setup recap
+
+- **Cohort**: 18 tickers × 2 Fridays = 36 propagates (NVDA, MSFT, AAPL, WFC, MA, COP, INTC, GOOGL, AMD, AMZN, AVGO, BAC, CSCO, GS, JPM, LLY, CVX, HON × 2026-04-17 + 2026-04-24)
+- **Boost configuration**: ENABLED (window=14d, magnitude=0.5x, T_bull=0.60)
+- **Boost-OFF comparison**: post-hoc reconstruction from state-log `bull_case_priced_in > T_bull AND pre_rating in {Buy, Overweight}`
+- **Compute**: started 2026-05-07 06:14 PDT; completed [TIMESTAMP]; total wall-clock [HRS] hours
+- **LLM cost**: actual ~$[X.XX] (estimated $18 in HYPOTHESIS.md)
+
+## SC-009 acceptance gate
+
+| Criterion | Threshold | Observed | Status |
+|---|---|---|---|
+| Bull-side net Δα improvement | [+2.35pp, +4.35pp] | [+X.XXpp] | [PASS / FAIL] |
+| n_fired_boost_on | ≥ 8 | [XX] | [PASS / FAIL] |
+| Boost engaged ≥ 1 row | ≥ 1 | [XX] | PASS |
+
+**Verdict**: [recommend Spec 008 v2 default-on flip / SKIP flip; document period-conditional limit / INCONCLUSIVE; expand cohort + rerun (DONE — see expansion experiment) / REGRESSION; investigate code/config].
+
+## Headline numbers
+
+- n_bull_commits total: **[XX]**
+- n_fired_boost_on: **[XX]** (Spec 007 fires after boost applied)
+- n_fired_boost_off (post-hoc): **[XX]** (Spec 007 fires that would have happened without boost)
+- Decisions changed by boost: **[XX]** (rows where `fired_boost_on != would_fire_boost_off`)
+- Boost-engaged rows (calendar_boost > 0): **[XX]**
+- Bull baseline α: [+X.XX%]
+- Boost-ON kept α: [+X.XX%]
+- Boost-OFF kept α: [+X.XX%]
+- Net Δα improvement: [+X.XXpp]
+
+## Commit-rate context (mid-flight diagnostic confirmed)
+
+Per `claudedocs/sc-009-hold-rate-root-cause-2026-05-07.md`: PM Hold-regime starves filter chain. Mid-flight (7/36) showed 86% Hold rate; final cohort showed [XX]% Hold rate. The high Hold-rate is calibrated abstention behavior per Constitution VII, not a filter malfunction.
+
+| Distribution | Count | % |
+|---|---|---|
+| Hold | [XX] | [XX]% |
+| Overweight | [XX] | [XX]% |
+| Buy | [XX] | [XX]% |
+| Underweight | [XX] | [XX]% |
+| Sell | [XX] | [XX]% |
+
+## Boost-engagement breakdown
+
+[Auto-populated by `scripts/analyze_sc009_ab.py` — table of all rows with calendar_boost > 0, including ticker, trade_date, days_to_earnings, calendar_boost, base score, effective score, pre_rating, post_rating, realized α.]
+
+## Per-row decomposition
+
+Of the **[XX]** rows where boost CHANGED the decision (`fired_boost_on != would_fire_boost_off`):
+- Cohort-correct fires (boosted into Hold + realized α was negative): [XX]
+- False-positive fires (boosted into Hold + realized α was positive): [XX]
+
+The boost contribution to net Δα is computed only over the boost-changed-decision rows. Spec 007 alone contribution = (boost-OFF kept α − bull baseline α). Spec 008 marginal contribution = (boost-ON kept α − boost-OFF kept α).
+
+## Expansion experiment trigger evaluation
+
+Per `claudedocs/sc-009-expansion-contingency-design-2026-05-07.md`:
+- Trigger: ≥30/36 rows return Hold AND `n_fired_boost_on < 4`
+- Observed: [XX]/36 Hold AND `n_fired_boost_on = [XX]`
+- Decision: [TRIGGERED → kicking off experiments/2026-05-07-002-sc-009-expansion/ / NOT TRIGGERED → original cohort sufficient]
+
+[If TRIGGERED]: see `experiments/2026-05-07-002-sc-009-expansion/ANALYSIS.md` for combined-cohort verdict (expected ~2026-05-22).
+
+## Bayesian posterior update
+
+Prior at experiment start: 0.55 on PASS verdict (per HYPOTHESIS.md).
+Observed evidence: [boost-ON kept α, boost-OFF kept α, n_fired, etc.]
+Posterior on "+3.35pp Δα generalizes to fresh cohorts": **[updated value]** per Constitution VIII v1.4.0 forward-catalyst-class gate criteria.
+
+## Implications
+
+- **Spec 008 default-on flip**: [recommended / not recommended / pending expansion analysis]
+- **Cross-period stability**: [holds / period-conditional / TBD pending more cohorts]
+- **Filter portfolio**: [no change / Spec 008 v2 amendment to flip default / require Spec 008 v2 with combined-cohort SC-009 evidence]
+- **Constitution**: [no change / candidate Constitution v1.5.0 amendment for "PM commit rate as filter ablation precondition"]
+
+## Lessons (if any) for Constitution VIII
+
+[Document any methodology improvements discovered during analysis. Likely candidates given the mid-flight diagnostic:]
+
+1. **PM Hold-regime is a filter ablation precondition** (already captured as `reference_pm_hold_regime_starves_filters.md` memory). Future ablations for PM-stage filters MUST select cohorts with high commit-elicitation probability. Consider codifying as Constitution v1.4.4 amendment if pattern recurs in 2-3 more ablation experiments.
+
+2. **PM rating-vs-prose distinction** (already captured as `reference_pm_hold_with_bullish_prose.md` memory). ANALYSIS.md framings must explicitly distinguish "PM didn't commit" from "filter didn't fire."
+
+3. **Boost engagement vs boost-attribution distinction**: SC-009 gate 3 (boost engaged) measures whether the MECHANISM is invoked. SC-009 gate 1 (Δα improvement) measures whether the mechanism CHANGES OUTCOMES. These are different — gate 3 can PASS while gate 1 INCONCLUSIVE. Codify in spec template if other Hybrid filters are designed.
+
+## Reproducibility
+
+```bash
+# Backtest (already run)
+bash experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/run.sh
+
+# Analyzer (run when realized α lands)
+python scripts/analyze_sc009_ab.py --holding-days 21
+```
+
+Reads `results.csv` + state logs from `~/.tradingagents/logs/<TICKER>/TradingAgentsStrategy_logs/` + free yfinance for realized α. Zero new LLM cost in analysis phase.
+
+## Cross-references
+
+- `experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/HYPOTHESIS.md` — original experiment design
+- `experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/ANALYSIS_PLAN.md` — pre-data analysis methodology
+- `experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/PARTIAL_ANALYSIS.md` — partial-data interim outputs (auto-generated)
+- `experiments/2026-05-07-002-sc-009-expansion/` — expansion cohort (CONDITIONAL kick-off)
+- `claudedocs/sc-009-mid-backtest-commit-pattern-2026-05-07.md` — mid-flight diagnostic
+- `claudedocs/sc-009-hold-rate-root-cause-2026-05-07.md` — root cause analysis
+- `claudedocs/sc-009-expansion-contingency-design-2026-05-07.md` — expansion design
+- `specs/007-calendar-boost-filter/spec.md` SC-009 — the spec gate this experiment is testing
+- `claudedocs/forward-catalyst-hybrid-c-retrospective-2026-05-06.md` — original retrofit verdict (+3.35pp at window=14d magnitude=0.5x)
