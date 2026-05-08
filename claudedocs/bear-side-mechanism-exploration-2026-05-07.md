@@ -31,17 +31,23 @@ Final scorecard:
 
 4. **Constitution VIII v1.4.1 retrospective-first methodology validated 6 times in this survey alone**: ~$0 + ~3-30min per retrospective avoided ~6-8h × 5 = 30-40h of spec-and-impl work that would have been wasted.
 
-### Spec-invocation pre-checklist for C-4
+### Spec-invocation pre-checklist for C-4 — ALL CLEARED + DEPLOYED
 
 | Check | Status | Source |
 |---|---|---|
 | Standalone gate PASS | ✅ n=12 | PR #75 |
 | Mechanism class distinct from existing | ✅ institutional-flow | PR #75 |
 | v1.4.3 additive overlap | ✅ +8.06pp Δα / +69pp hit | PR #77 |
-| Time-window discipline | ⚠️ valid until ~2026-05-15 (Q1 2026 13F refresh) | PR #66 + #75 |
-| Sample-size confidence | ⚠️ n=12 single-period | PR #75 |
+| Time-window discipline | ⚠️ valid until ~2026-05-15 (Q1 2026 13F refresh) — codified as Spec X-1 SC-009 | PR #66 + #75 |
+| Sample-size confidence | ⚠️ n=12 single-period — codified as Spec X-1 SC-010 (n≥30 live ablation before active flip) | PR #75 |
+| `/speckit.specify` | ✅ shipped via PR #88 | PR #88 |
+| `/speckit.plan` | ✅ shipped via PR #89 | PR #89 |
+| `/speckit.tasks` | ✅ shipped via PR #90 | PR #90 |
+| MVP implementation | ✅ shipped via PR #91 (PR-A: T001-T015) | PR #91 |
+| Remaining tests | ✅ shipped via PR #92 (PR-B: T016-T027) | PR #92 |
+| Polish | ✅ shipped via PR #93 (PR-C: T028-T034) | PR #93 |
 
-**Spec invocation NOW eligible** per Constitution VIII v1.4.0 + v1.4.3. Recommend SHADOW-MODE-FIRST launch per the v1.4.0 sample-size caution pattern.
+**Spec X-1 DEPLOYED end-to-end** at default-shadow bear-side / default-off bull-side. 18 tests + 4 config keys + ~190 LOC helper module + PM-hook chain integration. Constitution VIII v1.4.0 small-sample-caution sub-clause invoked → shadow mode pending SC-010 live ablation (n≥30 propagates). Operator-facing usage guide in `claudedocs/SETUP.md` section 10 (PR #94).
 
 ### Original design exploration (preserved below for traceability)
 
