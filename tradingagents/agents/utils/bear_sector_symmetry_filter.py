@@ -260,7 +260,7 @@ def maybe_suppress_bear_rating(
             "bear_sector_symmetry_filter: unknown mode %r; defaulting to 'off'",
             mode,
         )
-        mode = "off"  # type: ignore[assignment]
+        mode = "off"
 
     pre_rating = _parse_pre_rating(decision_markdown)
 
@@ -313,7 +313,7 @@ def maybe_suppress_bear_rating(
         from tradingagents.paper.sectors import get_sector  # local import per spec 004 pattern
 
         def sector_lookup(t: str) -> str:
-            return get_sector(t, sectors_cache_path)  # type: ignore[arg-type]
+            return get_sector(t, sectors_cache_path)
 
     try:
         sector = sector_lookup(ticker)

@@ -144,9 +144,9 @@ class ContrarianGate:
             logger.warning("contrarian_gate: unknown target %r; defaulting to 'hold'", target)
             target = "hold"
 
-        self.mode: Literal["off", "shadow", "active"] = mode  # type: ignore[assignment]
+        self.mode: Literal["off", "shadow", "active"] = mode
         self.threshold: int = int(config.get("contrarian_gate_threshold", self.DEFAULT_THRESHOLD))
-        self.target: Literal["hold", "underweight"] = target  # type: ignore[assignment]
+        self.target: Literal["hold", "underweight"] = target
         self.signal_id: str = config.get("contrarian_gate_signal", "market_report")
         self.feature: str = config.get("contrarian_gate_feature", "bull_keyword_count")
         self.cache_path = cache_path

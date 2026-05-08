@@ -276,10 +276,10 @@ def evaluate_forward_catalyst(
     # Normalize modes
     if bull_mode not in _VALID_MODES:
         logger.warning("forward_catalyst: unknown bull_mode %r; defaulting to 'off'", bull_mode)
-        bull_mode = "off"  # type: ignore[assignment]
+        bull_mode = "off"
     if bear_mode not in _VALID_MODES:
         logger.warning("forward_catalyst: unknown bear_mode %r; defaulting to 'off'", bear_mode)
-        bear_mode = "off"  # type: ignore[assignment]
+        bear_mode = "off"
 
     pre_rating = _parse_pre_rating(decision_markdown)
 
@@ -304,13 +304,13 @@ def evaluate_forward_catalyst(
             "forward_catalyst: bull_threshold=%s outside [0, 1]; bull side disabled",
             bull_threshold,
         )
-        bull_mode = "off"  # type: ignore[assignment]
+        bull_mode = "off"
     if bear_threshold_invalid:
         logger.warning(
             "forward_catalyst: bear_threshold=%s outside [0, 1]; bear side disabled",
             bear_threshold,
         )
-        bear_mode = "off"  # type: ignore[assignment]
+        bear_mode = "off"
 
     # If both sides invalidated by threshold validation, emit invalid_threshold
     if bull_mode == "off" and bear_mode == "off":
