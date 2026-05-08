@@ -36,6 +36,7 @@ dependencies = [
     "typer>=0.21.0",
     "stockstats>=0.6.5",
     "typing-extensions>=4.14.0",
+    "tzdata>=2024.2",
     "yfinance>=0.2.63",
 ]
 # Removed 2026-05-05 (zero references in code; verified by tech-debt audit
