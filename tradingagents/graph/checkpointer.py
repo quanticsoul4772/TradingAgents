@@ -11,6 +11,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 
+from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.sqlite import SqliteSaver
 
 
@@ -51,7 +52,7 @@ def checkpoint_step(data_dir: str | Path, ticker: str, date: str) -> int | None:
         return None
     tid = thread_id(ticker, date)
     with get_checkpointer(data_dir, ticker) as saver:
-        config = {"configurable": {"thread_id": tid}}
+        config: RunnableConfig = {"configurable": {"thread_id": tid}}
         cp = saver.get_tuple(config)
         if cp is None:
             return None
