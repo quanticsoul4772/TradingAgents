@@ -67,6 +67,10 @@ class TradingAgentsConfig(TypedDict):
     hybrid_c_calendar_boost_window_days: int
     hybrid_c_calendar_boost_magnitude: float
     analyst_pt_snapshot_enabled: bool
+    institutional_rotation_bear_mode: Literal["off", "shadow", "active"]
+    institutional_rotation_bull_mode: Literal["off", "shadow", "active"]
+    institutional_rotation_outflow_threshold: float
+    institutional_rotation_inflow_threshold: float
     bot_models: dict[str, str]
     data_vendors: dict[str, str]
     tool_vendors: dict[str, str]
@@ -239,6 +243,20 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     # zero behavior impact when disabled. ~50-200ms latency per propagate
     # when enabled (per PR #40 + PR #66 empirical timings). Zero LLM cost.
     "analyst_pt_snapshot_enabled": False,
+    # Spec X-1 (specs/091-c4-institutional-rotation/): C-4 institutional
+    # rotation filter. FIRST quantitative-flow bear-side filter — suppresses
+    # Underweight/Sell commits to Hold when top 10 institutional holders'
+    # net pctChange rotation is below -outflow_threshold. Default-shadow per
+    # Constitution VIII v1.4.0 small-sample-caution sub-clause (n=12 cohort
+    # from PR #75 retrospective). Bear-side empirical evidence: discrim
+    # +10.29pp / hit 75.0% / net Δα +5.41pp at T_outflow=0.05. Additive
+    # PASS vs Spec 007 bear (PR #77): +8.06pp Δα improvement / +69.23pp hit
+    # improvement on union. Bull-side default-OFF (n=1 evidence too thin).
+    # Set BOTH modes to "off" to disable + zero overhead.
+    "institutional_rotation_bear_mode": "shadow",
+    "institutional_rotation_bull_mode": "off",
+    "institutional_rotation_outflow_threshold": 0.05,
+    "institutional_rotation_inflow_threshold": 0.05,
     # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
     # (str). When set, the framework instantiates a per-bot client for that
     # model using the configured llm_provider; bots not in this dict use the
