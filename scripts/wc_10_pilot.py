@@ -136,7 +136,7 @@ def _run_propagate(ticker: str, date: str, mode: str, out_dir: Path) -> dict:
                 "error": "",
                 "run_seconds": f"{elapsed:.1f}",
             }
-        else:
+        elif mode == "5tier_baseline":
             # 5-tier baseline: `decision` is already the 5-tier string from
             # SignalProcessor.process_signal() — use directly.
             return {
@@ -148,6 +148,8 @@ def _run_propagate(ticker: str, date: str, mode: str, out_dir: Path) -> dict:
                 "error": "",
                 "run_seconds": f"{elapsed:.1f}",
             }
+        else:
+            raise ValueError(f"Unrecognized mode '{mode}' — supported: '5tier_baseline', 'rating_scalar'")
     except Exception as exc:  # noqa: BLE001
         elapsed = time.perf_counter() - start
         return {
