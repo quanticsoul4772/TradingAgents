@@ -14,7 +14,7 @@ def initialize_config() -> None:
         _config = cast(TradingAgentsConfig, default_config.DEFAULT_CONFIG.copy())
 
 
-def set_config(config: dict[str, Any]) -> None:
+def set_config(config: dict[str, Any] | TradingAgentsConfig) -> None:
     """Update the configuration with custom values.
 
     Accepts an untyped partial dict so callers can pass small overrides

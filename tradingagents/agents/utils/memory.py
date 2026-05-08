@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 from tradingagents.agents.utils.rating import parse_rating
+from tradingagents.default_config import TradingAgentsConfig
 
 
 class TradingMemoryLog:
@@ -15,7 +16,7 @@ class TradingMemoryLog:
     _DECISION_RE = re.compile(r"DECISION:\n(.*?)(?=\nREFLECTION:|\Z)", re.DOTALL)
     _REFLECTION_RE = re.compile(r"REFLECTION:\n(.*?)$", re.DOTALL)
 
-    def __init__(self, config: dict | None = None):
+    def __init__(self, config: dict | TradingAgentsConfig | None = None):
         cfg = config or {}
         self._log_path: Path | None = None
         path = cfg.get("memory_log_path")
