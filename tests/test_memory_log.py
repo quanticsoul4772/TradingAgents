@@ -303,6 +303,30 @@ class TestTradingMemoryLogCore:
         assert "AAPL" not in ctx
         assert "META" in ctx
 
+    def test_format_reflection_only_truncates_long_decision_when_no_reflection(self, tmp_path):
+        """When a cross-ticker entry has no reflection, the decision text is
+        truncated to 300 chars with `...` suffix per memory.py:295-297.
+
+        Edge case for the cross-ticker fallback path; previously uncovered.
+        """
+        log = make_log(tmp_path)
+        long_decision = "X" * 500  # >300 chars triggers truncation
+        # Seed a completed entry with EMPTY reflection — _format_reflection_only
+        # then falls back to truncated decision text.
+        entry = (
+            "[2026-01-05 | AAPL | Buy | +1.0% | +0.5% | 5d]\n\n"
+            f"DECISION:\n{long_decision}\n\n"
+            "REFLECTION:\n" + _SEP
+        )
+        (tmp_path / "trading_memory.md").write_text(entry, encoding="utf-8")
+        ctx = log.get_past_context("NVDA", n_same=0, n_cross=1)
+        # Cross-ticker fallback path used; truncated decision rendered with ...
+        assert "Recent cross-ticker lessons:" in ctx
+        assert "AAPL" in ctx
+        assert "..." in ctx  # truncation suffix
+        assert "X" * 300 in ctx  # first 300 chars present
+        assert "X" * 301 not in ctx  # truncated at 300 (chars 301+ NOT in render)
+
     # No-op when config is None
 
     def test_no_log_path_is_noop(self):
