@@ -1,0 +1,21 @@
+{
+  "config_overrides_wc_10_mode": {
+    "wc_10_enabled": true,
+    "wc_10_filter_mode": "bypass",
+    "wc_10_bin_thresholds": [-0.6, -0.2, 0.2, 0.6]
+  },
+  "config_overrides_5tier_baseline_mode": {
+    "wc_10_enabled": false
+  },
+  "explicit_flags": {
+    "tickers": ["NVDA", "AAPL"],
+    "dates": [
+      "2026-04-01", "2026-04-02", "2026-04-08", "2026-04-09",
+      "2026-04-15", "2026-04-16", "2026-04-22", "2026-04-23",
+      "2026-04-29", "2026-04-30"
+    ],
+    "modes": ["wc_10", "5tier_baseline"]
+  },
+  "baseline": "5tier_baseline mode (wc_10_enabled=false) on the same date+ticker pairs serves as the within-experiment baseline for SC-006 comparison. Existing 65-run corpus is the cross-experiment baseline.",
+  "notes": "v1 pilot grid: 10 dates × 2 tickers × 2 modes = 40 propagates. ~$16 LLM (T2). Per spec.md SC-007 falsification framework."
+}
