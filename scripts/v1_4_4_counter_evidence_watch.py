@@ -36,7 +36,7 @@ import re
 import sys
 from pathlib import Path
 
-LOG_BASE = Path(os.environ["USERPROFILE"]) / ".tradingagents/logs"
+LOG_BASE = Path(os.environ.get("USERPROFILE") or os.environ["HOME"]) / ".tradingagents/logs"
 
 T_BULL_SCORE_REFUTING = 0.80
 T_BEAR_SCORE_REFUTING = 0.60

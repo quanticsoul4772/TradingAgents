@@ -52,11 +52,11 @@ Sorted ascending by coverage %:
 - `google_client.py` (71%) — Google Gemini provider; not default. Testing requires Google creds.
 - `macro.py` (78%) — macro data integrations (VIX, sector ETF strength); partial coverage via downstream filter tests.
 
-**Total "structural gap" missing lines**: ~360 (35.5% of the 1015 missing statements). Bringing project total to ~83% if these were ignored.
+**Total "structural gap" missing lines**: ~360 (35.5% of the 1015 missing statements). Bringing project total to ~86.5% if these were ignored (4,178 / 4,833 ≈ 86.5%).
 
 ### Internal — actionable gaps
 
-9 modules. These are real gaps in framework-internal code where tests COULD exist:
+8 modules (≥20 statements). These are real gaps in framework-internal code where tests COULD exist:
 
 | Module | Cov | Priority | Rationale |
 |---|---|---|---|
@@ -68,7 +68,6 @@ Sorted ascending by coverage %:
 | `signals/drift.py` | 72.7% | LOW | Drift detection. Lines 367-438 missing — likely advanced drift modes. |
 | `signals/backfill.py` | 72.9% | LOW | Cache backfill. Validated end-to-end via PR #71 (254-row backfill). Missing lines are edge cases. |
 | `agent_utils.py` | 66.7% | LOW | Tiny module (21 stmts, 7 missing). Lines 22 + 64-67 likely langchain helper code. |
-| `paper/errors.py` | 53.8% | LOW | Custom error classes. Most missing lines are `__init__` / `__str__` boilerplate. |
 
 ### Recently-deployed code (Spec X-1) — already well-covered
 
