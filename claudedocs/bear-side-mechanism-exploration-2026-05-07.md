@@ -1,8 +1,53 @@
 # Bear-side mechanism exploration — the uncatchable +28pp `ticker_strong` cohort
 
-**Date**: 2026-05-07
-**Status**: Pre-retrospective design exploration (no code, no LLM calls)
-**Cost**: $0 (design only)
+**Date**: 2026-05-07 (UPDATED 2026-05-07 evening — survey complete)
+**Status**: ~~Pre-retrospective design exploration~~ — **6/6 mechanism class survey COMPLETE; C-4 is sole spec-eligible**
+**Cost**: $0 (design + 7 retrospectives, all yfinance-only)
+
+## SURVEY COMPLETE — empirical results (added 2026-05-07 evening)
+
+The 6 candidate mechanism classes enumerated below were all evaluated.
+Final scorecard:
+
+| Class | Standalone Gate | Additive Gate | Spec-eligible? | Source |
+|---|---|---|---|---|
+| C-1 (insider transactions) | SKIP (anti-pred) | n/a | NO | PR #23 |
+| C-2 (short-interest delta) | SKIP (mechanism INVERTED) | n/a | NO | PR #76 |
+| C-3 (analyst PT delta) | NOT FEASIBLE (no historical) | n/a | NO | PR #40 |
+| **C-4 (institutional ownership)** | **PASS (n=12, +5.41pp)** | **PASS (+8.06pp / +69pp)** | **YES (shadow-mode-first)** | PR #75 + PR #77 |
+| C-5 (EPS surprise) | PASS standalone | FAIL additive (89% overlap) | NO | 2026-05-06 |
+| C-5 (PRICE-REACTION) | SKIP (mechanism INVERTED) | n/a | NO | PR #74 |
+| C-6 (bear-news density) | SKIP (structural redundant) | n/a | NO | PR #67 |
+
+**1 of 6 mechanism classes spec-eligible**: C-4 (institutional ownership delta).
+
+### Major findings from the survey
+
+1. **Two C-classes show INVERTED mechanism on bear-side** (C-2 short-covering + C-5 price-reaction). Both originally hypothesized as mean-reversion signals; both empirically refuted — bear cohort on SC-009-era data has strong continuation bias that mean-reversion mechanisms can't exploit.
+
+2. **C-4 catches 11 bearish commits Spec 007 ENTIRELY MISSES**. Cross-mechanism-class additive case (LLM semantic + quantitative 13F flow). Hit rate 81.8% on c4_only cohort.
+
+3. **3 SKIP-types codified**: empirical (C-1, C-2, C-5 reaction), data-availability (C-3), structural (C-6).
+
+4. **Constitution VIII v1.4.1 retrospective-first methodology validated 6 times in this survey alone**: ~$0 + ~3-30min per retrospective avoided ~6-8h × 5 = 30-40h of spec-and-impl work that would have been wasted.
+
+### Spec-invocation pre-checklist for C-4
+
+| Check | Status | Source |
+|---|---|---|
+| Standalone gate PASS | ✅ n=12 | PR #75 |
+| Mechanism class distinct from existing | ✅ institutional-flow | PR #75 |
+| v1.4.3 additive overlap | ✅ +8.06pp Δα / +69pp hit | PR #77 |
+| Time-window discipline | ⚠️ valid until ~2026-05-15 (Q1 2026 13F refresh) | PR #66 + #75 |
+| Sample-size confidence | ⚠️ n=12 single-period | PR #75 |
+
+**Spec invocation NOW eligible** per Constitution VIII v1.4.0 + v1.4.3. Recommend SHADOW-MODE-FIRST launch per the v1.4.0 sample-size caution pattern.
+
+### Original design exploration (preserved below for traceability)
+
+The original 6-class enumeration + decision tree below is preserved as a record of how the candidate classes were ranked + selected. The "recommended next research-burst-day work unit" (C-1) was empirically tested and SKIPPED (PR #23); the survey then proceeded through C-3 / C-5 / C-2 / C-4 / C-6 with empirical findings as documented above.
+
+---
 
 ## The problem
 
