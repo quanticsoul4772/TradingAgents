@@ -1,4 +1,7 @@
 # Import from vendor-specific modules
+from collections.abc import Callable
+from typing import Any
+
 from .alpha_vantage import (
     get_balance_sheet as get_alpha_vantage_balance_sheet,
 )
@@ -121,7 +124,7 @@ VENDOR_LIST = [
 ]
 
 # Mapping of methods to their vendor-specific implementations
-VENDOR_METHODS = {
+VENDOR_METHODS: dict[str, dict[str, Callable[..., Any]]] = {
     # core_stock_apis
     "get_stock_data": {
         "alpha_vantage": get_alpha_vantage_stock,
