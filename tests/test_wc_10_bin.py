@@ -72,7 +72,7 @@ def test_bin_extreme_positive():
 
 def test_bin_custom_thresholds():
     """FR-004: custom thresholds override default."""
-    # Wider bins: rating=0.45 with thresholds (-0.7, -0.3, 0.3, 0.7) → Hold
+    # Wider bins: rating=0.45 with thresholds (-0.7, -0.3, 0.3, 0.7) → Overweight
     assert bin_scalar_to_tier(0.45, thresholds=(-0.7, -0.3, 0.3, 0.7)) == "Overweight"
     assert bin_scalar_to_tier(0.0, thresholds=(-0.7, -0.3, 0.3, 0.7)) == "Hold"
 
