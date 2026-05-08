@@ -6,6 +6,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (2026-05-07 — Constitution v1.4.5 ratified — Memory-log data-vs-prose discipline gate)
+
+**Constitution v1.4.3 → v1.4.5** (PATCH; v1.4.4 remains drafted but not yet ratified — explicit gap-skip documented in the version footer): adds **Quality Gate #6 — Memory-log data-vs-prose discipline** to the Quality Gates section. Operators MUST cross-check memory log entries' reflection prose against the entry's header data (raw_return, alpha, holding_days). Reflection prose can be hallucinated when the data contradicts the prior call's expected direction.
+
+**Empirical basis**: PR #54 single-case AMD-04-17 (reflection prose "captured the inflection correctly" while header recorded +24.9% raw return showing the Underweight call demonstrably failed at the 21d horizon) + PR #55 systematic sweep finding the pattern at **20% incidence rate** (3 of 15 entries: COP @ 2026-04-17, INTC @ 2026-04-17, AMD @ 2026-04-17 — ALL Underweight calls that went UP, ALL with explicit self-validating phrases despite the data refuting them). PM-04-24 demonstrably trusted AMD-04-17's hallucinated reflection ("the prior AMD lesson itself validates the trim discipline") over the +24.9% raw return data — cascade-failure-mode documented.
+
+**Mechanism explanation** (in the gate text): when `_resolve_pending_entries` writes a reflection, the LLM faces "self-justification pressure" — easier to write narrative coherent with the prior thesis than to admit the call was wrong. Framework has NO data-vs-prose consistency check on the write path.
+
+**Operational rule** (4 steps): read entry header FIRST → check sign consistency → if sign-mismatched, reflection is SUSPECT (do NOT cite without verification) → in claudedocs/analysis, distinguish "entry header says X" from "reflection narrates Y."
+
+**Symmetry with Constitution VII** (filters parse rating, not prose): VII applies to filter design; Quality Gate #6 extends the discipline to operator memory-log reading ("operators parse data, not prose"). Hold-rating entries are exempt (no directional expectation).
+
+**Tooling**: `scripts/memory_log_integrity_check.py` (PR #55, 12 unit tests, CI-friendly exit code 0=clean, 1=suspects). Run periodically or before any analysis citing memory log evidence.
+
+**Trigger criteria** (when this gate applies): operator analysis citing prior memory entries, spec retrospectives extracting historical lessons. NOT during PM propagates themselves — framework lacks the consistency check; this gate exists to protect operators against PM-side hallucinated reflections.
+
+Version footer notes that v1.4.4 (behavioral-additive 4th interpretation appended to Principle VIII v1.4.3 additive-to-existing-filter gate; draft at `claudedocs/constitution-v1.4.4-draft-2026-05-07.md`) remains in draft state. The version skip from v1.4.3 → v1.4.5 is intentional per the user's reasoning_decision rank ordering (v1.4.5 ranked #1 ahead of v1.4.4 due to stronger empirical evidence base — n=3 hallucination threshold met).
+
 ### Added (2026-05-07 late session — bear-side survey CONCLUDES; C-4 ADDITIVE PASS; tooling + memory polish)
 
 8 PRs merged extending the prior 2026-05-07 entry (PRs #71-#78). Total day count: 40+ PRs. Cost: $0 LLM (all retrospective + tooling work).
