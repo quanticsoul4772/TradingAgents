@@ -63,18 +63,42 @@ def create_portfolio_manager(llm):
                 "trader plan and risk debate alone]*\n"
             )
 
+        # WC-10 (specs/108-wc-10-continuous-scalar-rating/): when wc_10_enabled,
+        # the LLM emits a continuous scalar in [-1, +1] instead of the 5-tier
+        # categorical. Prompt-side change required so the model knows to use
+        # the new schema; default-off path retains the 5-tier prompt unchanged
+        # for backward compat (FR-006).
+        if get_config().get("wc_10_enabled", False):
+            rating_scale_block = (
+                "**Rating Scale (WC-10 continuous scalar mode)**:\n"
+                "Emit a single float in [-1.0, +1.0] expressing your signed conviction:\n"
+                "- **-1.0**: Maximum bearish conviction (strongest Sell call)\n"
+                "- **-0.5 to -1.0**: Range from moderate bear to maximum bearish (Underweight to Sell)\n"
+                "- **-0.2 to -0.5**: Mild bearish lean (light Underweight)\n"
+                "- **0.0**: Balanced; no commit (Hold-equivalent)\n"
+                "- **+0.2 to +0.5**: Mild bullish lean (light Overweight)\n"
+                "- **+0.5 to +1.0**: Range from moderate bull to maximum bullish (Overweight to Buy)\n"
+                "- **+1.0**: Maximum bullish conviction (strongest Buy call)\n\n"
+                "Use intermediate values to express partial confidence. Do NOT round to "
+                "discrete bins — the SCALAR magnitude carries the conviction signal."
+            )
+        else:
+            rating_scale_block = (
+                "**Rating Scale** (use exactly one):\n"
+                "- **Buy**: Strong conviction to enter or add to position\n"
+                "- **Overweight**: Favorable outlook, gradually increase exposure\n"
+                "- **Hold**: Maintain current position, no action needed\n"
+                "- **Underweight**: Reduce exposure, take partial profits\n"
+                "- **Sell**: Exit position or avoid entry"
+            )
+
         prompt = f"""As the Portfolio Manager, synthesize the risk analysts' debate and deliver the final trading decision.
 
 {instrument_context}
 
 ---
 
-**Rating Scale** (use exactly one):
-- **Buy**: Strong conviction to enter or add to position
-- **Overweight**: Favorable outlook, gradually increase exposure
-- **Hold**: Maintain current position, no action needed
-- **Underweight**: Reduce exposure, take partial profits
-- **Sell**: Exit position or avoid entry
+{rating_scale_block}
 
 **Context:**
 {research_plan_line}- Trader's transaction proposal: **{trader_plan}**
