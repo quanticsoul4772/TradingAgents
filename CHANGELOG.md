@@ -6,6 +6,39 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (2026-05-07 — Constitution v1.4.6 ratified — Behavioral-additive 4th interpretation; PM-as-multi-mechanism-validator reframe)
+
+**Constitution v1.4.5 → v1.4.6** (PATCH; content originally drafted as v1.4.4 but ratified as v1.4.6 to preserve monotone numbering after v1.4.5 was ratified first per reasoning_decision rank ordering): appends a **"Behavioral-additive sub-case (4th interpretation)"** sub-section to Principle VIII v1.4.3 Additive-to-existing-filter gate.
+
+**Mechanism**: codifies the case where a new filter F's operational fire-decisions appear redundant with existing portfolio fires BUT both correlate with the same PM commit decisions. The PM has internalized F's contrarian logic via Constitution VII's Calibrated Abstention training, so F is **REDUNDANT-ON-EXECUTION but COMPLEMENTARY-ON-DESIGN**. Reframes PM operational role from analyst+debate aggregator to **multi-mechanism-validator**: PM's Calibrated Abstention operationally validates consensus across the analyst+debate ensemble — when multiple mechanism classes flag the same contrarian condition, PM commits Hold or stricter even though no filter operationally fires.
+
+**Three pre-existing additive sub-cases** (per the existing v1.4.3 gate): cohort-additive (different cohort losers), mechanism-additive (different mechanism class), underlying-additive (hybrid filter modulating an underlying). The new 4th — behavioral-additive — fills the gap where standard fire-overlap analysis would SKIP a mechanistically-valuable filter as redundant when it's actually capturing a regime-drift robustness margin.
+
+**Operational test** (when applying the v1.4.3 additive gate):
+
+1. Run the standard intersection / new-only / existing-only / neither matrix on **actual** fire decisions (existing v1.4.3 procedure).
+2. **ALSO** run a counterfactual matrix on **would-fire-if-PM-committed** decisions — parse state-log score fields without gating on actual pre_rating. Reusable harness: `scripts/behavioral_additive_sweep.py`.
+3. Decision tree: Operational PASS → SHIP per v1.4.3. Operational FAIL but Mechanistic PASS → behavioral-additive case, SHIP with documented expectation that production fires will be sparse until PM regime shifts. Operational FAIL and Mechanistic FAIL → SKIP.
+
+**Empirical basis** (cross-cohort behavioral-additive sweep, `claudedocs/behavioral-additive-cross-cohort-sweep-2026-05-07.md`, PR #41 + AMD-04-17 deep-dive PR #43):
+
+| Mechanism class | Behavioral-additive cases | Per-instrumented-log rate |
+|---|---|---|
+| Spec 003 (prose-density) | 7 | 70% |
+| Spec 007 bull (LLM-extracted) | 7 → 8 (post-AMD) | 47-50% |
+| Spec 007 bear (LLM-extracted) | 3 | 20% |
+| Spec 008 (calendar-boosted) | 6 | 40% |
+
+**ALL 4 mechanism classes show evidence**, distributed across 7 tickers (AAPL, AMD, COP, INTC, MSFT, NVDA, WFC). MSFT shows the pattern in all 4 classes; AAPL+INTC in 3 each. AMD-04-17 (`claudedocs/amd-2026-04-17-deep-dive-2026-05-07.md`) is the textbook case where PM verbalizes the bull-priced-in mechanism in plain English ("42% rally" + "99th-percentile technical exhaustion" + "earnings repricing risk" with bull_score=0.85 — highest in SC-009).
+
+**Three sub-patterns identified**: (1) PM Hold + bull-priced-in scores high — original framing. (2) PM **stricter-than-Hold** (Underweight) + bull-priced-in scores high — extends original. (3) PM Hold + bear-priced-in scores high — BEAR-SIDE behavioral-additive (empirical kernel for Hybrid D candidate).
+
+**Risk acknowledged + mitigation**: behavioral-additive is a permissive case. Risk: shipping multiple specs whose fires never materialize in production. Mitigation: behavioral-additive specs MUST also document a regime-shift trigger (what PM behavior would cause F's fires to start materializing) in the retrospective. If no plausible regime-shift exists, SKIP.
+
+**Trigger criteria + acceptable exception**: applies when filter F PASSES v1.4.3 standalone gate but FAILS v1.4.3 actual-fire overlap, F's mechanism class is different from at least one existing default-active filter, AND counterfactual sweep shows F's would-fire correlates with PM's commits at ≥60% rate. Same-mechanism-class filters fall back to standard v1.4.3 (no behavioral-additive escape). Shakeout filters (operator-opt-in, default-off, marked `shakeout_filter: true`) skip ALL gates as before.
+
+**Sibling docs**: `scripts/behavioral_additive_sweep.py` (re-runnable harness), `claudedocs/amd-2026-04-17-deep-dive-2026-05-07.md` (textbook mechanistic-validation case), `memory/reference_behavioral_additive_4th_interpretation.md` (operator memory; PM-as-multi-mechanism-validator framing).
+
 ### Added (2026-05-07 — Constitution v1.4.5 ratified — Memory-log data-vs-prose discipline gate)
 
 **Constitution v1.4.3 → v1.4.5** (PATCH; v1.4.4 remains drafted but not yet ratified — explicit gap-skip documented in the version footer): adds **Quality Gate #6 — Memory-log data-vs-prose discipline** to the Quality Gates section. Operators MUST cross-check memory log entries' reflection prose against the entry's header data (raw_return, alpha, holding_days). Reflection prose can be hallucinated when the data contradicts the prior call's expected direction.

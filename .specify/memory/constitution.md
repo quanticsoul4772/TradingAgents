@@ -297,6 +297,121 @@ The Class 5 (recent earnings surprise) retrospective PASSED the standalone Const
 
 **Why the post-hoc retroactive verdict on Class 5**: the Class 5 standalone retrospective shipped today (`claudedocs/forward-catalyst-class5-retrospective-2026-05-06.md`) is left intact as historical record. The overlap analysis (`claudedocs/forward-catalyst-class5-vs-class3-overlap-2026-05-06.md`) supersedes its verdict — Class 5 is REDUNDANT with Spec 007 on this corpus, so Spec 010 invocation is NOT permitted under v1.4.3. If a future cohort expansion (e.g., 50-ticker SC-003 cross-window replication) shifts the overlap statistics, re-run the analysis and re-evaluate.
 
+### Behavioral-additive sub-case (4th interpretation; added 2026-05-07; v1.4.6)
+
+The Additive-to-existing-filter gate (v1.4.3) defaults to evaluating overlap
+ON ACTUAL FIRE DECISIONS — what the new filter F actually fires vs what the
+existing portfolio actually fires. Three sub-cases of "additive" cover
+most workflows:
+
+1. **Cohort-additive**: F catches different cohort losers than existing.
+   Empirical overlap matrix shows < 60% intersection on the cohort.
+2. **Mechanism-additive**: F operates on a different mechanism class than
+   existing (e.g., LLM-extracted vs prose-density vs backward-price). The
+   v1.4.0 forward-catalyst-class gate distinguishes mechanism classes
+   formally.
+3. **Underlying-additive** (hybrid filters): F MODULATES an underlying
+   validated filter and improves at least one of its criteria (covered by
+   the v1.4.2 magnitude-fungibility section's adjacent principle).
+
+A **4th interpretation** — **behavioral-additive** — applies when F's
+operational fire-decisions appear redundant with existing filters'
+fire-decisions, BUT both correlate with the same PM commit decisions.
+The PM has internalized F's contrarian logic via Constitution VII's
+Calibrated Abstention training, so F is REDUNDANT-ON-EXECUTION but
+COMPLEMENTARY-ON-DESIGN.
+
+**The framing applies broadly to PM decisions, not just to one mechanism
+class**: empirical evidence shows the PM has internalized contrarian
+logic across multiple mechanism classes simultaneously (across this
+project's filter portfolio: prose-density, LLM-extracted bull,
+LLM-extracted bear, calendar-boosted). The right operating framing is
+**PM-as-multi-mechanism-validator**: PM's Calibrated Abstention
+operationally validates consensus across the analyst+debate ensemble —
+when multiple mechanism classes flag the same contrarian condition,
+PM commits Hold or stricter even though no filter operationally fires.
+
+**Operational test** (when applying the v1.4.3 additive gate):
+
+1. Run the standard intersection / new-only / existing-only / neither
+   matrix on **actual** fire decisions (existing v1.4.3 procedure).
+2. **ALSO** run a counterfactual matrix on **would-fire-if-PM-committed**
+   decisions — parse state-log score fields without gating on actual
+   pre_rating. (Reusable harness: `scripts/behavioral_additive_sweep.py`.)
+3. Decision tree:
+   - **Operational PASS** (cohort-additive on actual matrix per v1.4.3):
+     SHIP THE SPEC unconditionally per existing v1.4.3.
+   - **Operational FAIL but Mechanistic PASS** (counterfactual matrix
+     shows F's would-fire matches PM's commits, different mechanism
+     class than existing filters): **behavioral-additive case** — SHIP
+     THE SPEC with documented expectation that production fires will be
+     sparse until PM regime shifts. Document the behavioral-additive
+     status in the spec's retrospective.
+   - **Operational FAIL and Mechanistic FAIL**: SKIP per v1.4.3.
+
+**Empirical basis** (2026-05-07 cross-cohort sweep):
+
+The cross-cohort behavioral-additive sweep
+(`scripts/behavioral_additive_sweep.py`,
+`claudedocs/behavioral-additive-cross-cohort-sweep-2026-05-07.md`) walked
+all 236 state logs accumulated 2026-05-04 to 2026-05-07 and found:
+
+| Mechanism class | Behavioral-additive cases | Per-instrumented-log rate |
+|---|---|---|
+| Spec 003 (prose-density) | 7 | 70% |
+| Spec 007 bull (LLM-extracted) | 7 → 8 (post-AMD) | 47-50% |
+| Spec 007 bear (LLM-extracted) | 3 | 20% |
+| Spec 008 (calendar-boosted) | 6 | 40% |
+
+**ALL 4 mechanism classes show evidence**, distributed across 7 tickers
+(AAPL, AMD, COP, INTC, MSFT, NVDA, WFC). MSFT shows the pattern in all 4
+classes; AAPL+INTC in 3 each. AMD-04-17 (`claudedocs/amd-2026-04-17-deep-dive-2026-05-07.md`)
+is the textbook case where PM verbalizes the bull-priced-in mechanism
+in plain English — confirms the pattern is mechanistically interpretable,
+not just numerically correlated.
+
+**Three sub-patterns identified by the sweep**:
+
+1. PM Hold + bull-priced-in scores high (original framing — "PM abstains
+   when filter would suppress").
+2. PM **stricter-than-Hold** (Underweight) + bull-priced-in scores high
+   (extends original — "PM commits CONSISTENT-OR-STRICTER than the
+   filter's would-be suppression"). AMD-04-17 + INTC×2 + AAPL-04-24
+   are the canonical examples.
+3. PM Hold + bear-priced-in scores high (BEAR-SIDE behavioral-additive;
+   empirical kernel for Hybrid D candidate).
+
+**Why this matters**: without the 4th interpretation, future filter
+specs in mechanism classes the PM has internalized would all SKIP per
+v1.4.3 — even though they provide robustness against PM regime drift
+(if PM ever stops being Hold-prone, the filter starts firing on
+previously-redundant cases). Codifying behavioral-additive prevents
+SKIPPING mechanistically-valuable filter specs based on operational-
+redundancy artifacts of the current PM regime.
+
+**Risk acknowledged**: behavioral-additive is a permissive case. It
+unlocks specs whose immediate operational impact is small. The risk is
+shipping multiple specs whose fires never materialize in production.
+Mitigation: behavioral-additive specs MUST also document a regime-shift
+trigger (what PM behavior would cause F's fires to start materializing)
+in the retrospective. If no plausible regime-shift exists, SKIP.
+
+**Trigger criteria** (when this sub-case applies):
+
+- Yes: new filter F PASSES the v1.4.3 standalone gate but FAILS the
+  v1.4.3 additive overlap on actual fires.
+- Yes: F's mechanism class is different from at least one existing
+  default-active filter.
+- Yes: counterfactual sweep shows F's would-fire correlates with PM's
+  commits at ≥ 60% rate on the same cohort.
+- No: F is in the SAME mechanism class as an existing default-active
+  filter (then v1.4.3 standard applies — no behavioral-additive escape).
+
+**Acceptable exception**: same as v1.4.3 broader gates — explicit
+"shakeout" filters scoped to operator-opt-in (default-off, marked
+`shakeout_filter: true` in PARAMS.json) skip both the standalone gate
+AND the additive gate AND the behavioral-additive sub-case.
+
 ---
 
 ## Quality Gates
@@ -438,9 +553,9 @@ This constitution is amendable. Amendments follow the spec-kit constitution flow
 
 The principles above are themselves up for amendment if they prove ceremonial rather than load-bearing. The test: after one month of use, are we honoring this principle because it's helping or because it's written down? If the latter, amend or remove.
 
-**Version**: 1.4.5
-**Last amended**: 2026-05-07 — added Quality Gate #6 "Memory-log data-vs-prose discipline" requiring operators to cross-check memory log entry reflection prose against entry header data. Empirical basis: PR #54 single-case (AMD-04-17 reflection claims "captured the inflection correctly" while header records +24.9% raw return showing trim FAILED) + PR #55 sweep finding the pattern is SYSTEMATIC at 20% incidence rate (3 of 15 entries; COP+INTC+AMD all Underweight calls that went UP). Symmetry with Constitution VII ("filters parse rating, not prose") extended to memory-log reading discipline ("operators parse data, not prose"). Tooling: `scripts/memory_log_integrity_check.py` (PR #55, 12 unit tests, CI-friendly exit code). v1.4.4 → v1.4.5 (PATCH per clarification rule).
-**Prior version**: 1.4.4 — (NOT YET RATIFIED, draft at `claudedocs/constitution-v1.4.4-draft-2026-05-07.md`) appended a "Behavioral-additive sub-case (4th interpretation)" sub-section to Principle VIII v1.4.3 Additive-to-existing-filter gate. Codifies the case where a new filter F's operational fires appear redundant with existing portfolio fires BUT both correlate with PM commit decisions (PM has internalized F's contrarian logic via Constitution VII Calibrated Abstention training). Empirical basis: 23 → 37 cases across all 4 mechanism classes in 6 → 10 tickers (PRs #41/#45/#53). Counter-evidence watch (PR #49) confirms 0 refuting rows.
+**Version**: 1.4.6
+**Last amended**: 2026-05-07 — appended a "Behavioral-additive sub-case (4th interpretation)" sub-section to Principle VIII v1.4.3 Additive-to-existing-filter gate. Codifies the case where a new filter F's operational fires appear redundant with existing portfolio fires BUT both correlate with PM commit decisions (PM has internalized F's contrarian logic via Constitution VII Calibrated Abstention training). Reframes PM operational role from analyst+debate aggregator to **multi-mechanism-validator**. Empirical basis: cross-cohort behavioral-additive sweep (`claudedocs/behavioral-additive-cross-cohort-sweep-2026-05-07.md`, PR #41 + AMD-04-17 deep-dive PR #43) — 23+ cases across 7 tickers in ALL 4 mechanism classes (Spec 003 prose-density, Spec 007 bull/bear LLM-extracted, Spec 008 calendar-boosted). MSFT shows pattern in all 4 classes; AMD-04-17 is textbook case (PM verbalizes bull-priced-in mechanism in plain English). Without this sub-case, future filter specs in mechanism classes the PM has internalized would all SKIP per v1.4.3 — even though they provide regime-drift robustness. Re-runnable harness: `scripts/behavioral_additive_sweep.py`. v1.4.5 → v1.4.6 (PATCH per clarification rule). Note: this content was originally drafted as v1.4.4 (`claudedocs/constitution-v1.4.4-draft-2026-05-07.md`) but ratified as v1.4.6 to preserve monotone numbering after v1.4.5 was ratified first per reasoning_decision rank ordering.
+**Prior version**: 1.4.5 — added Quality Gate #6 "Memory-log data-vs-prose discipline" requiring operators to cross-check memory log entry reflection prose against entry header data. Empirical basis: PR #54 single-case (AMD-04-17 reflection claims "captured the inflection correctly" while header records +24.9% raw return showing trim FAILED) + PR #55 sweep finding the pattern is SYSTEMATIC at 20% incidence rate (3 of 15 entries; COP+INTC+AMD all Underweight calls that went UP). Symmetry with Constitution VII ("filters parse rating, not prose") extended to memory-log reading discipline ("operators parse data, not prose"). Tooling: `scripts/memory_log_integrity_check.py` (PR #55, 12 unit tests, CI-friendly exit code). v1.4.4 (drafted, not ratified) → v1.4.5 (PATCH per clarification rule, gap-skip).
 **Prior version**: 1.4.3 — added "Additive-to-existing-filter gate" sub-section to Principle VIII. Discovered when Class 5 standalone retrospective PASSED but post-hoc overlap analysis showed 89% cohort overlap with Spec 007. v1.4.2 → v1.4.3 (PATCH).
 **Prior version**: 1.4.2 — added a "Magnitude fungibility for hybrid filters" sub-section to Principle VIII (forward-catalyst-class gate). Empirical basis: Spec 008 Hybrid C bull retrofit + Spec 009-candidate bear-inverted retrofit BOTH produced identical fire patterns across magnitude={0.5, 1.0, 2.0} within fixed window. Codifies the methodology improvement: magnitude is fungible within a hybrid-filter window when the smallest tested magnitude already crosses the underlying threshold. Future retrospectives skip redundant magnitude sweeps in this regime. v1.4.1 → v1.4.2 (PATCH per clarification rule).
 **Prior version**: 1.4.1 — appended a "Spec ships its retrospective + verdict" sub-section to Principle VI. Codifies the pattern that today's 22-work-unit research-burst day demonstrated 5 times: spec invocation requires accompanying retrospective markdown in `claudedocs/` documenting the empirical justification + verdict + decision tree. Cost asymmetry (retrospective $0-2 / 1h vs spec+impl ~6-8h) makes "retrospective FIRST, spec SECOND" the dominant strategy. v1.4.0 → v1.4.1 (PATCH per clarification rule).
