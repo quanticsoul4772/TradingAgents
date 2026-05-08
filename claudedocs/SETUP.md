@@ -180,7 +180,109 @@ config["output_language"] = "Spanish"  # or any language
 ```
 Internal Bull/Bear/risk debates stay in English on purpose (reasoning quality).
 
-## 10. Troubleshooting
+## 10. Filter portfolio + opt-in modes
+
+The framework runs **6 PM-stage filters** in this order (FR-012 chain):
+
+```
+A3 (momentum) → spec 006 (bear-sector-symmetry) → spec 003/003.5 (contrarian gate) →
+spec 004 (sector momentum) → spec 007 (forward-catalyst) → spec X-1 (institutional rotation)
+```
+
+Most filters default to **shadow mode** (record `would_fire` decisions but don't mutate ratings) when the empirical evidence base is thin. Once you accumulate ≥30 propagates worth of shadow-mode observations and the would-fire pattern matches your expectations, you flip to **active mode** to start suppressing commits.
+
+### 10.1 Defaults summary (after 2026-05-07)
+
+| Filter | Default mode | Default threshold | When it fires (active) |
+|---|---|---|---|
+| A3 momentum | active | -5% (30d) | Suppress UW/Sell when ticker down >5% in prior 30d |
+| Spec 006 bear-sector-symmetry | off | None | Suppress UW/Sell when ticker outperformed sector >+5% |
+| Spec 003 contrarian gate | active | 80th percentile | Suppress Buy/OW when bull_keyword_count percentile high |
+| Spec 003.5 sector fallback | enabled | N≥20 floor | Falls back to sector pool when per-ticker history thin |
+| Spec 004 sector momentum | off | None | Suppress Buy/OW when sector ETF down >threshold% |
+| Spec 007 bull (forward catalyst) | active | 0.60 | Suppress Buy/OW when LLM-extracted bull_priced_in score high |
+| Spec 007 bear (forward catalyst) | shadow | 0.50 | Suppress UW/Sell when LLM-extracted bear_priced_in score high |
+| Spec 008 Hybrid C calendar boost | off | window=14 / mag=0.5 | Multiplies Spec 007 bull score near earnings |
+| **Spec X-1 C-4 institutional rotation** | **shadow** | **-0.05** | **Suppress UW/Sell when top 10 institutional holders' net pctChange < -5%** |
+
+### 10.2 Spec X-1 shadow-mode workflow (newest filter)
+
+After PR #93 (2026-05-07), Spec X-1 ships at **default-shadow bear-side**. State logs at `~/.tradingagents/logs/<TICKER>/TradingAgentsStrategy_logs/full_states_log_<DATE>.json` will contain:
+
+```json
+{
+  "forward_catalyst": {
+    "...": "...other Spec 007 fields...",
+    "institutional_rotation": {
+      "net_rotation_pct": -0.0823,
+      "outflow_threshold": 0.05,
+      "bear_mode": "shadow",
+      "bull_mode": "off",
+      "would_fire_bear": true,
+      "fired_bear": false,
+      "pre_rating": "Underweight",
+      "post_rating": "Underweight"
+    }
+  }
+}
+```
+
+**Watch for**: rows where `would_fire_bear=true` AND `fired_bear=false` (shadow-mode observation). After ~30 such rows accumulate, review whether the would-fire pattern matches your judgment — if yes, flip to active mode.
+
+### 10.3 Flipping Spec X-1 to active mode
+
+Edit your experiment's `PARAMS.json` (or pass via CLI `--config-override`):
+
+```json
+{
+  "institutional_rotation_bear_mode": "active",
+  "institutional_rotation_outflow_threshold": 0.05
+}
+```
+
+Or via Python:
+
+```python
+config["institutional_rotation_bear_mode"] = "active"
+```
+
+After flipping, `fired_bear=true` rows will appear in state logs AND the rendered Portfolio Manager output will show "Hold" instead of the original UW/Sell + a `[C-4 Institutional Rotation filter]` note explaining the suppression.
+
+### 10.4 Disabling a filter entirely (zero overhead)
+
+To fully turn off Spec X-1 (no yfinance fetch, no state annotation):
+
+```json
+{
+  "institutional_rotation_bear_mode": "off",
+  "institutional_rotation_bull_mode": "off"
+}
+```
+
+The same pattern works for any filter — set its `_mode` config keys to `"off"`. A3 uses `uw_momentum_filter_threshold = None` instead.
+
+### 10.5 Re-validation cadence (Spec X-1 specific)
+
+Spec X-1's empirical evidence base used Q4 2025 13F data (cohort cutoff 2026-02-14). Q1 2026 13Fs land **~2026-05-15**. After that date, re-run:
+
+```bash
+python scripts/forward_catalyst_class4_retrospective.py --cohort-cutoff 2026-05-15
+python scripts/forward_catalyst_class4_vs_spec007_overlap.py
+```
+
+If either gate drops below the v1.4.0 / v1.4.3 thresholds (discrim ≥+5pp / hit ≥60% / Δα ≥+0.5pp standalone; ≥1 of 3 v1.4.3 criteria for additive), ablate the filter to `"off"` default mode pending investigation. Spec X-1 SC-009 codifies this requirement.
+
+### 10.6 Auditing all filter fires across propagates
+
+To survey which filters fired across your entire log corpus (useful for behavioral-additive analysis per Constitution VIII v1.4.6):
+
+```bash
+python scripts/behavioral_additive_sweep.py
+```
+
+Outputs per-mechanism + per-ticker counts of would-fire decisions. Use to identify operator-relevant patterns (e.g., "Spec X-1 would-fire on 8 of my 30 propagates this month — time to flip to active?").
+
+## 11. Troubleshooting
 
 **`UnicodeEncodeError` on Windows** — shouldn't happen in v0.2.4 (every `open()` was patched to `encoding="utf-8"`). If it does, that's a bug — file an issue, don't add a `try/except`.
 
@@ -215,14 +317,14 @@ pytest tests/test_checkpoint_resume.py  # one file
 python scripts/smoke_structured_output.py anthropic
 ```
 
-## 11. What NOT to touch
+## 12. What NOT to touch
 
 - `<!-- ENTRY_END -->` separator in `memory.py` — load-bearing.
 - `backend_url` default of `None` — was the cause of the cross-provider URL leak bug.
 - `create_msg_delete()` placeholder `HumanMessage("Continue")` — Anthropic requires a non-empty message after `RemoveMessage`s.
 - File I/O without `encoding="utf-8"` — Windows will break.
 
-## 12. Files you'll edit most
+## 13. Files you'll edit most
 
 | File | Why |
 |---|---|
