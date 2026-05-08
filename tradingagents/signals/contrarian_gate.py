@@ -34,9 +34,10 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from tradingagents.agents.utils.rating import parse_rating
+from tradingagents.default_config import TradingAgentsConfig
 from tradingagents.signals.cache import query_all
 from tradingagents.signals.featurization import FEATURIZERS
 
@@ -131,7 +132,7 @@ class ContrarianGate:
 
     def __init__(
         self,
-        config: dict,
+        config: dict | TradingAgentsConfig,
         cache_path: Path | None = None,
         history_floor: int = DEFAULT_HISTORY_FLOOR,
     ) -> None:
@@ -144,9 +145,11 @@ class ContrarianGate:
             logger.warning("contrarian_gate: unknown target %r; defaulting to 'hold'", target)
             target = "hold"
 
-        self.mode: Literal["off", "shadow", "active"] = mode
+        self.mode: Literal["off", "shadow", "active"] = cast(
+            Literal["off", "shadow", "active"], mode
+        )
         self.threshold: int = int(config.get("contrarian_gate_threshold", self.DEFAULT_THRESHOLD))
-        self.target: Literal["hold", "underweight"] = target
+        self.target: Literal["hold", "underweight"] = cast(Literal["hold", "underweight"], target)
         self.signal_id: str = config.get("contrarian_gate_signal", "market_report")
         self.feature: str = config.get("contrarian_gate_feature", "bull_keyword_count")
         self.cache_path = cache_path

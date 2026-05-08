@@ -22,6 +22,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from tradingagents.default_config import TradingAgentsConfig
 from tradingagents.llm_clients import create_llm_client
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ class BotLLMFactory:
 
     def __init__(
         self,
-        config: dict,
+        config: dict | TradingAgentsConfig,
         default_quick_llm: Any,
         default_deep_llm: Any,
     ):
