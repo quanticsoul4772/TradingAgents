@@ -8,13 +8,39 @@ than sufficient to extract that rating; no extra LLM call is needed.
 
 This module exists for backwards compatibility with callers that expect a
 ``SignalProcessor.process_signal(text)`` interface.
+
+WC-10 (specs/108-wc-10-continuous-scalar-rating/): when wc_10_enabled=True,
+the rendered Rating header is a signed float (e.g., "+0.4567") rather than
+a 5-tier categorical. The :func:`extract_scalar_rating` function handles
+that case; ``process_signal`` retains the 5-tier behavior for backward
+compat.
 """
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from tradingagents.agents.utils.rating import parse_rating
+
+_SCALAR_RATING_RE = re.compile(r"\*\*Rating\*\*:\s*([+-]?\d+\.?\d*)")
+
+
+def extract_scalar_rating(full_signal: str) -> float | None:
+    """Extract a continuous scalar rating from PM markdown when wc_10_enabled.
+
+    Returns None if no scalar rating found (caller should fall back to
+    5-tier path or raise per FR-002).
+    """
+    if not full_signal:
+        return None
+    m = _SCALAR_RATING_RE.search(full_signal)
+    if m is None:
+        return None
+    try:
+        return float(m.group(1))
+    except (ValueError, IndexError):
+        return None
 
 
 class SignalProcessor:

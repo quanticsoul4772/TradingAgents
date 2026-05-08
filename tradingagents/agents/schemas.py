@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # ---------------------------------------------------------------------------
 # Shared rating types
@@ -230,12 +230,26 @@ class PortfolioDecision(BaseModel):
     the rating-scale guidance.
     """
 
-    rating: PortfolioRating = Field(
+    rating: PortfolioRating | float = Field(
         description=(
-            "The final position rating. Exactly one of Buy / Overweight / Hold / "
-            "Underweight / Sell, picked based on the analysts' debate."
+            "The final position rating. When wc_10_enabled=False (default), "
+            "expect exactly one of Buy / Overweight / Hold / Underweight / Sell, "
+            "picked based on the analysts' debate. When wc_10_enabled=True "
+            "(WC-10 Tier 2 experiment per specs/108-wc-10-continuous-scalar-rating/), "
+            "expect a continuous scalar in [-1.0, +1.0]: -1=max bearish, "
+            "0=balanced/Hold-equivalent, +1=max bullish; values between thresholds "
+            "express partial confidence."
         ),
     )
+
+    @field_validator("rating")
+    @classmethod
+    def _validate_rating_range(cls, v: PortfolioRating | float) -> PortfolioRating | float:
+        """WC-10 FR-002: float ratings must be in [-1, +1]."""
+        if isinstance(v, float) and not (-1.0 <= v <= 1.0):
+            raise ValueError(f"Float rating must be in [-1, +1]; got {v}")
+        return v
+
     executive_summary: str = Field(
         description=(
             "A concise action plan covering entry strategy, position sizing, "
@@ -266,9 +280,18 @@ def render_pm_decision(decision: PortfolioDecision) -> str:
     so the rendered output preserves the exact section headers (``**Rating**``,
     ``**Executive Summary**``, ``**Investment Thesis**``) that downstream
     parsers and the report writers already handle.
+
+    WC-10 (specs/108-wc-10-continuous-scalar-rating/): when rating is a float
+    (Union type allows both PortfolioRating enum AND float in [-1, +1]),
+    render as a signed decimal (e.g., "+0.4567"); SignalProcessor handles
+    both forms via the wc_10_enabled config branch.
     """
+    if isinstance(decision.rating, float):
+        rating_str = f"{decision.rating:+.4f}"
+    else:
+        rating_str = decision.rating.value
     parts = [
-        f"**Rating**: {decision.rating.value}",
+        f"**Rating**: {rating_str}",
         "",
         f"**Executive Summary**: {decision.executive_summary}",
         "",

@@ -94,3 +94,12 @@ class AgentState(MessagesState):
     forward_catalyst: Annotated[
         dict, "Spec 007 forward-catalyst-filter annotation; None when both modes=='off'"
     ]
+
+    # WC-10 continuous scalar rating: PM emits this block when wc_10_enabled=True.
+    # Keys per specs/108-wc-10-continuous-scalar-rating/data-model.md
+    # ({rating_scalar, filter_mode, bin_thresholds_snapshot}). Absent when
+    # wc_10_enabled=False (FR-006 backward-compat).
+    # Must be declared here so LangGraph propagates it from PM's return dict to final_state.
+    wc_10: Annotated[
+        dict, "WC-10 continuous scalar rating annotation; absent when wc_10_enabled=False"
+    ]

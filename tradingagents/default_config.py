@@ -71,6 +71,9 @@ class TradingAgentsConfig(TypedDict):
     institutional_rotation_bull_mode: Literal["off", "shadow", "active"]
     institutional_rotation_outflow_threshold: float
     institutional_rotation_inflow_threshold: float
+    wc_10_enabled: bool
+    wc_10_filter_mode: Literal["bypass", "passthrough"]
+    wc_10_bin_thresholds: tuple[float, float, float, float]
     bot_models: dict[str, str]
     data_vendors: dict[str, str]
     tool_vendors: dict[str, str]
@@ -257,6 +260,20 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     "institutional_rotation_bull_mode": "off",
     "institutional_rotation_outflow_threshold": 0.05,
     "institutional_rotation_inflow_threshold": 0.05,
+    # WC-10 (specs/108-wc-10-continuous-scalar-rating/): Tier 2 experiment to
+    # test the categorical-bottleneck hypothesis. Replaces the framework's
+    # 5-tier categorical PortfolioRating enum with a continuous scalar in
+    # [-1, +1] (signed conviction magnitude). Default-OFF (operator opts in
+    # via PARAMS.json). When enabled, filter-bypass mode (the v1 default)
+    # SKIPS the entire 9-filter PM chain so the experiment is a clean
+    # single-intervention test. bin_scalar_to_tier() pure function provides
+    # 5-tier compatibility for ex-post analysis. v1 cost ~$16 LLM (40
+    # propagates × ~$0.40); Constitution III T2 ≤$30. Per Principle IV,
+    # NULL or INCONCLUSIVE results are valid. See spec.md SC-007 for the
+    # 3 falsifiable predictions framework.
+    "wc_10_enabled": False,
+    "wc_10_filter_mode": "bypass",
+    "wc_10_bin_thresholds": (-0.6, -0.2, 0.2, 0.6),
     # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
     # (str). When set, the framework instantiates a per-bot client for that
     # model using the configured llm_provider; bots not in this dict use the
