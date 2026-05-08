@@ -109,7 +109,7 @@ def _request_with_retry(payload: dict, max_retries: int = 2) -> dict:
     A 429 response triggers exponential backoff (2s, 4s) and one retry.
     Other 4xx/5xx errors propagate via raise_for_status().
     """
-    last_response = None
+    response: requests.Response | None = None
     for attempt in range(max_retries + 1):
         _throttle()
         response = requests.post(
@@ -118,13 +118,13 @@ def _request_with_retry(payload: dict, max_retries: int = 2) -> dict:
             json=payload,
             timeout=30,
         )
-        last_response = response
         if response.status_code == 429 and attempt < max_retries:
             time.sleep(2.0 * (attempt + 1))
             continue
         break
-    last_response.raise_for_status()
-    return last_response.json()
+    assert response is not None  # loop runs at least once (max_retries >= 0)
+    response.raise_for_status()
+    return response.json()
 
 
 def get_news_exa(ticker: str, start_date: str, end_date: str) -> str:
