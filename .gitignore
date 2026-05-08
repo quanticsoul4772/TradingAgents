@@ -234,3 +234,7 @@ backtest_results.csv
 experiments/*/results.csv
 experiments/*/events.db
 experiments/*/debates.jsonl
+# Memory log artifacts from experiment harnesses (backtest, pilot, etc.)
+# These are operator-private decision logs; never commit.
+experiments/**/*_memory.md
+experiments/**/wc10_pilot_memory.md
