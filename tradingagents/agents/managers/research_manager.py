@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from tradingagents.agents.schemas import (
     ResearchPlan,
     ResearchPlanV2,
@@ -90,6 +92,7 @@ def create_research_manager(llm):
         # "reserve Hold for balanced" instruction would partially cancel
         # the v2 prompt's "two-sided is the norm" framing.
         variant = get_config().get("research_manager_prompt_variant", "default")
+        renderer: Callable[..., str]
         if variant in ("default", "v1"):
             template = _PROMPT_V1
             structured_llm = structured_v1
