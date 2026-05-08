@@ -6,6 +6,40 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (2026-05-07 — Spec X-1 deployed — C-4 institutional rotation filter (FIRST quantitative-flow bear-side filter))
+
+**Spec X-1 (`specs/091-c4-institutional-rotation/`)** ships the framework's FIRST quantitative-flow bear-side filter via 4 PRs (#88 spec → #89 plan + design → #90 tasks → #91 PR-A MVP implementation → #92 PR-B remaining tests → this PR-C polish).
+
+**Mechanism**: At PM stage, AFTER all existing filters (A3 → spec 006 → spec 003/003.5 → spec 004 → spec 007), apply the C-4 check. Fetch top 10 institutional holders for the ticker via `yfinance.Ticker(t).institutional_holders` (LRU-cached maxsize=128 per process). Sum the `pctChange` column across top 10 holders → `net_rotation`. If `net_rotation < -outflow_threshold` AND `pre_rating ∈ {Underweight, Sell}` → suppress to Hold. Bear-side ONLY at v1 (bull-side disabled by default — n=1 evidence too thin).
+
+**Module**: new `tradingagents/agents/utils/institutional_rotation_filter.py` (~190 LOC). Exports `_fetch_institutional_rotation` (LRU-cached fetcher), `should_suppress_bear` (pure function with strict less-than per FR-005 / SC-002), `evaluate_institutional_rotation` (main filter). Internal helpers `_parse_pre_rating` + `_downgrade_to_hold` mirror Spec 007 patterns. Mirrors `scripts/forward_catalyst_class4_retrospective.py` for fetch semantics (single source of truth).
+
+**State annotation** extends `state["forward_catalyst"]["institutional_rotation"]` with 8 fields (`net_rotation_pct`, `outflow_threshold`, `bear_mode`, `bull_mode`, `would_fire_bear`, `fired_bear`, `pre_rating`, `post_rating`). When both modes are off, the sub-dict is NOT added (FR-011 backward-compat with Spec 007 baseline state log shape). Persisted via existing `_log_state` whitelist (no AgentState schema changes — `forward_catalyst` already declared).
+
+**4 new TradingAgentsConfig keys**: `institutional_rotation_bear_mode` (Literal[off/shadow/active], default "shadow"), `institutional_rotation_bull_mode` (Literal[off/shadow/active], default "off"), `institutional_rotation_outflow_threshold` (float, default 0.05), `institutional_rotation_inflow_threshold` (float, default 0.05; reserved for future bull-side activation).
+
+**Defaults rationale**: bear-side default-shadow per Constitution VIII v1.4.0 small-sample-caution sub-clause (n=12 cohort). Bull-side default-off (n=1 evidence too thin). Filter ordering LAST in chain per sample-size discipline (smallest evidence base goes last).
+
+**Empirical evidence** (PR #75 + #77, both pre-cleared the Constitution VIII gates BEFORE spec invocation per VIII v1.4.1 retrospective-FIRST pattern):
+
+| Gate | Result |
+|---|---|
+| Standalone (VIII v1.4.0) | PASS at n=12 — discrim +10.29pp / hit 75.0% / net Δα +5.41pp at T_outflow=0.05 |
+| Additive (VIII v1.4.3) | PASS on 2 of 3 criteria — net Δα improvement +8.06pp / hit improvement +69.23pp / FP improvement +0.00pp (≥1 sufficient) |
+| Mechanism class | LITERALLY different from Spec 007 bear (LLM-extracted vs quantitative 13F flow); C-4 catches 11 bearish commits Spec 007 entirely misses (mean α +6.16% on `c4_only` cohort, 81.8% hit) |
+
+**Test coverage**: 18 tests total (15 unit + 3 integration). All PASS via uv venv (matches pre-commit env). 0 regressions in 1134-test unit suite.
+
+**Cost gate**: Zero LLM cost (Constitution III T0 free-tier). yfinance fetch ~50-200ms latency on cache miss.
+
+**Deferred follow-up gates**:
+- SC-009 (~2026-05-15): re-run `scripts/forward_catalyst_class4_retrospective.py` + `scripts/forward_catalyst_class4_vs_spec007_overlap.py` with Q1 2026 13F panel; ablate to "off" if either gate drops below v1.4.0 / v1.4.3 thresholds.
+- SC-010 (live-mode flip eligibility): n≥30 propagates A/B ablation (active vs shadow on same propagates) before flipping bear_mode default to "active".
+
+**No new constitution amendment needed** — Spec X-1 is governed by existing Principle VIII v1.4.0 + v1.4.3 gates; cleared before spec invocation.
+
+**Sibling docs**: full spec/plan/research/data-model/contracts/quickstart bundle at `specs/091-c4-institutional-rotation/` + 4 retrospective markdowns (`claudedocs/forward-catalyst-class4-{retrospective,vs-spec007-overlap}-2026-05-07.md` + `claudedocs/spec-x-1-c4-institutional-rotation-feature-description-2026-05-07.md`).
+
 ### Added (2026-05-07 — Constitution v1.4.6 ratified — Behavioral-additive 4th interpretation; PM-as-multi-mechanism-validator reframe)
 
 **Constitution v1.4.5 → v1.4.6** (PATCH; content originally drafted as v1.4.4 but ratified as v1.4.6 to preserve monotone numbering after v1.4.5 was ratified first per reasoning_decision rank ordering): appends a **"Behavioral-additive sub-case (4th interpretation)"** sub-section to Principle VIII v1.4.3 Additive-to-existing-filter gate.
