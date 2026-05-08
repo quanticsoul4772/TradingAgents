@@ -1,7 +1,7 @@
 from .alpha_vantage_common import _make_api_request
 
 
-def _filter_reports_by_date(result, curr_date: str):
+def _filter_reports_by_date(result, curr_date: str | None):
     """Filter annualReports/quarterlyReports to exclude entries after curr_date.
 
     Prevents look-ahead bias by removing fiscal periods that end after
