@@ -466,6 +466,9 @@ class TradingAgentsGraph:
             # mirrors the contrarian_gate / sector_momentum / bear_sector_symmetry
             # persistence paths above per spec 007 R-5; same precedent as commit 4c14d0f.
             "forward_catalyst": final_state.get("forward_catalyst"),
+            # WC-10 continuous scalar rating annotation (absent when wc_10_enabled=False);
+            # per specs/108-wc-10-continuous-scalar-rating/data-model.md.
+            "wc_10": final_state.get("wc_10"),
         }
 
         # Save to file

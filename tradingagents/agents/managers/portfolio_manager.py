@@ -94,6 +94,42 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
             "Portfolio Manager",
         )
 
+        # WC-10 (specs/108-wc-10-continuous-scalar-rating/): when wc_10_enabled
+        # AND wc_10_filter_mode="bypass", SKIP the entire 9-filter PM chain
+        # so the experiment is a clean single-intervention test of the
+        # categorical-bottleneck hypothesis. Per Constitution II + spec.md
+        # FR-005 + FR-006.
+        wc_10_enabled = bool(get_config().get("wc_10_enabled", False))
+        wc_10_filter_mode = get_config().get("wc_10_filter_mode", "bypass")
+        if wc_10_enabled and wc_10_filter_mode == "bypass":
+            from tradingagents.graph.signal_processing import extract_scalar_rating
+
+            rating_scalar = extract_scalar_rating(final_trade_decision)
+            wc_10_dict = {
+                "rating_scalar": rating_scalar,
+                "filter_mode": "bypass",
+                "bin_thresholds_snapshot": tuple(
+                    get_config().get("wc_10_bin_thresholds", (-0.6, -0.2, 0.2, 0.6))
+                ),
+            }
+            new_risk_debate_state_bypass = {
+                "judge_decision": final_trade_decision,
+                "history": risk_debate_state["history"],
+                "aggressive_history": risk_debate_state["aggressive_history"],
+                "conservative_history": risk_debate_state["conservative_history"],
+                "neutral_history": risk_debate_state["neutral_history"],
+                "latest_speaker": "Judge",
+                "current_aggressive_response": risk_debate_state["current_aggressive_response"],
+                "current_conservative_response": risk_debate_state["current_conservative_response"],
+                "current_neutral_response": risk_debate_state["current_neutral_response"],
+                "count": risk_debate_state["count"],
+            }
+            return {
+                "risk_debate_state": new_risk_debate_state_bypass,
+                "final_trade_decision": final_trade_decision,
+                "wc_10": wc_10_dict,
+            }
+
         # A3 momentum filter: suppress UW/Sell commits when ticker is deeply
         # down (mean-reversion zone). Disabled by default — set
         # `uw_momentum_filter_threshold` (e.g. -5.0) in config to enable.
