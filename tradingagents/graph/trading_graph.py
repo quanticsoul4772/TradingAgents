@@ -98,7 +98,7 @@ class TradingAgentsGraph:
         self,
         selected_analysts=["market", "social", "news", "fundamentals"],
         debug=False,
-        config: dict[str, Any] = None,
+        config: dict[str, Any] | None = None,
         callbacks: list | None = None,
     ):
         """Initialize the trading agents graph and components.
