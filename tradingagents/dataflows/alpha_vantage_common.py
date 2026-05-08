@@ -45,7 +45,7 @@ class AlphaVantageRateLimitError(Exception):
     pass
 
 
-def _make_api_request(function_name: str, params: dict) -> dict | str:
+def _make_api_request(function_name: str, params: dict) -> str:
     """Helper function to make API requests and handle responses.
 
     Raises:
