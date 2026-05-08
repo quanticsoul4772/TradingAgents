@@ -6,6 +6,40 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (2026-05-07 late session — bear-side survey CONCLUDES; C-4 ADDITIVE PASS; tooling + memory polish)
+
+8 PRs merged extending the prior 2026-05-07 entry (PRs #71-#78). Total day count: 40+ PRs. Cost: $0 LLM (all retrospective + tooling work).
+
+**Bear-side mechanism class survey CONCLUDES (PRs #74, #75, #76, #77, #78)**: 6/6 mechanism classes evaluated; **C-4 (institutional ownership delta) is the SOLE spec-eligible bear-side mechanism class**.
+
+| Class | Standalone Gate | Additive Gate | Spec-eligible? | Source |
+|---|---|---|---|---|
+| C-1 (insider transactions) | SKIP | n/a | NO | PR #23 |
+| C-2 (short-interest delta) | SKIP (mechanism INVERTED) | n/a | NO | PR #76 |
+| C-3 (analyst PT delta) | NOT FEASIBLE | n/a | NO | PR #40 |
+| **C-4 (institutional ownership)** | **PASS (n=12, +5.41pp)** | **PASS (+8.06pp / +69pp; PR #77)** | **YES (shadow-mode-first)** | PR #75 + PR #77 |
+| C-5 EPS-surprise | PASS standalone, FAIL additive | n/a | NO | 2026-05-06 |
+| C-5 PRICE-REACTION | SKIP (mechanism INVERTED) | n/a | NO | PR #74 |
+| C-6 (bear-news density) | SKIP (structural redundant) | n/a | NO | PR #67 |
+
+C-4 ADDITIVE PASS finding (PR #77): C-4 catches 11 bearish commits Spec 007 ENTIRELY MISSES (`c4_only` cohort: n=11, mean α +6.16%, hit 81.8%). LITERALLY different signal sources (LLM semantic vs quantitative 13F flow). Cross-mechanism-class additive case — exactly what v1.4.3 gate is designed to identify.
+
+Two C-classes show INVERTED bear-side mechanism (C-5 price-reaction + C-2 short-covering): both originally hypothesized as mean-reversion; both empirically show momentum/continuation. Bear cohort on SC-009-era data has strong continuation bias. Three SKIP-types now codified (empirical, data-availability, structural).
+
+**Spec 003 historical-recompute + cache-collision fix (PRs #71, #72)**: `scripts/spec_003_historical_recompute.py` walks 254 state logs and backfills bull_keyword_count cache via `record_value`. Cache state went from sparse to 435 rows / 54 tickers. **9 tickers now clear FR-004 N≥20 per-ticker floor** (NVDA, AAPL, INTC, XLE, MSFT, GOOGL, JPM, XLF, XLK). JPM + GOOGL crossed from `baseline=sector` to `baseline=per_ticker`. Sub-pattern 2 cold-start tickers (AMZN, COP, CVX, LLY, HON) still cold; no source data available for backfill. PR #72 found the cache PK (signal_id, ticker, date, fetcher_version) silently overwrites when --feature differs; added cache-collision guard + new `--write-to` flag for non-default features. Bear-side cache populated under separate signal_id `market_report__bear_keyword_count` (254 rows; preserves bull cache).
+
+**Path C analyst PT snapshot wiring (PR #73)**: new `tradingagents/agents/utils/analyst_pt_snapshot.py` (~80 LOC) captures `yfinance.analyst_price_targets` + `recommendations` distribution at propagate time when `analyst_pt_snapshot_enabled=True` (default OFF). Adds `state["forward_catalyst"]["analyst_pt_snapshot"]` field. Future C-3-class retrospectives can backfill historical contrarian signals from accumulated snapshots in state logs (yfinance has no historical PT panels per PR #40 — snapshots forward are the only path). LRU-cached, graceful fallback, ETFs return None.
+
+**PR #22 design doc updated (PR #78)**: bear-side-mechanism-exploration design doc gets a "SURVEY COMPLETE" section at the top with the full empirical scorecard. Original design exploration preserved below for traceability of how candidate classes were ranked + selected.
+
+**Spec X-1 (C-4 institutional rotation filter) is now spec-invocable** per Constitution VIII v1.4.0 + v1.4.3 gates. Recommend SHADOW-MODE-FIRST launch per the v1.4.0 sample-size caution pattern (n=12 is small; Q1 2026 13F refresh ~2026-05-15 will refresh the data; cohort expansion would tighten variance bands).
+
+**Cross-session memories**: 19 → 21 (+2 new): `reference_signals_cache_pk_collision.md` (PR #72 footgun), `feedback_precommit_ruff_silent_rejection.md` (PR #77 chain-output footgun).
+
+**New scripts**: `scripts/spec_003_historical_recompute.py` (PR #71) + `scripts/forward_catalyst_class5_reaction_retrospective.py` (PR #74) + `scripts/forward_catalyst_class4_retrospective.py` (PR #75) + `scripts/forward_catalyst_class2_retrospective.py` (PR #76) + `scripts/forward_catalyst_class4_vs_spec007_overlap.py` (PR #77).
+
+**Test count**: 1162 → 1170 → 1179 (+17 net from PRs #71, #72, #73). Full unit suite passes.
+
 ### Added (2026-05-07 — SC-009 backtest, bear-side mechanism survey, v1.4.4+v1.4.5 drafts)
 
 A multi-session day combining a long-running SC-009 backtest with extensive parallel-safe documentation, diagnostic, and tooling work. 32 PRs merged. ~$18 LLM (background backtest); foreground all $0. See `claudedocs/research-burst-2026-05-07.md` for the canonical narrative.
