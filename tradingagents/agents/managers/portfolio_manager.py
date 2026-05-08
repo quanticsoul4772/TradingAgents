@@ -326,6 +326,42 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
                 exc,
             )
 
+        # Spec X-1 (specs/091-c4-institutional-rotation/): C-4 institutional
+        # rotation filter. Runs LAST in FR-012 chain (smallest evidence
+        # base n=12 → least gating priority). Annotation lives as sub-dict
+        # of forward_catalyst per spec 003/004/006/007/008 precedent.
+        # Zero LLM cost; ~50-200ms latency on yfinance cache miss.
+        try:
+            from tradingagents.agents.utils.institutional_rotation_filter import (
+                evaluate_institutional_rotation,
+            )
+
+            ir_bear_mode = get_config().get("institutional_rotation_bear_mode", "shadow")
+            ir_bull_mode = get_config().get("institutional_rotation_bull_mode", "off")
+            ir_outflow_threshold = float(
+                get_config().get("institutional_rotation_outflow_threshold", 0.05)
+            )
+            ir_modified_decision, ir_annotation = evaluate_institutional_rotation(
+                final_trade_decision,
+                state,
+                bear_mode=ir_bear_mode,
+                bull_mode=ir_bull_mode,
+                outflow_threshold=ir_outflow_threshold,
+            )
+            final_trade_decision = ir_modified_decision
+            if ir_annotation is not None:
+                if forward_catalyst_dict is None:
+                    forward_catalyst_dict = {}
+                forward_catalyst_dict["institutional_rotation"] = ir_annotation
+        except Exception as exc:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "institutional_rotation_filter: unexpected failure in PM hook (%s); "
+                "proceeding with unmodified decision",
+                exc,
+            )
+
         new_risk_debate_state = {
             "judge_decision": final_trade_decision,
             "history": risk_debate_state["history"],
