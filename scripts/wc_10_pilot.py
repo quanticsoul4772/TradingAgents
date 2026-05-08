@@ -29,7 +29,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tradingagents.default_config import DEFAULT_CONFIG  # noqa: E402
 from tradingagents.graph.signal_processing import (  # noqa: E402
-    SignalProcessor,
     extract_scalar_rating,
 )
 from tradingagents.graph.trading_graph import TradingAgentsGraph  # noqa: E402
@@ -108,8 +107,15 @@ def _run_propagate(ticker: str, date: str, mode: str, out_dir: Path) -> dict:
         final_state, decision = ta.propagate(ticker, date)
         elapsed = time.perf_counter() - start
 
+        # propagate() returns (final_state, signal_processor_output) where the
+        # second element is the 5-tier tier extracted via process_signal().
+        # For WC-10 mode we need the FULL markdown (final_state['final_trade_decision'])
+        # to extract the scalar; the already-extracted `decision` is the 5-tier
+        # fallback ("Hold" when no 5-tier match found in scalar markdown).
+        markdown = final_state.get("final_trade_decision", "") or ""
+
         if mode == "wc_10":
-            rating_scalar = extract_scalar_rating(decision)
+            rating_scalar = extract_scalar_rating(markdown)
             if rating_scalar is None:
                 return {
                     "ticker": ticker,
@@ -131,15 +137,14 @@ def _run_propagate(ticker: str, date: str, mode: str, out_dir: Path) -> dict:
                 "run_seconds": f"{elapsed:.1f}",
             }
         else:
-            # 5-tier baseline: extract enum string via existing SignalProcessor
-            sp = SignalProcessor()
-            tier = sp.process_signal(decision)
+            # 5-tier baseline: `decision` is already the 5-tier string from
+            # SignalProcessor.process_signal() — use directly.
             return {
                 "ticker": ticker,
                 "date": date,
                 "mode": mode,
-                "rating": tier,
-                "binned_tier": tier,  # already a tier
+                "rating": decision,
+                "binned_tier": decision,  # already a tier
                 "error": "",
                 "run_seconds": f"{elapsed:.1f}",
             }
