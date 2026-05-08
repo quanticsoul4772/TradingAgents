@@ -495,11 +495,11 @@ def render_multi_horizon_report(
         for (signal_id, feature), by_h in sorted_groups:
             ic_cells = []
             for h in horizons:
-                ev = by_h.get(h)
-                if ev is None or ev["ic"] is None:
+                cell_ev = by_h.get(h)
+                if cell_ev is None or cell_ev["ic"] is None:
                     ic_cells.append("—")
                 else:
-                    ic_cells.append(f"{ev['ic']:+.3f}")
+                    ic_cells.append(f"{cell_ev['ic']:+.3f}")
             last_ev = by_h.get(horizons[-1])
             hr_str = (
                 f"{last_ev['hit_rate']:.1%}" if last_ev and last_ev["hit_rate"] is not None else "—"

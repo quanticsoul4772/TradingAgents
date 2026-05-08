@@ -111,7 +111,9 @@ def _portfolio_from_dict(data: dict[str, Any], path: Path) -> Portfolio:
             "entry_slippage_bps",
             "exit_slippage_bps",
         }
-        snap_kwargs = {k: (Decimal(v) if k in decimal_fields else v) for k, v in snap_raw.items()}
+        snap_kwargs: dict[str, Any] = {
+            k: (Decimal(v) if k in decimal_fields else v) for k, v in snap_raw.items()
+        }
         snapshot = PolicySnapshot(**snap_kwargs)
 
         positions: dict[str, Position] = {}
