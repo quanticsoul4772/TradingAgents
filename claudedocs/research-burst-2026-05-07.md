@@ -1,8 +1,8 @@
 # Research-burst day — 2026-05-07
 
-**TALLY (current)**: **80+ PRs shipped** (all merged) + SC-009 backtest COMPLETED (36/36 rows, exit code 0) + **9 cross-session memories added today** (14 → 23 cumulative). Pattern: parallel-safe $0 work while backtest burned ~$18 LLM in background. Major arcs: SC-009 ablation completion + bear-side mechanism class survey CONCLUSION (6/6 evaluated; C-4 SOLE spec-eligible) + Constitution v1.4.4 + v1.4.5 amendment drafts + tooling family.
+**TALLY (FINAL)**: **95+ PRs shipped** (all merged) + SC-009 backtest COMPLETED (36/36 rows, exit code 0) + **10 cross-session memories added today** (14 → 24 cumulative). Pattern: parallel-safe $0 work while backtest burned ~$18 LLM in background. Major arcs: SC-009 ablation completion + bear-side mechanism class survey CONCLUSION (6/6 evaluated; C-4 SOLE spec-eligible) + Constitution v1.4.5 + v1.4.6 BOTH RATIFIED (drafts originally numbered v1.4.4 + v1.4.5 — see version-rename note in CHANGELOG) + **Spec X-1 (C-4 institutional rotation filter) DEPLOYED end-to-end via 6-PR spec-kit bundle (#88 spec → #89 plan → #90 tasks → #91 MVP → #92 tests → #93 polish)** + Spec 010 closed via SKIP retrospective (PR #86) + tooling family.
 
-**Pattern**: parallel-safe documentation + diagnostic + risk-mitigation + filter-audit + tooling-build work while a long-running experiment ran in background. Foreground LLM cost: $0 across all 80+ PRs. Background backtest cost: ~$18 (completed). Test count 1123 → 1179 (+56 net).
+**Pattern**: parallel-safe documentation + diagnostic + risk-mitigation + filter-audit + tooling-build work while a long-running experiment ran in background. Foreground LLM cost: $0 across all 95+ PRs. Background backtest cost: ~$18 (completed). Test count 1123 → 1134 unit + 2 integration after Spec X-1 deployment.
 
 This document is the canonical entry point for today's session. Companion to `claudedocs/research-burst-2026-05-06.md` (yesterday's 17-unit + 5-amendment day) which now has a 2026-05-07 appendix referencing this standalone doc.
 
@@ -147,32 +147,49 @@ Unchanged from yesterday: 8 filters, 4 default-active, 4 operator-opt-in. SC-009
 - L-8: codify behavioral-additive 4th interpretation of v1.4.3 — **threshold MET** as of PR #41 (4/4 mechanism classes have evidence; 23 cases across 6 tickers). Reframed from "PM-as-implicit-Spec-003" to **PM-as-multi-mechanism-validator**. Drafting eligible; ratification still gated on 1 more session of pattern holding to avoid over-fitting.
 - L-9: codify alt gate-1 methodology for 100%-fire-rate filters in SC-009 pattern. Still n=1 (SC-009 only); defer until pattern recurs in another spec.
 
-## Open work entering tomorrow (UPDATED end-of-day)
+## Late-day continuation (PRs #60-#95+) — bear-side survey CONCLUDES + ratification + Spec X-1 DEPLOYED
 
-**RESOLVED today (no longer pending)**:
+The day's late session continued well past the original "end-of-day" mark, shipping ~35 more PRs covering bear-side survey conclusion, constitution ratification, full Spec X-1 spec-kit deployment, and doc refresh.
+
+| Range | Major arc | Outcome |
+|---|---|---|
+| #60-#82 | C-2 + C-5-reaction + C-4 retrospectives + bear-side survey CONCLUSION + design doc cross-reference + first README accuracy pass | 6/6 mechanism class survey COMPLETE; C-4 SOLE spec-eligible at PASS gates; PR #82 fixes 12 stale README items |
+| #83 | Constitution v1.4.5 ratified | Quality Gate #6 — Memory-log data-vs-prose discipline (PR #55 + #54 empirical basis) |
+| #84 | Constitution v1.4.6 ratified | Behavioral-additive 4th interpretation (original v1.4.4 draft content rolled to v1.4.6 to preserve monotone numbering after v1.4.5 ratified first per reasoning_decision rank ordering) |
+| #85 | Behavioral-additive sweep refresh post-v1.4.6 | 23 → 29 → **44** cases / 6 → 8 → **13** tickers / 4-of-4 mechanism class coverage maintained / **0 counter-evidence** rows |
+| #86 | Spec 010 (Hybrid D bear-side calendar-boosted) SKIP retrospective | Bear-side calendar-boost mechanism class CLOSED via 3-converging-retrospective methodological closure |
+| #87 | Spec X-1 feature description draft | Pre-spec-kit user-review artifact (~316 LOC draft) per Spec 008 precedent |
+| #88-#93 | Spec X-1 6-PR spec-kit bundle | spec.md → plan + research + design → tasks.md → MVP (T001-T015) → remaining tests (T016-T027) → polish (T028-T034). 18 tests + 4 config keys + ~190 LOC helper module + PM-hook integration |
+| #94 | SETUP.md operator guide | New section 10 "Filter portfolio + opt-in modes" (6 sub-sections covering all 9 filters + Spec X-1 shadow-mode workflow + active-mode flip + opt-out + SC-009 re-validation cadence + behavioral_additive_sweep audit pointer) |
+| #95 | README + ROADMAP + RESEARCH_FINDINGS bundled refresh | 5 stale items fixed; "Spec X-1 candidate" → "DEPLOYED"; v1.4.4/v1.4.5 drafts → v1.4.5/v1.4.6 ratified; Constitution version v1.4.3 → v1.4.6; filter portfolio 8+1-candidate → 9 production |
+
+## Open work (final FOLLOW-UP gates as of session-end)
+
+**RESOLVED today** (no longer pending):
 - ✅ SC-009 backtest completes (PR #57 — 36/36 rows, exit code 0)
 - ✅ Re-run analyzer on full 36-row data (PR #58 — ANALYSIS.md updated)
-- ✅ D-1 expansion contingency: NOT triggered (n_fired=13 ≥ 8) — scaffold inert
-- ✅ Constitution v1.4.4 amendment draft (PR #44 — drafted; ratification ready for tomorrow)
-- ✅ Hybrid D feasibility design doc (PR #48 — both Hybrid D + E DEFERRED for cohort growth)
-- ✅ Bear-side sample-size update (subsumed into PR #39 + PR #46 + PR #56 deep-dives)
-- ✅ Memory log integrity check tooling (PR #55 — n=3 v1.4.5 threshold MET)
-- ✅ AMD memory log audit (PR #54 — hallucination cascade documented)
+- ✅ D-1 expansion contingency: NOT triggered — scaffold inert
+- ✅ Constitution v1.4.5 ratified (PR #83) + v1.4.6 ratified (PR #84) — both drafts now landed
+- ✅ Hybrid D feasibility design doc (PR #48) → SKIP retrospective shipped (PR #86) — methodological closure
+- ✅ Bear-side mechanism class survey CONCLUDED (6/6; PR #78)
+- ✅ Memory log integrity check tooling (PR #55)
+- ✅ AMD memory log audit (PR #54)
+- ✅ Spec X-1 deployed end-to-end (PRs #88-#93)
+- ✅ Operator-facing SETUP.md guide (PR #94)
+- ✅ All 3 top-level docs refreshed for Spec X-1 deployment (PR #95)
+- ✅ Memory polish for spec-kit 6-PR workflow pattern + 2026-05-07 daily summary (memory-only, this session)
 
-**Still pending entering 2026-05-08**:
+**Calendar-anchored deferred gates** (no forward action available yet):
 - **Realized α window for 2026-04-17 closes ~2026-05-18** (~11 days)
 - **Realized α window for 2026-04-24 closes ~2026-05-26** (~19 days)
 - **Final SC-009 ANALYSIS.md** (FINAL status not PRELIMINARY) writable ~2026-05-22+
-- **D-2 v1.4.4 amendment ratification** — Tuesday morning per same-session-defer rule
-- **D-2.5 v1.4.5 amendment draft + ratification** — n=3 threshold MET per PR #55; draft tonight or Tuesday
-- **D-3 C-5 (earnings price reaction) feasibility probe** — ~30min, $0
-- **Path C snapshot wiring PoC** — defer until next backtest design
-- **AVGO temporal-jump investigation** — small followup from PR #53
-- **Identify 4 unaccounted bull-pre fires from final 9 rows** — small followup from PR #57
-- **Memory polish: PR #50 F-3 temporal-learning observation** — never captured
-- **Update CHANGELOG.md for today's 22-PR + 4-memory burst** — operational hygiene
-- **Spec 003.5 baseline=none diagnostic** (recurring on AMZN + BAC + GS)
-- **Spec 003 historical-recompute script** — still deferred (~2h)
+- **Spec X-1 SC-009** re-run on Q1 2026 13F panel (~2026-05-15): if either gate drops below v1.4.0 / v1.4.3 thresholds, ablate to "off" default
+- **Spec X-1 SC-010** live-mode flip eligibility (after n≥30 propagates): A/B ablation before flipping bear default to "active"
+
+**No-longer-applicable items** (superseded or absorbed):
+- ~~D-3 C-5 retrospective probe~~ — bear-side survey COMPLETE; no further C-class probes needed
+- ~~Path C snapshot wiring PoC~~ — shipped earlier today (default-OFF; ready for future C-3-class retrospectives if data becomes available)
+- ~~Spec 003 historical-recompute script~~ — shipped earlier today (PR #71; 254 cache rows backfilled)
 
 ## What did NOT happen today
 
@@ -184,23 +201,26 @@ Unchanged from yesterday: 8 filters, 4 default-active, 4 operator-opt-in. SC-009
 
 ## Cumulative state across 2 days (FINAL end-of-day 2026-05-07)
 
-- **Filter portfolio**: 8 sides (unchanged from 2026-05-06 evening)
-- **Constitution version**: v1.4.3 in effect (v1.4.4 + v1.4.5 candidates DRAFTED + ELIGIBLE for ratification tomorrow)
-- **Cross-session memories**: 16 total (was 9 entering today; +6 new + 1 updated)
-- **PRs merged across 2026-05-06 + 2026-05-07**: 60+ (15 yesterday + ~45 today including pre-#38 morning work)
+- **Filter portfolio**: **9 production filters** (was 8 + 1 candidate at start; Spec X-1 promoted from candidate to deployed via PRs #88-#93)
+- **Constitution version**: **v1.4.6** in effect (v1.4.5 + v1.4.6 BOTH ratified during the day; v1.4.4 draft content rolled to v1.4.6)
+- **Cross-session memories**: **24 total** (was 9 entering today; +15 new + 1 updated across both day-sessions)
+- **PRs merged across 2026-05-06 + 2026-05-07**: **110+** (15 yesterday + 95+ today)
 - **Tags**: v0.7.0/v0.8.0/v0.8.1 (no new today; SC-009 verdict pending ~2026-05-22)
-- **Tests**: **1162/1162 PASS** (was 1123 → +15 PR #38 + +12 PR #49 + +12 PR #55 = +39 net)
+- **Tests**: **1134 unit + 2 integration PASS** post-Spec X-1 deployment
 - **Backtest**: COMPLETE 36/36 rows; PRELIMINARY analyzer at +0.43% suppressed-α / 13 fires / 0 decisions changed by boost. ANALYSIS.md FINAL writable ~2026-05-22+
 
 ## Headline findings shipped today
 
-1. **L-8 codification THRESHOLD MET + reframed**: `PM-as-multi-mechanism-validator` (was PM-as-implicit-Spec-003). 23 → 29 → 37 cases across 4/4 mechanism classes and 6 → 8 → 10 tickers (PRs #41, #45, #53). v1.4.4 amendment drafted (PR #44).
+1. **L-8 codification THRESHOLD MET + reframed**: `PM-as-multi-mechanism-validator` (was PM-as-implicit-Spec-003). 23 → 29 → 37 → **44** cases across 4/4 mechanism classes and 6 → 8 → 10 → **13** tickers (PRs #41, #45, #53, #85). v1.4.6 amendment ratified (PR #84) — original v1.4.4 draft content.
 2. **AMD-04-17 textbook L-8 case** (PR #43) + AMD-04-24 TRIPLE behavioral-additive (PR #46) + AMZN-04-17 first OPERATIONAL fire event (PR #50).
-3. **Reflection-prose hallucination DISCOVERED systematic at 20% rate** (PRs #54+#55). N=3 threshold for v1.4.5 amendment MET. Three hallucinated reflections found via integrity-check tool.
+3. **Reflection-prose hallucination DISCOVERED systematic at 20% rate** (PRs #54+#55). N=3 threshold for v1.4.5 amendment MET → **v1.4.5 RATIFIED (PR #83)** as Quality Gate #6 — Memory-log data-vs-prose discipline.
 4. **PASS-by-non-counterexample distinction** (PR #56): SC-009 cohort doesn't exercise spec 008 boost's intended borderline regime; default-on flip should be SHADOW-MODE-FIRST per Constitution VIII v1.4.0.
 5. **Spec 007 calendar-INDEPENDENCE** validated empirically (BAC×2 + GS at 81-88d to earnings fire on bull_score alone — PR #56).
 6. **C-3 mechanism class NOT FEASIBLE** for retrospective (PR #40 — yfinance has no historical PT panels).
 7. **Counter-evidence watch automation shipped** (PR #49) with 12 tests; current corpus 0 refuting rows.
+8. **Bear-side mechanism class survey CONCLUDES** (PR #78): 6/6 evaluated; C-4 SOLE spec-eligible. Three SKIP-types codified (empirical / data-availability / structural). Two C-classes show INVERTED bear-side mechanism (C-2 short-covering + C-5 price-reaction).
+9. **Spec X-1 (C-4 institutional rotation filter) DEPLOYED** end-to-end via 6-PR spec-kit bundle (#88-#93). FIRST quantitative-flow bear-side filter; default-shadow bear-side / default-off bull-side; 18 tests + 4 config keys + ~190 LOC helper module + PM-hook chain integration. Constitution VIII v1.4.0 + v1.4.3 gates pre-cleared by PR #75 + #77 retrospectives.
+10. **Spec 010 (Hybrid D bear-side calendar-boosted) closed via SKIP retrospective** (PR #86): 3-converging-retrospective methodological closure of bear-side calendar-boost mechanism class (Spec 008 original retrofit + Hybrid C INVERTED + this analysis all SKIP).
 
 ## Methodology cost-benefit summary across both days (FINAL)
 
