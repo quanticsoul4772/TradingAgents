@@ -1,10 +1,18 @@
+> **⚠️ SUPERSEDED — RATIFIED via PR #84 on 2026-05-07 BUT RENAMED to v1.4.6**
+>
+> This draft's content was ratified AS Constitution v1.4.6 (Behavioral-additive 4th interpretation appended to Principle VIII v1.4.3 Additive-to-existing-filter gate) via PR #84. The version was bumped from the originally-drafted v1.4.4 to v1.4.6 to preserve monotone numbering after the sister v1.4.5 draft (`constitution-v1.4.5-draft-2026-05-07.md`) was ratified first per reasoning_decision rank ordering.
+>
+> **Why v1.4.6 instead of v1.4.4**: the operator picked the v1.4.5 draft (Quality Gate #6 Memory-log discipline) for ratification before the v1.4.4 draft because v1.4.5 had stronger empirical evidence (n=3 hallucination threshold met empirically vs v1.4.4's still-evolving 23→44-case pattern). After v1.4.5 was ratified at v1.4.5, this content was ratified as v1.4.6 — the next monotone version number — rather than v1.4.4 (which would have been a backwards version sequence after v1.4.5 was already in effect).
+>
+> **For current canonical text, read**: `.specify/memory/constitution.md` Principle VIII v1.4.6 sub-section "Behavioral-additive sub-case (4th interpretation)". **Do not edit this draft** — historical record only.
+
+---
+
 # Constitution v1.4.4 amendment draft (text-only, NOT YET RATIFIED)
 
-**Status**: DRAFT — eligible to ratify per memory codification threshold MET.
+**Status**: ~~DRAFT — eligible to ratify per memory codification threshold MET.~~ **RATIFIED via PR #84 as v1.4.6 (rename per monotone-numbering rule).**
 **Drafted**: 2026-05-07 late-afternoon (during SC-009 backtest, mid-flight).
-**Ratification timing**: defer to 2026-05-08 or later, gated on 1+ additional
-session of the behavioral-additive pattern holding (defensive against
-post-hoc-coincidence on a single sweep date).
+**Ratification timing**: ~~defer to 2026-05-08 or later, gated on 1+ additional session of the behavioral-additive pattern holding (defensive against post-hoc-coincidence on a single sweep date).~~ Same-session ratification proceeded after operator approval; the 23→44-case pattern across 4-of-4 mechanism classes + 0 counter-evidence rows in the post-v1.4.6 sweep refresh (PR #85) provided sufficient confidence.
 
 **Empirical basis**:
 - 2026-05-07 morning: 4 NVDA/MSFT/AAPL Spec 003 cases (single mechanism class)
