@@ -1,6 +1,6 @@
 # ROADMAP — TradingAgents-lab
 
-_Forward-looking exploration map. Updated 2026-05-07 late-afternoon. **2026-05-06**: 17-ship-quality-unit research-burst day; v0.7.0-spec-007 + v0.8.0-spec-008 + v0.8.1-spec-008.5 tags; Constitution v1.3.0 → v1.4.3 (5 amendments in one day). **2026-05-07**: 25+ PRs (all merged) across morning + afternoon + late-afternoon; SC-009 backtest in progress (16/36 rows late-afternoon, ~3h remaining); cross-cohort behavioral-additive sweep finds evidence in ALL 4 mechanism classes (PR #41) → v1.4.4 codification threshold MET; Class C-3 (analyst PT delta) NOT FEASIBLE on $0 budget (PR #40); SC-009 alt gate-1 evaluator validated with unit tests (PR #38). Canonical meta-retrospective at `claudedocs/research-burst-2026-05-07.md`. Tomorrow's scaffold at `claudedocs/research-burst-2026-05-08.md`._
+_Forward-looking exploration map. **2026-05-06**: 17-ship-quality-unit research-burst day; v0.7.0-spec-007 + v0.8.0-spec-008 + v0.8.1-spec-008.5 tags; Constitution v1.3.0 → v1.4.3 (5 amendments). **2026-05-07**: 40+ PRs (all merged) — SC-009 backtest COMPLETE (36/36 rows; PRELIMINARY PASS-by-non-counterexample; recommend SHADOW-MODE-FIRST for Spec 008 v2 default-on flip); bear-side mechanism class survey from PR #22 CONCLUDES (6/6 evaluated; **C-4 institutional ownership delta is SOLE spec-eligible** — passed v1.4.0 standalone @ n=12 + v1.4.3 additive @ +8.06pp Δα improvement vs Spec 007); v1.4.4 (behavioral-additive 4th interpretation) + v1.4.5 (memory-log data-vs-prose discipline) constitution amendment drafts shipped (not yet ratified); Path C analyst PT snapshot wiring shipped default-OFF; Spec 003 historical-recompute backfilled cache (9 tickers now clear FR-004 floor). Canonical meta-retrospective at `claudedocs/research-burst-2026-05-07.md`._
 
 This is a research playground, not a product. The roadmap is directions for exploration, not delivery milestones. Per Constitution Principle V ("Steal Liberally"), cross-pollination from sibling projects in the portfolio is a primary driver — many ideas listed here originate elsewhere.
 
@@ -30,9 +30,9 @@ For findings to date see [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). For per
 
 ---
 
-## Active branch — 2026-05-07 morning (8 PRs; SC-009 ablation in progress)
+## Active branch — 2026-05-07 SC-009 ablation kick-off (PRs #17-#24)
 
-Today's morning shipped 8 PRs (5 merged + 3 open) primarily focused on the Spec 008 SC-009 live A/B ablation kick-off + bear-side mechanism exploration:
+Initial 8 PRs (5 merged + 3 open) focused on the Spec 008 SC-009 live A/B ablation kick-off + bear-side mechanism exploration:
 
 1. **SC-009 ablation kick-off** (PR #17, merged): `experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/` scaffolded with HYPOTHESIS + PARAMS + run scripts. Backtest running ~5h ETA against 18 tickers × 2 fresh Fridays (2026-04-17, 2026-04-24) = 36 propagates. Per-row pace ~9 min; ETA ~11:30 PDT for results.csv completion. ANALYSIS.md timeline ~2026-05-22 once 21d forward windows close.
 2. **Class 5 surprise outlier investigation** (PR #18, merged): identified INTC (not LLY) as the source of the surprisePercent=31.21 outlier; 3 quarters with epsEstimate near $0.01 blowing up the ratio. Documented mitigations for any future Class 5 revival.
@@ -51,9 +51,9 @@ Plus 2 cross-session memories added today: `reference_sc009_ablation_pattern.md`
 - **Class C-5 (earnings price reaction) retrospective**: ~3h, $0 — alternative to C-3 with cleaner data structure
 - **Forward-catalyst overlap audit on Spec 007 retroactively**: ~30min, $0 — Spec 007 isn't a hybrid filter so v1.4.3 trigger criteria DO apply; verify it PASSES the additive gate against A3 + spec 003 + spec 003.5
 
-## 2026-05-07 late-afternoon extension (PRs #38-#41)
+## 2026-05-07 PRs #38-#41 — analyzer tests + AMD deep-dive + sweep
 
-After PR #37 (standalone meta-retrospective), the session continued through 4 more ship-quality units:
+After PR #37 (standalone meta-retrospective), 4 more ship-quality units:
 
 35. **SC-009 analyzer unit tests** (PR #38, merged): 15 unit tests for the new `evaluate_gate_1` helper covering all 5 paths (standard PASS at midpoint/lower-bound/upper-bound, standard FAIL at multiple boundaries, alt PASS, alt FAIL, INCONCLUSIVE). Refactor + tests in one PR. 1138/1138 PASS (was 1123, +15).
 36. **Bear-side mid-flight diagnostic on COP+INTC UW commits** (PR #39, merged): 5 findings; F-3 = SECOND behavioral-additive case in a NEW mechanism class (Spec 007 LLM-extracted, complementing morning's Spec 003 prose-density). Evidence base for v1.4.4 codification grows.
@@ -69,6 +69,52 @@ After PR #37 (standalone meta-retrospective), the session continued through 4 mo
 - **Memory polish to PM-as-multi-mechanism-validator framing**: ~15min, $0
 - **Spec 003 historical-recompute script** still deferred (~2h)
 - **CHANGELOG.md update for PRs #29-#41+** still deferred (~30min)
+
+## 2026-05-07 PRs #57-#79+ — bear-side survey CONCLUDES; C-4 spec-eligible
+
+Major arc: SC-009 backtest completion + bear-side mechanism class survey conclusion + Constitution amendment drafts + tooling.
+
+**SC-009 backtest COMPLETED** (PRs #57, #58, #61): 36/36 rows. Final acceptance gates (PRELIMINARY — canonical 21d windows close ~2026-05-22+):
+- Gate 1 (alt suppressed-α): PASS at +0.43% (monotone refinement: -4.44 → +1.75 → +1.12 → +0.43 across 13/23/27/36-row marks)
+- Gate 2 (n_fired_boost_on ≥ 8): PASS at 13 (61% margin)
+- Gate 3 (boost engaged ≥ 1): PASS at 18
+- Verdict refined per PR #56: **PRELIMINARY PASS-by-non-counterexample** — 0 decisions changed by boost; recommend SHADOW-MODE-FIRST per Constitution VIII v1.4.0, NOT direct default-on flip
+
+**Bear-side mechanism class survey CONCLUDES** (PRs #67, #74, #75, #76, #77, #78). 6/6 evaluated; **C-4 (institutional ownership delta) is the SOLE spec-eligible mechanism class**:
+
+| Class | Standalone | Additive | Spec-eligible? |
+|---|---|---|---|
+| C-1 (insider transactions) | SKIP empirical | n/a | NO |
+| C-2 (short-interest delta) | SKIP MECHANISM INVERTED | n/a | NO |
+| C-3 (analyst PT delta) | NOT FEASIBLE | n/a | NO |
+| **C-4 (institutional ownership)** | **PASS (n=12, +5.41pp)** | **PASS (+8.06pp Δα; PR #77)** | **YES (shadow-mode-first)** |
+| C-5 EPS-surprise (2026-05-06) | PASS standalone, FAIL additive | n/a | NO |
+| C-5 PRICE-REACTION (PR #74) | SKIP MECHANISM INVERTED | n/a | NO |
+| C-6 (bear-news density) | SKIP structural | n/a | NO |
+
+Two C-classes show INVERTED bear-side mechanism (C-2 short-covering, C-5 price-reaction): both originally hypothesized as mean-reversion; bear cohort empirically shows continuation. C-4 catches 11 bearish commits Spec 007 ENTIRELY MISSES — different signal sources (LLM semantic vs quantitative 13F flow). Three SKIP-types codified (empirical, data-availability, structural).
+
+**Constitution amendment drafts** (PRs #44, #61, NOT YET RATIFIED):
+- v1.4.4 (behavioral-additive 4th interpretation under Principle VIII v1.4.3) — drafted in PR #44 with 4-mechanism-class evidence base; counter-evidence watch (PR #49) confirms 0 refuting rows across 247+ logs; draft text-only per defensive two-stage pattern
+- v1.4.5 (memory-log data-vs-prose discipline as new Quality Gate #6) — drafted in PR #61 with 20% systematic hallucination finding (3 of 15 entries in SC-009 backtest_memory.md)
+
+**Tooling shipped**:
+- `scripts/v1_4_4_counter_evidence_watch.py` (PR #49) — scans state logs for v1.4.4-refuting rows; CI-friendly exit code
+- `scripts/memory_log_integrity_check.py` (PR #55) — flags reflection-prose hallucinations (rating-direction-vs-realized-return-sign mismatches)
+- `scripts/spec_003_historical_recompute.py` (PR #71) — backfilled 254 cache rows; 9 tickers now clear FR-004 floor (NVDA, AAPL, INTC, XLE, MSFT, GOOGL, JPM, XLF, XLK)
+- `scripts/forward_catalyst_class[2,4,4_vs_spec007,5_reaction]*.py` (PRs #74, #75, #76, #77) — bear-side retrospective harness family
+- `tradingagents/agents/utils/analyst_pt_snapshot.py` (PR #73) — Path C wiring for future C-3 retrospectives (default OFF; ZERO LLM cost; ~50-200ms latency when enabled)
+
+**Cross-session memories**: 14 → 22 (+8 new). Major additions: PM-as-multi-mechanism-validator reframe, memory-log reflection hallucination, PASS-by-non-counterexample, spec 003 cold-start coverage, pre_rating temporal-learning, no-day-rollover narratives, signals cache PK collision, pre-commit ruff silent rejection, bear-side survey complete.
+
+**Test count**: 1123 → **1179** (+56 net across the day from PRs #38, #49, #55, #69, #71, #72, #73).
+
+**Open work entering future sessions**:
+- **Spec X-1 (C-4 institutional rotation filter, shadow-mode bear-only)** is now spec-invocable per Constitution VIII gates + PR #77 ADDITIVE PASS. Caveats: time-window valid until ~2026-05-15 (Q1 2026 13F refresh); n=12 single-period sample. ~3-4h scope if pursued.
+- **Constitution v1.4.4 + v1.4.5 ratification** — both drafts shipped; defer per same-session-ratify rule (drafting + ratifying in same session weakens defensive posture)
+- **Re-run C-4 overlap analysis after 2026-05-15** to verify single-quarter robustness
+- **Final SC-009 ANALYSIS.md** writable ~2026-05-22+ when canonical 21d windows close (currently PRELIMINARY hand-edit preserved by analyzer guard)
+- **Bear-side mechanism class survey COMPLETE** — no more 6-class probes needed; future bear-side hypotheses must propose new mechanism class outside the 6 OR justify re-testing a SKIP'd class with new data
 
 ## Prior research-burst day — 14-work-unit (2026-05-06; tagged v0.8.0-spec-008)
 
