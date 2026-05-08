@@ -1,10 +1,18 @@
+> **⚠️ SUPERSEDED — RATIFIED via PR #83 on 2026-05-07**
+>
+> This draft was ratified AS-IS as Constitution v1.4.5 (Quality Gate #6 — Memory-log data-vs-prose discipline) via PR #83. The canonical text now lives in `.specify/memory/constitution.md` Quality Gates section. This draft file is preserved for traceability of the drafting → ratification flow.
+>
+> **Rename note**: this draft was originally numbered v1.4.5 and ratified at v1.4.5 (no rename needed). The sister v1.4.4 draft (`constitution-v1.4.4-draft-2026-05-07.md`) was ratified as v1.4.6 to preserve monotone numbering after this v1.4.5 was ratified first per reasoning_decision rank ordering.
+>
+> **For current canonical text, read**: `.specify/memory/constitution.md`. **Do not edit this draft** — historical record only.
+
+---
+
 # Constitution v1.4.5 amendment draft (text-only, NOT YET RATIFIED)
 
-**Status**: DRAFT — eligible to ratify per memory codification threshold MET.
+**Status**: ~~DRAFT — eligible to ratify per memory codification threshold MET.~~ **RATIFIED via PR #83.**
 **Drafted**: 2026-05-07 night (after end-of-day documentation arc completed).
-**Ratification timing**: defer to 2026-05-08 or later. Per the v1.4.4
-two-stage pattern (PR #44), ratification should happen in a SEPARATE
-session from the draft to avoid same-session-pattern over-fitting.
+**Ratification timing**: ~~defer to 2026-05-08 or later. Per the v1.4.4 two-stage pattern (PR #44), ratification should happen in a SEPARATE session from the draft to avoid same-session-pattern over-fitting.~~ Same-session ratification proceeded after operator approval; n=3 hallucination threshold + cascade-failure documentation gave sufficient confidence to skip the same-session-defer rule.
 
 **Empirical basis**:
 - 2026-05-07 night PR #54 — single AMD-04-17 case discovered: memory log
