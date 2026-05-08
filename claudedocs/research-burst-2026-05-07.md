@@ -1,8 +1,8 @@
-# Research-burst day — 2026-05-07 (morning → early-afternoon → late-afternoon → evening → night session)
+# Research-burst day — 2026-05-07
 
-**FINAL DAY TALLY** (end-of-day): **45 PRs shipped** (all merged) + SC-009 backtest COMPLETED (36/36 rows, exit code 0) + **6 cross-session memories** (5 from earlier + 1 added evening). Pattern: parallel-safe $0 work while backtest burned ~$18 LLM in background. Foreground spent in 4 distinct sessions through the day.
+**TALLY (current)**: **80+ PRs shipped** (all merged) + SC-009 backtest COMPLETED (36/36 rows, exit code 0) + **9 cross-session memories added today** (14 → 23 cumulative). Pattern: parallel-safe $0 work while backtest burned ~$18 LLM in background. Major arcs: SC-009 ablation completion + bear-side mechanism class survey CONCLUSION (6/6 evaluated; C-4 SOLE spec-eligible) + Constitution v1.4.4 + v1.4.5 amendment drafts + tooling family.
 
-**Pattern**: parallel-safe documentation + diagnostic + risk-mitigation + filter-audit + tooling-build work while a long-running experiment runs in background. Foreground LLM cost: $0 across all 45 PRs. Background backtest cost: ~$18 (estimated, completed). Wall-clock: ~9h foreground + parallel ~7h compute. ~2 PRs per hour foreground rate.
+**Pattern**: parallel-safe documentation + diagnostic + risk-mitigation + filter-audit + tooling-build work while a long-running experiment ran in background. Foreground LLM cost: $0 across all 80+ PRs. Background backtest cost: ~$18 (completed). Test count 1123 → 1179 (+56 net).
 
 This document is the canonical entry point for today's session. Companion to `claudedocs/research-burst-2026-05-06.md` (yesterday's 17-unit + 5-amendment day) which now has a 2026-05-07 appendix referencing this standalone doc.
 
