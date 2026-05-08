@@ -1,3 +1,7 @@
+> **⚠️ SUPERSEDED by [`sc-009-backtest-complete-final-state-2026-05-07-night.md`](sc-009-backtest-complete-final-state-2026-05-07-night.md)** — SC-009 mid-flight bear-side observation; backtest later completed at 36/36 rows. The bear-side mechanism class survey CONCLUDED (PR #78) with C-4 SOLE spec-eligible — see [`bear-side-mechanism-exploration-2026-05-07.md`](bear-side-mechanism-exploration-2026-05-07.md) for the final scorecard. Preserved as research record per Constitution Principle I.
+
+---
+
 # SC-009 bear-side mid-flight diagnostic — COP + INTC UW commits
 
 **Date**: 2026-05-07 (mid-backtest, 13/36 rows complete, ~36%)

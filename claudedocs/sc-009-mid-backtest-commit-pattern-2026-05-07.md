@@ -1,3 +1,7 @@
+> **⚠️ SUPERSEDED by [`sc-009-backtest-complete-final-state-2026-05-07-night.md`](sc-009-backtest-complete-final-state-2026-05-07-night.md)** — SC-009 mid-flight diagnostic (early-rows commit-pattern observation). Backtest later completed at 36/36 rows. Preserved as research record per Constitution Principle I.
+
+---
+
 # SC-009 mid-backtest commit-pattern diagnostic — 2026-05-07
 
 **Status**: Mid-flight diagnostic of `experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/` (kicked off 06:14 PDT 2026-05-07, ~5h ETA, 6/36 rows complete as of 07:08 PDT).

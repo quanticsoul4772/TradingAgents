@@ -1,3 +1,7 @@
+> **⚠️ SUPERSEDED by [`sc-009-backtest-complete-final-state-2026-05-07-night.md`](sc-009-backtest-complete-final-state-2026-05-07-night.md) (SC-009) + [`behavioral-additive-sweep-post-v1.4.6-ratification-2026-05-07.md`](behavioral-additive-sweep-post-v1.4.6-ratification-2026-05-07.md) (behavioral-additive sweep)** — SC-009 mid-flight at 27/36 rows + intermediate sweep snapshot. Both later superseded by terminal docs. Preserved as research record per Constitution Principle I.
+
+---
+
 # SC-009 27-row mark + behavioral-additive sweep refresh — 2026-05-07 late
 
 **Trigger**: 4 new rows landed since 23-row mark (CSCO×2 + BAC×2 + GS-04-17;

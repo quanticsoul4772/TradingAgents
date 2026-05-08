@@ -1,3 +1,7 @@
+> **⚠️ SUPERSEDED — NOT TRIGGERED** — SC-009 expansion was a contingency design IF original backtest's `n_fired_boost_on < 8`. Final result: `n_fired = 13` (well above the 8-threshold), so expansion was NOT triggered. Final backtest state in [`sc-009-backtest-complete-final-state-2026-05-07-night.md`](sc-009-backtest-complete-final-state-2026-05-07-night.md). Preserved as research record per Constitution Principle I.
+
+---
+
 # SC-009 expansion contingency design — 2026-05-07
 
 **Trigger**: SC-009 backtest at `experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/` (kicked off 06:14 PDT 2026-05-07) shows an all-Hold pattern in the first 5/36 rows. If this continues, `n_fired_boost_on` will be ~0 and SC-009 gate 2 (n_fired ≥ 8) FAILS → INCONCLUSIVE verdict.

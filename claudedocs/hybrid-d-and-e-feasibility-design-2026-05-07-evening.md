@@ -1,3 +1,12 @@
+> **⚠️ PARTIALLY SUPERSEDED**:
+>
+> - **Hybrid D part**: SUPERSEDED by [`forward-catalyst-hybrid-d-retrospective-2026-05-07.md`](forward-catalyst-hybrid-d-retrospective-2026-05-07.md) — closed via SKIP retrospective (3-converging-retrospective methodological closure of bear-side calendar-boost mechanism class).
+> - **Hybrid E part**: SUPERSEDED by [`hybrid-e-mini-feasibility-2026-05-08.md`](hybrid-e-mini-feasibility-2026-05-08.md) — closed via SKIP at n=17 cohort (mechanism INVERTED; joins C-2 + C-5-price-reaction precedent).
+>
+> Both candidates are now methodologically closed. Preserved as research record per Constitution Principle I.
+
+---
+
 # Hybrid D + Hybrid E feasibility + design sketch — 2026-05-07 evening
 
 **Goal**: Design + feasibility analysis for two candidate forward-catalyst-class

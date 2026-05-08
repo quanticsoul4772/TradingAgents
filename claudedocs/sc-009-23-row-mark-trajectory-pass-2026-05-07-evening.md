@@ -1,3 +1,7 @@
+> **⚠️ SUPERSEDED by [`sc-009-backtest-complete-final-state-2026-05-07-night.md`](sc-009-backtest-complete-final-state-2026-05-07-night.md)** — SC-009 mid-flight diagnostic at 23/36 rows; backtest later completed at 36/36 rows. Preserved as research record per Constitution Principle I.
+
+---
+
 # SC-009 23-row trajectory mark — analyzer reports PRELIMINARY PASS
 
 **Date**: 2026-05-07 evening

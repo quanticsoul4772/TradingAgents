@@ -1,3 +1,7 @@
+> **⚠️ SUPERSEDED by [`behavioral-additive-sweep-post-v1.4.6-ratification-2026-05-07.md`](behavioral-additive-sweep-post-v1.4.6-ratification-2026-05-07.md)** — this is the intermediate (PR #45) snapshot at 23 → 29 cases / 6 → 8 tickers. The terminal post-v1.4.6 sweep (PR #85) extended to 29 → 44 cases / 8 → 13 tickers. Re-runnable harness: `scripts/behavioral_additive_sweep.py`. Preserved as research record per Constitution Principle I.
+
+---
+
 # Behavioral-additive sweep refresh — 2026-05-07 evening
 
 **Trigger**: 4 new state logs landed since PR #41 sweep (AMD-04-17, AMD-04-24,

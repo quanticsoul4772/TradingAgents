@@ -1,3 +1,7 @@
+> **⚠️ SUPERSEDED by [`sc-009-backtest-complete-final-state-2026-05-07-night.md`](sc-009-backtest-complete-final-state-2026-05-07-night.md)** — SC-009 mid-flight diagnostic; backtest later completed at 36/36 rows. Preserved as research record per Constitution Principle I.
+
+---
+
 # SC-009 — all 13 bull-pre rows enumerated (closes PR #57 followup #1)
 
 **Trigger**: PR #57 followup #1 — "Identify 4 unaccounted bull commits

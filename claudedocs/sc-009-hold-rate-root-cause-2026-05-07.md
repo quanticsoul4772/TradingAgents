@@ -1,3 +1,7 @@
+> **⚠️ SUPERSEDED by [`sc-009-backtest-complete-final-state-2026-05-07-night.md`](sc-009-backtest-complete-final-state-2026-05-07-night.md)** — SC-009 mid-flight Hold-rate investigation. Final backtest verdict at 36/36 rows. The Hold-regime mechanism is now formally codified in operator memory `reference_pm_hold_regime_starves_filters.md`. Preserved as research record per Constitution Principle I.
+
+---
+
 # SC-009 Hold-rate root cause investigation — 2026-05-07
 
 **Status**: Mid-flight diagnostic of `experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/` (7/36 rows complete as of 07:18 PDT). Concern: 6 of 7 rows returned Hold (86% Hold rate); SC-009 gate 2 (n_fired_boost_on ≥ 8) at risk.
