@@ -309,6 +309,97 @@ These are derived from the principles above. They must pass before any commit la
 4. **Spec exists for structural changes** — see Principle VI.
 5. **`HYPOTHESIS.md` exists for experiment runs** — Principle I enforced; CI/pre-commit cannot enforce this directly, so the discipline is operator-enforced and visible in `findings.md` aggregation.
 
+### Quality Gate #6 — Memory-log data-vs-prose discipline (added 2026-05-07; v1.4.5)
+
+When operators read entries from any memory log file (`backtest_memory.md`,
+`~/.tradingagents/memory/trading_memory.md`, or future variants),
+operators MUST cross-check the entry's reflection prose against the
+entry's header data (raw_return, alpha, holding_days). Reflection prose
+can be hallucinated when the data contradicts the prior call's expected
+direction; operators trusting prose over data risk propagating false
+"lessons learned" into downstream decisions.
+
+**Operational rule**:
+
+1. **Read entry header FIRST**: extract date, ticker, rating, raw_return,
+   alpha, holding_days.
+2. **Check sign consistency**: bullish ratings (Buy, Overweight) expect
+   raw_return ≥ 0; bearish ratings (Underweight, Sell) expect
+   raw_return ≤ 0; Hold has no expected direction.
+3. **If sign-mismatched, the reflection is SUSPECT**: do NOT cite
+   reflection prose as evidence without verifying it acknowledges the
+   data. Common hallucination phrases include "captured the inflection
+   correctly," "validated the trim discipline," "directional call was
+   correct" appearing on entries where the call DEMONSTRABLY failed at
+   the holding-window horizon.
+4. **In claudedocs / analysis**: distinguish "entry header says X" from
+   "reflection narrates Y." Don't conflate.
+
+**Empirical basis** (PR #54 + PR #55):
+
+`scripts/memory_log_integrity_check.py` walks any memory log and flags
+sign-mismatched entries with reflection-phrase scoring. On
+`experiments/2026-05-07-001-spec-008-hybrid-c-ab-ablation/backtest_memory.md`
+(15 resolved entries) it found:
+
+| Ticker / Date | Rating | Raw return | Validation phrases in reflection |
+|---|---|---|---|
+| COP @ 2026-04-17 | Underweight | +4.90% | 1 |
+| INTC @ 2026-04-17 | Underweight | +20.50% | 1 |
+| AMD @ 2026-04-17 | Underweight | +24.90% | 5 (canonical) |
+
+3 of 15 (20%) hallucinated reflections; ALL Underweight calls that went
+UP; ALL with explicit self-validating phrases despite data refuting them.
+PM-04-24 demonstrably trusted AMD-04-17's hallucinated reflection ("the
+prior AMD lesson itself validates the trim discipline") rather than the
++24.9% raw return data — cascade-failure-mode documented.
+
+**Mechanism explanation**: when `_resolve_pending_entries` writes a
+reflection, the LLM generating the prose sees both the entry header data
+AND the original DECISION prose. It faces "self-justification pressure"
+when the realized data refutes the prior thesis: easier to write
+narrative coherent with the prior thesis than to admit the call was
+wrong. The framework has NO data-vs-prose consistency check on the
+write; the prose can drift arbitrarily far from the data.
+
+**Why this matters**:
+
+- **Reflection-driven cascade failure**: PM trusts prior reflection
+  prose over re-deriving from raw data. One bad reflection contaminates
+  ALL downstream same-ticker runs until either (a) memory entry is
+  manually corrected, or (b) realized data so strongly contradicts the
+  cascading narrative that a future LLM generates a corrective
+  reflection.
+- **Operator-side defense is required**: framework provides no
+  consistency check. Operators must parse data, not prose.
+- **Symmetry with Constitution VII**: Principle VII says "filters parse
+  rating, not prose" (in spirit, codified in operator memory). This
+  Quality Gate extends the discipline to memory log: operators parse
+  data, not prose.
+
+**Tooling**:
+
+`scripts/memory_log_integrity_check.py` (PR #55) is the canonical
+reusable harness. Run periodically (or before any analysis that cites
+memory log evidence) to surface suspect entries. Exit code 0 = clean,
+1 = suspects found. CI-friendly.
+
+**Acceptable exception**:
+
+Hold-rating entries are exempt (no directional expectation). Reflection
+prose on Hold entries can be checked using human judgment but isn't
+flagged automatically.
+
+**Trigger criteria** (when this gate applies):
+
+- Yes: any operator analysis that cites prior memory log entries as
+  evidence for current decisions.
+- Yes: any spec retrospective that walks memory log to extract historical
+  lessons.
+- No: PM propagates themselves (framework-internal; framework lacks the
+  consistency check to enforce). PM behavior is what THIS gate exists
+  to protect operators against.
+
 ---
 
 ## Workflow
@@ -347,8 +438,10 @@ This constitution is amendable. Amendments follow the spec-kit constitution flow
 
 The principles above are themselves up for amendment if they prove ceremonial rather than load-bearing. The test: after one month of use, are we honoring this principle because it's helping or because it's written down? If the latter, amend or remove.
 
-**Version**: 1.4.3
-**Last amended**: 2026-05-06 (late-evening, fifth amendment of the day) — added "Additive-to-existing-filter gate" sub-section to Principle VIII. Discovered when Class 5 standalone retrospective PASSED but post-hoc overlap analysis showed 89% cohort overlap with Spec 007. v1.4.2 → v1.4.3 (PATCH).
+**Version**: 1.4.5
+**Last amended**: 2026-05-07 — added Quality Gate #6 "Memory-log data-vs-prose discipline" requiring operators to cross-check memory log entry reflection prose against entry header data. Empirical basis: PR #54 single-case (AMD-04-17 reflection claims "captured the inflection correctly" while header records +24.9% raw return showing trim FAILED) + PR #55 sweep finding the pattern is SYSTEMATIC at 20% incidence rate (3 of 15 entries; COP+INTC+AMD all Underweight calls that went UP). Symmetry with Constitution VII ("filters parse rating, not prose") extended to memory-log reading discipline ("operators parse data, not prose"). Tooling: `scripts/memory_log_integrity_check.py` (PR #55, 12 unit tests, CI-friendly exit code). v1.4.4 → v1.4.5 (PATCH per clarification rule).
+**Prior version**: 1.4.4 — (NOT YET RATIFIED, draft at `claudedocs/constitution-v1.4.4-draft-2026-05-07.md`) appended a "Behavioral-additive sub-case (4th interpretation)" sub-section to Principle VIII v1.4.3 Additive-to-existing-filter gate. Codifies the case where a new filter F's operational fires appear redundant with existing portfolio fires BUT both correlate with PM commit decisions (PM has internalized F's contrarian logic via Constitution VII Calibrated Abstention training). Empirical basis: 23 → 37 cases across all 4 mechanism classes in 6 → 10 tickers (PRs #41/#45/#53). Counter-evidence watch (PR #49) confirms 0 refuting rows.
+**Prior version**: 1.4.3 — added "Additive-to-existing-filter gate" sub-section to Principle VIII. Discovered when Class 5 standalone retrospective PASSED but post-hoc overlap analysis showed 89% cohort overlap with Spec 007. v1.4.2 → v1.4.3 (PATCH).
 **Prior version**: 1.4.2 — added a "Magnitude fungibility for hybrid filters" sub-section to Principle VIII (forward-catalyst-class gate). Empirical basis: Spec 008 Hybrid C bull retrofit + Spec 009-candidate bear-inverted retrofit BOTH produced identical fire patterns across magnitude={0.5, 1.0, 2.0} within fixed window. Codifies the methodology improvement: magnitude is fungible within a hybrid-filter window when the smallest tested magnitude already crosses the underlying threshold. Future retrospectives skip redundant magnitude sweeps in this regime. v1.4.1 → v1.4.2 (PATCH per clarification rule).
 **Prior version**: 1.4.1 — appended a "Spec ships its retrospective + verdict" sub-section to Principle VI. Codifies the pattern that today's 22-work-unit research-burst day demonstrated 5 times: spec invocation requires accompanying retrospective markdown in `claudedocs/` documenting the empirical justification + verdict + decision tree. Cost asymmetry (retrospective $0-2 / 1h vs spec+impl ~6-8h) makes "retrospective FIRST, spec SECOND" the dominant strategy. v1.4.0 → v1.4.1 (PATCH per clarification rule).
 **Prior version**: 1.4.0 — extended **Principle VIII** with a "Forward-catalyst-class validation gate" sub-section. Empirical basis: Class 3 Opus retrospective DECISIVELY PASSED bull-side (discrim +14.43pp / hit rate 88.9% / net Δα +2.24pp at T=0.60 on n=33 fires); bear-side passed criteria 1+2 with shadow-mode-first condition (discrim +23.10pp / hit rate 72.2% / net Δα +0.30pp). Forward-catalyst signals follow a separate gate (discrim ≥ +5pp PRIMARY + cohort hit rate ≥ 60% + net Δα ≥ +0.5pp OR shadow-mode-first) calibrated to their different statistical properties. Spec 007 ships as the first instance of this filter class.
