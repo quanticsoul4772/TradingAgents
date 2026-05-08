@@ -89,7 +89,7 @@ def get_vix(
             f"Current level: {current:.2f}",
             f"Regime: {regime}",
         ]
-        if prior is not None:
+        if prior is not None and change_pct is not None:
             direction = "up" if change_pct > 0 else "down"
             lines.append(
                 f"{lookback_days}-day change: {change_pct:+.2f}% (was {prior:.2f}, now {current:.2f}, trending {direction})"
