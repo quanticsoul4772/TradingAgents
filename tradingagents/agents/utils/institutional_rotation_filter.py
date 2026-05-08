@@ -148,12 +148,12 @@ def evaluate_institutional_rotation(
         logger.warning(
             "institutional_rotation: unknown bear_mode %r; defaulting to 'off'", bear_mode
         )
-        bear_mode = "off"  # type: ignore[assignment]
+        bear_mode = "off"
     if bull_mode not in _VALID_MODES:
         logger.warning(
             "institutional_rotation: unknown bull_mode %r; defaulting to 'off'", bull_mode
         )
-        bull_mode = "off"  # type: ignore[assignment]
+        bull_mode = "off"
 
     # FR-011: both modes off → no annotation, no fetch, no overhead
     if bear_mode == "off" and bull_mode == "off":
