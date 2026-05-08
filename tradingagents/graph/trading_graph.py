@@ -179,7 +179,7 @@ class TradingAgentsGraph:
         # State tracking
         self.curr_state = None
         self.ticker = None
-        self.log_states_dict = {}  # date to full state dict
+        self.log_states_dict: dict[str, dict[str, Any]] = {}  # date to full state dict
 
         # Set up the graph: keep the workflow for recompilation with a checkpointer.
         self.workflow = self.graph_setup.setup_graph(selected_analysts)
@@ -266,8 +266,8 @@ class TradingAgentsGraph:
         updates = []
         for entry in pending:
             raw, alpha, days = self._fetch_returns(ticker, entry["date"])
-            if raw is None:
-                continue  # price not available yet — try again next run
+            if raw is None or alpha is None:
+                continue  # price not available yet — try again next run (fetch_returns returns all-None together)
             reflection = self.reflector.reflect_on_final_decision(
                 final_decision=entry.get("decision", ""),
                 raw_return=raw,
