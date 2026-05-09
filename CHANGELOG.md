@@ -6,6 +6,30 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (2026-05-09 — Triple-pilot landing arc COMPLETE + WC-10 research arc CLOSED + Constitution v1.5.1 → v1.5.2 + Spec 009 Branch C activated)
+
+**Triple-pilot landing arc** (8 PRs merged: #179-#186) lands all 3 in-flight pilots (WC-10 v2 + WC-11 + BR-3) plus consolidated docs + Spec 009 Branch C MVP + day-end synthesis + monitor smoke test. $48 LLM (3 pilots; pre-spent in prior session). Wall-clock ~2.5h. Demonstrates rank-driven shipping + pre-scaffolding ROI (~3-6× per-PR vs cold-draft baseline). Canonical day-end synthesis at `claudedocs/research-burst-2026-05-09.md`.
+
+**WC-10 v2 (n=80, 8 tickers × 10 Q1 2026 dates) → SC-005(b) NULL + Branch C selected** (PR #181, $32 LLM):
+- Combined v1+v2 (n=100): Pearson r **+0.0918**, Spearman ρ **+0.0410** (both BELOW ±0.197 critical at p=0.05). Scalar magnitude carries no detectable signal beyond what the binned tier captures.
+- SC-007 ALT-A generalization: PARTIAL — 5/8 tickers ≥80% commit (NVDA 100%, AMZN 100%, MSFT 90%, AAPL 80%, XOM 80%); 3/8 retain Hold-default (JPM 70%, GOOG 60%, **JNJ 10%**) → fall back into Constitution VII original "genuine ambiguity" sub-population.
+- SC-005(c) bullish-amplification REPLICATES: Buy n=20 combined α +2.93% / 80% hit; OW n=32 α +2.10% / 53% hit. Bearish-side anti-calibration also replicates EXCEPT XOM (UW n=8 -1.45%, calibrated bear-correct).
+- Notable counter-finding: **NVDA degenerate-attractor** — all 10 NVDA propagates emitted exactly +0.6200 (continuous-scalar mode does NOT prevent intra-ticker mode collapse to a single value). JPM strongly NEGATIVE within-ticker IC (-0.6656).
+
+**WC-11 analyst-order randomization → PARTIAL ALT-A + ALT-B + Constitution v1.5.2** (PRs #177 + #179, $8 LLM): NVDA × 5 dates × 4 permutations (n=20). Per-permutation commit rate range **0% → 40%** (±20pp from pooled mean). Both ALT-A (news-first) and ALT-B (market-last) triggers fire on the same `news_fundamentals_market` permutation — cannot disambiguate at n=20. **DEFAULT order is Hold-biased**. Constitution VII v1.5.1 → v1.5.2 PATCH: new "Analyst-order scope" paragraph in Replicability sub-section. Future ablations targeting commit-rate metrics MUST randomize order or document as confounder.
+
+**BR-3 Squeak market-analyst structured-output → PARTIAL ALT-B** (PR #178, $8 LLM): NVDA + AAPL × 5 dates × 2 modes (n=20). Structured mode produced +20pp commit shift vs prose (commit-shift trigger MET) but α delta +0.24pp below ALT-B magnitude threshold. NVDA unanimous-Hold across all 10 propagates; AAPL is the only divergence ticker (sister to WC-10 bear-side amplification observation). **Phase E architectural variant NOT unblocked at this evidence level.** No Constitution amendment required. L4 cross-pollination status preserved at "pilot-eligible".
+
+**Spec 009 Branch C MVP shipped** (PR #184, $0): bin-then-output ergonomic-only mode. New PARAMS key `wc_10_internal_only: bool` (default False). When True AND `wc_10_enabled=True`, the LLM emits a continuous scalar internally but the rendered Rating header is binned to 5-tier via `bin_scalar_to_tier()` before downstream consumers see it. 3 new unit tests (15/15 WC-10 tests pass). `daily_signals.py` does NOT expose WC-10 flags — production-facing signals remain 5-tier per the v2 NULL verdict. Implementation: ~30 min wall-clock (vs plan estimate 1.5h; pre-scaffolded design surface 5/7 saved time).
+
+**Joint multi-mechanism reframe** (PR #180): WC-10 + WC-11 + BR-3 collectively identify **at least 4 structural sources of mode-collapse-to-Hold**: (1) genuine ambiguity (Constitution VII original); (2) schema-induced collapse (v1.5.0); (3) analyst-order-biased pooling (v1.5.2); (4) weak analyst-format signal (BR-3 PARTIAL ALT-B). Mode collapse is a multi-mechanism phenomenon, not a single-cause artifact.
+
+**WC-10 underperformance monitor compatibility audit** (PR #186, $0): smoke test PASSES on v1 paired CSV (cohort cumulative Δα +22.42pp; 2 per-pair alerts on AAPL bear-side anti-calibration). No monitor modification needed for Spec 009 Branch C. v2 cross-corpus extension deferred until corpus n≥200.
+
+**WC-10 research arc total**: $54.40 LLM (v1 $16 + v2 $32 + v3 $6.40) across 4 ratified Constitution sub-sections (v1.5.0 + v1.5.1 + v1.5.2 Analyst-order; plus pre-existing v1.4.0/v1.4.3 framing). 1 production-deployment branch selected (Branch C). Open Questions table (RESEARCH_FINDINGS.md) reflects 5 WC-10 rows resolved + 2 new rows (WC-11 + BR-3) added.
+
+**Test count**: 1146 → **1171 unit tests** passing (+25 net across the multi-day arc). mypy floor 0; ruff floor 0; both preserved.
+
 ### Added (2026-05-08 — WC-10 v1 ALT-A confirmed + Constitution v1.4.6 → v1.5.0 + mypy 126 → 0)
 
 **WC-10 v1 pilot ships the first non-filter / non-prompt-tweak intervention to produce a decisive falsification verdict in the corpus** (40 propagates / 10 dates × 2 tickers × 2 modes / $16 / `experiments/2026-05-08-001-wc-10-pilot/`). SC-007 ALT-A confirmed at distribution level: continuous-scalar mode emitted `|rating| > 0.2` on 18/20 (90%) vs 5-tier mode's 5/20 (25%) — **3.6× commit ratio**. 75% of paired decisions differ. NVDA case study: continuous-scalar emitted bullish reads on every date (+0.38 to +0.72) while 5-tier emitted Hold on 8 of 10 dates with realized 21d α from +2.83% to +8.53% — the schema was suppressing 8 commits the framework would have made under continuous output.
