@@ -29,6 +29,7 @@ Internal directory tour for operators + future-self. Links from `README.md` "Whe
 | Spec 007 forward-catalyst (bull/bear) | `tradingagents/agents/utils/forward_catalyst_filter.py` |
 | Spec 008 Hybrid C calendar boost | `tradingagents/agents/utils/calendar_boost.py` |
 | Spec X-1 C-4 institutional rotation | `tradingagents/agents/utils/institutional_rotation_filter.py` |
+| Spec 012 Class 4 macro-environment | `tradingagents/agents/utils/macro_environment_filter.py` |
 | Path C analyst PT snapshot (default-off) | `tradingagents/agents/utils/analyst_pt_snapshot.py` |
 
 ## Specs (`specs/` + `.specify/specs/`)
@@ -45,8 +46,11 @@ Spec-kit bundles for each structural change:
 | Spec 006 bear-sector-symmetry | `specs/005-bear-sector-symmetry/` | Default-off (SC-008 FAILED) |
 | Spec 007 forward-catalyst | `specs/006-forward-catalyst-gate/` | Bull-active, bear-shadow |
 | Spec 008 Hybrid C calendar boost | `specs/007-calendar-boost-filter/` | Default-off |
+| Spec 009 WC-10 production deployment | `specs/009-wc-10-production-deployment/` | Branch C activated 2026-05-09 (bin-then-output ergonomic-only) |
+| Spec 011 behavioral-additive procedure | `specs/011-behavioral-additive-procedure/` | Methodology spec (Constitution v1.4.6 invocation pattern); first-invocation deferred (no candidate per PR #213 audit) |
 | Spec X-1 C-4 institutional rotation | `specs/091-c4-institutional-rotation/` | Bear-shadow / bull-off |
-| WC-10 continuous scalar rating | `specs/108-wc-10-continuous-scalar-rating/` | Default-off (Tier 2 experiment) |
+| Spec 012 Class 4 macro-environment | `specs/012-class-4-macro-filter/` | Bear-shadow @ VIX < 18 / bull-off; deployed 2026-05-09 via 5-PR bundle |
+| WC-10 continuous scalar rating | `specs/108-wc-10-continuous-scalar-rating/` | Default-off (Tier 2 experiment); operator opt-in via `wc_10_internal_only=True` per Spec 009 Branch C |
 
 The on-disk directory prefix (e.g., `091-`) often diverges from the user-facing spec name (e.g., "Spec X-1") — cross-check via `spec.md` header.
 
