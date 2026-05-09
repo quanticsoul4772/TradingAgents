@@ -196,6 +196,44 @@ WC-10 (`specs/108-wc-10-continuous-scalar-rating/`) replaces the framework's 5-t
 
 `daily_signals.py` does NOT expose `wc_10_enabled` or `wc_10_internal_only` flags. WC-10 is a PARAMS.json-only research mode; production-facing signal generation remains 5-tier per the v2 NULL verdict.
 
+## Spec 012 Class 4 macro-environment filter (default-shadow)
+
+Spec 012 (`specs/012-class-4-macro-filter/`) is the **FIRST cross-asset/macro filter** in the framework. Suppresses Underweight/Sell commits to Hold when the VIX snapshot at the trade_date is below threshold (default 18.0).
+
+**Empirical motivation** (per `claudedocs/class4-macro-filter-retrospective-2026-05-09.md`, PR #193):
+- Bear-side ticker_strong cohort (n=22 commits with α-vs-SPY > 0 AND α-vs-sector > 0; mean α-vs-SPY +32.64%) is the largest bear-side anti-calibration cohort in the corpus
+- VIX 30d Δ% is the discriminator: cohort committed bear when VIX rising +10.50% over 30d vs other-bear-cells +22.96% (-12.46pp Δ)
+- Standalone gate PASS (Constitution VIII v1.4.0): n=8 fires at VIX < 18; net Δα +24.07pp; cohort hit 75%
+- Additive gate PASS (Constitution VIII v1.4.3) vs A3: mechanism-disjoint (A3 catches 0 of 22 ticker_strong cohort by definition; Class 4 catches 6); +24.07pp incremental
+
+**Default mode**: bear-side **SHADOW** (per Constitution VIII v1.4.0 small-sample-caution; n=8 retrospective fires at recommended threshold). Bull-side **OFF** (deferred to v2).
+
+**Config keys** (`tradingagents/default_config.py`):
+
+| Key | Type | Default | Notes |
+|---|---|---|---|
+| `class_4_macro_bear_mode` | Literal["off", "shadow", "active"] | `"shadow"` | Bear-side mode |
+| `class_4_macro_bull_mode` | Literal["off", "shadow", "active"] | `"off"` | Bull-side reserved |
+| `class_4_macro_vix_threshold` | float | `18.0` | VIX snapshot threshold |
+
+**3-mode behavior table**:
+
+| Mode | Annotation in `state["class_4_macro"]` | Rating modification | yfinance fetch |
+|---|---|---|---|
+| `"off"` | None | None | No |
+| `"shadow"` | 7-field dict (would_fire_bear computed) | None | Yes |
+| `"active"` | 7-field dict (fired_bear=True if condition met) | UW/Sell → Hold | Yes |
+
+**Filter ordering** (PM hook chain): A3 → Spec 003 / 003.5 → Spec 004 → Spec 006 → Spec 007 → Spec X-1 → **Class 4 (LAST)**. Class 4 runs LAST per smallest-sample-last rule (n=8 cohort < Spec X-1 n=12).
+
+**Default-on flip path** (per SC-010): operators MUST run a 30+ live shadow-mode-fire ablation AND verify mean realized α-vs-SPY ≥ -1pp at 21d before flipping `class_4_macro_bear_mode = "active"`. Audit script: `python scripts/class4_macro_shadow_audit.py` outputs the SC-010 readiness verdict.
+
+**Cost**: $0/propagate (yfinance + arithmetic; no LLM call). ~250ms p99 latency cache-cold (single yfinance VIX history fetch); ~5ms cache-warm.
+
+**Naming clarification**: "Spec 012" / "Class 4" = Spec 008 design doc mechanism classification. NOT to be confused with C-4 institutional rotation = Spec X-1 (bear-side mechanism survey numbering).
+
+`daily_signals.py` does NOT expose Class 4 flags. PARAMS.json-only research-mode operator surface.
+
 ---
 
 ## Related artifacts
@@ -204,6 +242,8 @@ WC-10 (`specs/108-wc-10-continuous-scalar-rating/`) replaces the framework's 5-t
 - `tradingagents/agents/utils/*_tools.py` — tool definitions
 - `tradingagents/agents/analysts/*_analyst.py` — what tools each analyst requests
 - `tradingagents/wc_10/bin.py` — `bin_scalar_to_tier()` canonical bin function
+- `tradingagents/agents/utils/macro_environment_filter.py` — Spec 012 Class 4 macro filter
+- `scripts/class4_macro_shadow_audit.py` — Spec 012 SC-010 readiness audit
 - `RESEARCH_FINDINGS.md` — empirical findings motivating priorities
 - `docs/BOTS_DESIGN.md` — architecture for incorporating new signals via Signal schema
 - `.specify/specs/001-bots-architecture/spec.md` — formal spec
