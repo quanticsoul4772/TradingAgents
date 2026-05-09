@@ -1,0 +1,17 @@
+{
+  "config_overrides_prose_mode": {
+    "market_analyst_format": "prose"
+  },
+  "config_overrides_structured_mode": {
+    "market_analyst_format": "structured"
+  },
+  "explicit_flags": {
+    "tickers": ["NVDA", "AAPL"],
+    "dates": [
+      "2026-01-30", "2026-02-13", "2026-02-27", "2026-03-13", "2026-03-27"
+    ],
+    "formats": ["prose", "structured"]
+  },
+  "baseline": "Within-experiment: prose mode (current production market analyst output) on the same dates. Cross-experiment: WC-10 v1 + v2 + v3 cohorts use prose-mode market analyst (default) — those are the broader baseline reference.",
+  "notes": "BR-3 v1 scaffold: 5 dates × 2 tickers × 2 formats = 20 propagates × ~$0.40 = ~$8 LLM (T2). Tests whether market analyst's free-form prose carries signal vs structured emitter (sister hypothesis to WC-10 PM-stage finding). Implementation Option A recommended (new tradingagents/agents/analysts/market_analyst_structured.py module + market_analyst_format config key). NOT yet launched; HYPOTHESIS + PARAMS scaffold only — operator authorization required."
+}
