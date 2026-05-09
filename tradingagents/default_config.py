@@ -74,6 +74,7 @@ class TradingAgentsConfig(TypedDict):
     wc_10_enabled: bool
     wc_10_filter_mode: Literal["bypass", "passthrough"]
     wc_10_bin_thresholds: tuple[float, float, float, float]
+    wc_10_internal_only: bool
     # BR-3 Squeak (per experiments/2026-05-09-001-br3-squeak-market-analyst/):
     # When "structured", swap market_analyst.py for market_analyst_structured.py
     # which emits Pydantic MarketAnalystSquared via second LLM call instead of
@@ -279,6 +280,15 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     "wc_10_enabled": False,
     "wc_10_filter_mode": "bypass",
     "wc_10_bin_thresholds": (-0.6, -0.2, 0.2, 0.6),
+    # Spec 009 Branch C (per specs/009-wc-10-production-deployment/spec.md
+    # User Story C.1): bin-then-output ergonomic-only mode. When True AND
+    # wc_10_enabled=True, the LLM still emits a continuous scalar internally
+    # but the rendered Rating header is binned to 5-tier via bin_scalar_to_tier
+    # before downstream consumers see it. Default False preserves the v1+v2
+    # research mode (raw scalar emission). Activated by Branch C verdict on
+    # WC-10 v2 SC-005(b) NULL (Pearson r +0.0918, Spearman ρ +0.0410 at n=100;
+    # see experiments/2026-05-08-002-wc-10-v2-ticker-expansion/ANALYSIS.md).
+    "wc_10_internal_only": False,
     # BR-3 Squeak (per experiments/2026-05-09-001-br3-squeak-market-analyst/).
     # When "structured", market analyst emits MarketAnalystSquared Pydantic
     # via second LLM call. "prose" preserves existing behavior (default).

@@ -169,11 +169,43 @@ For signals that fit the bots architecture, also extend the `Signal` schema and 
 
 ---
 
+## WC-10 (research mode + Branch C ergonomic-only mode)
+
+WC-10 (`specs/108-wc-10-continuous-scalar-rating/`) replaces the framework's 5-tier categorical PortfolioRating enum with a continuous scalar in `[-1, +1]`. **Default-OFF**; operators opt in via PARAMS.json or config override.
+
+**v1 + v2 + v3 empirical summary** (n=120 propagates total across $54.40 LLM):
+- v1 (n=20): SC-007 ALT-A confirmed (3.6× commit ratio vs 5-tier; PR #130)
+- v2 (n=80, 8 tickers): SC-005(b) **NULL** (Pearson r +0.0918 / Spearman ρ +0.0410 at n=100; PR #181). SC-007 ALT-A PARTIAL — 5/8 tickers ≥80% commit; JNJ + GOOG + JPM retain Hold-default.
+- v3 (n=16, Q4 2025 NVDA bear regime): PARTIAL ALT-A (α delta -0.22pp within ±100bps NULL; PR #153). Constitution v1.5.1.
+
+**Branch C activated** per v2 NULL verdict (Spec 009 PR #4):
+
+| Mode | Config keys | External output | Internal representation | Filter chain |
+|---|---|---|---|---|
+| **Off (default)** | (all wc_10 keys at defaults) | 5-tier categorical | 5-tier categorical | Full chain (A3 → spec 003/003.5 → spec 004 → spec 006 → spec 007 → spec X-1) |
+| **Research mode** (v1/v2/v3) | `wc_10_enabled=True` + `wc_10_filter_mode="bypass"` | Continuous scalar in `[-1, +1]` | Continuous scalar | **Bypassed** (filter-bypass for clean single-intervention test) |
+| **Branch C internal-only** (NEW) | + `wc_10_internal_only=True` | 5-tier categorical (binned via `bin_scalar_to_tier`) | Continuous scalar | Bypassed (same as research mode) |
+
+**Branch C rationale**: v2 NULL on SC-005(b) means scalar magnitude carries no detectable signal beyond what the bin captures. Branch C preserves the 5-tier external interface (no false-precision claim to operators) while keeping continuous-internal representation in case it improves PM-stage reasoning quality. The scalar is preserved in `state["wc_10"]["rating_scalar"]` for audit purposes.
+
+**Cohorts where WC-10 commit-amplification is empirically validated** (5/8 v2 tickers): NVDA, AMZN, MSFT, AAPL, XOM. Bullish-side amplification realized α: Buy n=20 +2.93% / 80% hit; OW n=32 +2.10% / 53% hit. Bearish-side amplification anti-calibrated EXCEPT XOM (UW n=8 -1.45%, calibrated when ticker is in bear regime).
+
+**Cohorts where WC-10 is NOT empirically validated** (3/8 v2 tickers): JPM, GOOG, JNJ. These tickers retain Hold-default under continuous-scalar mode → Constitution VII original sub-population (genuine ambiguity).
+
+**Runtime monitoring**: `scripts/wc_10_underperformance_monitor.py` (PR #146) flags WC-10 commits underperforming the 5-tier baseline.
+
+`daily_signals.py` does NOT expose `wc_10_enabled` or `wc_10_internal_only` flags. WC-10 is a PARAMS.json-only research mode; production-facing signal generation remains 5-tier per the v2 NULL verdict.
+
+---
+
 ## Related artifacts
 
 - `tradingagents/dataflows/interface.py` — vendor routing
 - `tradingagents/agents/utils/*_tools.py` — tool definitions
 - `tradingagents/agents/analysts/*_analyst.py` — what tools each analyst requests
+- `tradingagents/wc_10/bin.py` — `bin_scalar_to_tier()` canonical bin function
 - `RESEARCH_FINDINGS.md` — empirical findings motivating priorities
 - `docs/BOTS_DESIGN.md` — architecture for incorporating new signals via Signal schema
 - `.specify/specs/001-bots-architecture/spec.md` — formal spec
+- `specs/108-wc-10-continuous-scalar-rating/spec.md` — WC-10 schema spec
+- `specs/009-wc-10-production-deployment/spec.md` — Branch C deployment spec

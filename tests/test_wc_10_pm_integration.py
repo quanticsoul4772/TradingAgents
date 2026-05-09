@@ -159,3 +159,94 @@ def test_bypass_mode_skips_filters(llm_returning_scalar_0_45):
     assert wc_10["bin_thresholds_snapshot"] == (-0.6, -0.2, 0.2, 0.6)
     # SC-004: A3 momentum filter NOT called (bypass mode skips ALL filters)
     a3_mock.assert_not_called()
+
+
+# ---- Spec 009 Branch C: bin-then-output internal-only mode --------------
+
+
+def test_branch_c_internal_only_emits_5tier(llm_returning_scalar_0_45):
+    """Spec 009 Branch C: wc_10_internal_only=True overwrites the rendered
+    Rating header with the binned 5-tier value while preserving the scalar
+    in the wc_10 annotation. Scalar 0.45 with default thresholds bins to
+    "Overweight" (0.2 < 0.45 <= 0.6).
+    """
+    node = create_portfolio_manager(llm_returning_scalar_0_45)
+
+    with patch(
+        "tradingagents.dataflows.config.get_config",
+        return_value={
+            "output_language": "English",
+            "uw_momentum_filter_threshold": None,
+            "wc_10_enabled": True,
+            "wc_10_filter_mode": "bypass",
+            "wc_10_bin_thresholds": (-0.6, -0.2, 0.2, 0.6),
+            "wc_10_internal_only": True,
+        },
+    ):
+        result = node(_state())
+
+    decision = result["final_trade_decision"]
+    # External output: 5-tier (binned), NOT scalar
+    assert "**Rating**: Overweight" in decision
+    assert "+0.4500" not in decision
+    # Internal scalar preserved in wc_10 annotation
+    wc_10 = result.get("wc_10", {})
+    assert wc_10["rating_scalar"] == pytest.approx(0.45)
+    assert wc_10["internal_only"] is True
+    assert wc_10["filter_mode"] == "bypass"
+
+
+def test_branch_c_internal_only_default_off_preserves_scalar(llm_returning_scalar_0_45):
+    """Spec 009 Branch C default: wc_10_internal_only defaults False; rendered
+    output retains the scalar Rating header (v1+v2 research-mode behavior).
+    """
+    node = create_portfolio_manager(llm_returning_scalar_0_45)
+
+    with patch(
+        "tradingagents.dataflows.config.get_config",
+        return_value={
+            "output_language": "English",
+            "uw_momentum_filter_threshold": None,
+            "wc_10_enabled": True,
+            "wc_10_filter_mode": "bypass",
+            "wc_10_bin_thresholds": (-0.6, -0.2, 0.2, 0.6),
+            # wc_10_internal_only NOT set → defaults False
+        },
+    ):
+        result = node(_state())
+
+    decision = result["final_trade_decision"]
+    # Default-off: scalar preserved in rendered Rating header
+    assert "+0.4500" in decision or "0.45" in decision
+    wc_10 = result.get("wc_10", {})
+    assert wc_10.get("internal_only") is False
+
+
+def test_branch_c_internal_only_negative_scalar_bins_to_underweight():
+    """Spec 009 Branch C: scalar -0.35 (between -0.6 and -0.2 default
+    thresholds) bins to Underweight under default thresholds.
+    """
+    llm = MagicMock()
+    structured = MagicMock()
+    structured.invoke.return_value = _decision_scalar(-0.35)
+    llm.with_structured_output.return_value = structured
+    node = create_portfolio_manager(llm)
+
+    with patch(
+        "tradingagents.dataflows.config.get_config",
+        return_value={
+            "output_language": "English",
+            "uw_momentum_filter_threshold": None,
+            "wc_10_enabled": True,
+            "wc_10_filter_mode": "bypass",
+            "wc_10_bin_thresholds": (-0.6, -0.2, 0.2, 0.6),
+            "wc_10_internal_only": True,
+        },
+    ):
+        result = node(_state())
+
+    decision = result["final_trade_decision"]
+    assert "**Rating**: Underweight" in decision
+    wc_10 = result["wc_10"]
+    assert wc_10["rating_scalar"] == pytest.approx(-0.35)
+    assert wc_10["internal_only"] is True
