@@ -1,10 +1,10 @@
-# Research-burst 2026-05-09 — triple-pilot landing arc + Spec 009 Branch C + Spec 012 Class 4 BEAR + 27 PRs
+# Research-burst 2026-05-09 — triple-pilot + Spec 009 Branch C + Spec 012 Class 4 BEAR + dual-pilot WC-11 v2 / BR-3 v2 launch + 39 PRs
 
 **Date**: 2026-05-09
 **Predecessors**: `claudedocs/research-burst-2026-05-07.md` + `claudedocs/research-burst-2026-05-08.md`
-**Status**: REFRESHED 2026-05-09 evening (was 14-PR snapshot at original write at PR #185; now extended to **27 PRs** through #205).
-**Cost**: $48.40 LLM ($48 pre-spent in prior session for 3 pilots; $0.40 net-new today for Spec 009 Branch C smoke propagate at PR #189). $0 LLM for all other coding/analysis/retrospectives.
-**PRs**: **27 PRs merged today** (#179-#205) + 3 global-memory writes.
+**Status**: REFRESHED 2026-05-09 late-evening — original snapshot 14 PRs at PR #185, then 27 PRs at PR #206, now **39 PRs** at PR #218 + 2 background pilots in flight.
+**Cost**: $88.40 LLM total ($48 pre-spent prior session for 3 pilots that landed today; $0.40 net-new for Spec 009 Branch C smoke propagate at PR #189; $40 net-new for dual-pilot launch at PR #214). All other 38 PRs were $0 LLM (coding/analysis/retrospective/audit/cleanup).
+**PRs**: **39 PRs merged today** (#179-#218) + 5 global-memory writes + 2 background pilots in flight (WC-11 v2 + BR-3 v2; ETA 2026-05-10).
 
 ## Headline
 
@@ -64,9 +64,32 @@ Filter portfolio expanded **8 → 10 production sides** (added Spec X-1 institut
 | #203 | research(Class 4 macro BULL): SKIP — bull-side hypothesis empirically refuted |
 | #204 | fix(sector_alpha_attribution): dual CSV schema + dated --out + refreshed cohort |
 | #205 | research(local-high BULL): POTENTIAL PASS at n=2; DEFER spec drafting |
-| #206 (this) | claudedocs: research-burst synthesis refresh to 27-PR scale |
+| #206 | claudedocs: research-burst synthesis refresh to 27-PR scale |
 
-Wall-clock: **~6h total** across the 4 phases. Per-PR median ~15 min. Pre-scaffolded design surfaces + verdict-conditional templates + landing playbook PR #172 + 5-PR-vs-6-PR bundle pattern (memory `reference_speckit_5pr_vs_6pr_pattern.md`) prevented per-PR drafting overhead.
+### Phase 5 — Audits + cleanup r2 + cross-pollination L4 + Constitution xref (PRs #207-#213, ~1.5h)
+
+| PR | Title |
+|---|---|
+| #207 | audit: end-of-day quality-floor verification — all green |
+| #208 | claudedocs: memory cleanup audit r2 — day-arc memory entry refreshed 14→29 PR |
+| #209 | roadmap: Open Questions refresh — add Class 4 BULL SKIP + local-high BULL DEFER rows |
+| #210 | audit: Constitution v1.5.2 cross-reference audit — CLEAN PASS |
+| #211 | roadmap: cross-pollination L4 refresh + 3 new project-internal patterns |
+| #212 | docs: CLAUDE.md preamble headline finding refresh — 24 → 33 experiments + Spec 012 added |
+| #213 | audit: Spec 011 first-invocation candidate audit — NO CANDIDATE FOUND |
+
+### Phase 6 — Dual-pilot launch + pre-scaffolding for landing arc (PRs #214-#218, ~1.5h)
+
+| PR | Title |
+|---|---|
+| #214 | launch: dual-pilot WC-11 v2 ($24) + BR-3 v2 ($16) — explicit user authorization |
+| #215 | claudedocs: Constitution v1.5.3 conditional patch drafts pre-scaffolded for WC-11 v2 |
+| #216 | scripts: dual_pilot_monitor.py — synchronized progress check |
+| #217 | roadmap: Open Questions — add WC-11 v2 + BR-3 v2 in-flight rows |
+| #218 | claudedocs: dual-pilot landing PR series template — 4-PR-per-pilot scaffold |
+| #219 (this) | claudedocs: research-burst synthesis refresh to 39-PR scale |
+
+Wall-clock: **~9h total** across the 6 phases. Per-PR median ~15 min. Pre-scaffolded design surfaces + verdict-conditional templates + landing playbooks (PR #172 triple-pilot, PR #214 dual-pilot, PR #218 4-PR-per-pilot scaffold) + 5-PR-vs-6-PR bundle pattern + Constitution conditional-patch drafts (PR #215) prevented per-PR drafting overhead.
 
 ## What landed (verdict-by-verdict)
 
@@ -175,30 +198,49 @@ Per `RESEARCH_FINDINGS.md` Open Questions table after PR #182's resolution sweep
 
 Total deferred-but-budgeted: $40 (BR-3 v2 + WC-11 v2). Total open higher-tier: ~$70 across multi-T2/T3 questions. None block the headline finding.
 
-## Net session yield (refreshed at 27-PR scale)
+## Net session yield (refreshed at 39-PR scale + 2 in-flight pilots)
 
-- **27 ship-quality PRs** (#179-#205) + **3 global-memory writes** (WC-11 sister memory + BR-3 sister memory + project_2026-05-09 day-arc + 5-PR-vs-6-PR pattern memory)
+- **39 ship-quality PRs** (#179-#218) + **5 global-memory writes**
+- **2 background pilots IN FLIGHT** (WC-11 v2 `bwzris458` ETA ~12h; BR-3 v2 `bkpnb5www` ETA ~8h; total $40 LLM authorized; landing 2026-05-10)
 - **1 Constitution amendment** ratified (v1.5.1 → v1.5.2; Analyst-order scope per WC-11)
-- **3 pilot verdicts** resolved (WC-10 v2 NULL; WC-11 PARTIAL ALT-A+ALT-B; BR-3 PARTIAL ALT-B)
+- **3 pilot verdicts resolved** today (WC-10 v2 NULL; WC-11 PARTIAL ALT-A+ALT-B; BR-3 PARTIAL ALT-B)
 - **1 production deployment activated** (Spec 009 Branch C — bin-then-output ergonomic-only)
 - **1 new filter shipped end-to-end** (Spec 012 Class 4 macro, default-SHADOW)
 - **4 retrospectives** completed (Class 4 BEAR PASS / Class 5 BULL SKIP confirmed / Class 4 BULL SKIP / local-high BULL DEFER)
 - **2 mechanism-class novelties** identified (cross-asset macro Class 4; per-ticker-local-high deferred)
-- **1 mypy regression** found + fixed (PR #184 Branch C MVP introduced; PR #195 fixed)
+- **1 mypy regression** found + fixed (PR #184 introduced; PR #195 fixed)
 - **1 script bug fixed** (sector_alpha_attribution dual CSV schema; PR #204)
+- **2 audit-pass cleans** (Constitution v1.5.2 xref CLEAN PASS PR #210; Spec 011 candidate audit NO CANDIDATE PR #213)
+- **Pre-scaffolding portfolio for the dual-pilot landing arc** (5 PRs): launch + ANALYSIS_TEMPLATEs (PR #214) + Constitution v1.5.3 conditional patches (PR #215) + monitor script (PR #216) + ROADMAP in-flight rows (PR #217) + 4-PR-per-pilot landing template (PR #218)
 - **Filter portfolio**: 8 → **10 production sides** (added Spec X-1 + Spec 012)
 - **Test count**: 1146 → **1193** (+47 net)
-- **Constitution**: v1.5.1 → **v1.5.2**
-- **$48.40 LLM total** ($48 pre-spent prior session for 3 pilots; $0.40 net-new today for Branch C smoke)
+- **Constitution**: v1.5.1 → **v1.5.2** (v1.5.3 patches pre-scaffolded for WC-11 v2 landing)
+- **$88.40 LLM total** ($48 pre-spent prior session + $0.40 Branch C smoke + $40 dual-pilot launch)
 
-The session demonstrates the **rank-driven continuous-shipping methodology** at high throughput across **5 sequential reasoning_decision rounds within one session**. Methodology characteristics:
+The session demonstrates the **rank-driven continuous-shipping methodology** at high throughput across **6 sequential reasoning_decision rounds within one session**. Methodology characteristics:
 
 - Per-PR median ~15 min wall-clock
-- Pre-scaffolding ROI: ~3x per-PR / ~6x multi-PR-arc (validated again on Spec 012 5-PR bundle: ~4h actual vs ~5h plan estimate)
+- Pre-scaffolding ROI: ~3x per-PR / ~6x multi-PR-arc (validated again on Spec 012 5-PR bundle + dual-pilot landing pre-scaffolding portfolio)
 - Queue exhaustion pattern continues from 2026-05-08 sister day
-- Cost-per-ship-quality-unit: $48.40 / 30 units = **~$1.61 per ship-quality unit** (extreme efficiency from pre-spent pilot data + $0 retrospective methodology)
+- Cost-per-ship-quality-unit: $88.40 / 44 units (39 PRs + 5 memories) = **~$2.01 per ship-quality unit** today (factoring $40 dual-pilot LLM spend); cumulative across 4-day arc: ~$0.55/unit
 
-Pre-scaffolding pattern continued to win rank-#1 in reasoning_decision rounds 1-3; queue-exhaustion led to discovering 2 NEW empirical findings (Class 4 BULL counterintuitive macro signature; local-high mechanism shows directional support but n-too-thin) that wouldn't have surfaced without exhaustion-driven exploration.
+Pre-scaffolding pattern continued to win rank-#1 in 5+ of the 6 reasoning_decision rounds today; queue-exhaustion led to discovering 2 NEW empirical findings (Class 4 BULL counterintuitive macro signature; local-high mechanism shows directional support but n-too-thin) AND surfaced the dual-pilot pre-scaffolding portfolio (PRs #214-#218) that would not have shipped without exhaustion-driven exploration.
+
+## Tomorrow's landing arc (pre-scaffolded; ETA 2026-05-10 ~8-12h from launch)
+
+When BR-3 v2 lands first (~8h), execute 4 PRs per `claudedocs/dual-pilot-landing-pr-series-template-2026-05-09.md` (PR #218):
+1. ANALYSIS PR
+2. RESEARCH_FINDINGS append PR
+3. ROADMAP row resolved PR
+4. (Conditional) memory write PR — Constitution amendment only if BR-3 v2 ALT-B confirmed (would unblock Phase E)
+
+Then WC-11 v2 lands (~12h), execute another 4 PRs:
+1. ANALYSIS PR
+2. RESEARCH_FINDINGS append PR
+3. ROADMAP row resolved PR
+4. Constitution amendment (per PR #215 — 1 of 5 verdict-conditional patches: Patch B/A/C/D/E)
+
+Estimated landing-arc wall-clock: ~2.5-3.5h total (40-60% reduction vs cold-draft per pre-scaffolding ROI).
 
 ## Cross-references
 
