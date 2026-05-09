@@ -439,6 +439,38 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
                 exc,
             )
 
+        # Spec 012 Class 4 macro-environment filter (per
+        # specs/012-class-4-macro-filter/spec.md). FIRST cross-asset/macro
+        # filter. Runs LAST in the bear-side chain per smallest-sample-last
+        # rule (n=8 retrospective fires at recommended threshold; smaller
+        # than Spec X-1 n=12). Bear-side default-shadow per Constitution
+        # VIII v1.4.0 small-sample-caution.
+        # Zero LLM cost; ~250ms latency on yfinance cache miss.
+        class_4_macro_dict: dict | None = None
+        try:
+            from tradingagents.agents.utils.macro_environment_filter import (
+                evaluate_macro_environment,
+            )
+
+            c4_bear_mode = get_config().get("class_4_macro_bear_mode", "shadow")
+            c4_vix_threshold = float(get_config().get("class_4_macro_vix_threshold", 18.0))
+            c4_modified_decision, c4_annotation = evaluate_macro_environment(
+                final_trade_decision,
+                state,
+                bear_mode=c4_bear_mode,
+                vix_threshold=c4_vix_threshold,
+            )
+            final_trade_decision = c4_modified_decision
+            class_4_macro_dict = c4_annotation
+        except Exception as exc:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "class_4_macro_filter: unexpected failure in PM hook (%s); "
+                "proceeding with unmodified decision",
+                exc,
+            )
+
         new_risk_debate_state = {
             "judge_decision": final_trade_decision,
             "history": risk_debate_state["history"],
@@ -464,6 +496,8 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
             result["bear_sector_symmetry"] = bear_sector_symmetry_dict
         if forward_catalyst_dict is not None:
             result["forward_catalyst"] = forward_catalyst_dict
+        if class_4_macro_dict is not None:
+            result["class_4_macro"] = class_4_macro_dict
         return result
 
     return portfolio_manager_node

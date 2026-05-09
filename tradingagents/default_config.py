@@ -71,6 +71,9 @@ class TradingAgentsConfig(TypedDict):
     institutional_rotation_bull_mode: Literal["off", "shadow", "active"]
     institutional_rotation_outflow_threshold: float
     institutional_rotation_inflow_threshold: float
+    class_4_macro_bear_mode: Literal["off", "shadow", "active"]
+    class_4_macro_bull_mode: Literal["off", "shadow", "active"]
+    class_4_macro_vix_threshold: float
     wc_10_enabled: bool
     wc_10_filter_mode: Literal["bypass", "passthrough"]
     wc_10_bin_thresholds: tuple[float, float, float, float]
@@ -266,6 +269,21 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     "institutional_rotation_bull_mode": "off",
     "institutional_rotation_outflow_threshold": 0.05,
     "institutional_rotation_inflow_threshold": 0.05,
+    # Spec 012 Class 4 macro-environment filter (per
+    # specs/012-class-4-macro-filter/spec.md). FIRST cross-asset/macro
+    # filter. Suppresses Underweight/Sell commits to Hold when VIX
+    # snapshot < threshold (default 18.0; risk-on environment correlates
+    # with bear-side ticker_strong cohort counter-trend failures per
+    # claudedocs/class4-macro-filter-retrospective-2026-05-09.md PASS
+    # verdict at v1.4.0 + v1.4.3 gates). Bear-side default-shadow per
+    # Constitution VIII v1.4.0 small-sample-caution sub-clause (n=8 fires
+    # at recommended threshold; 30+ live fires required before default-on
+    # flip per SC-010). Bull-side default-off (deferred). Naming: "Class 4"
+    # = Spec 008 design doc numbering, NOT C-4 institutional rotation
+    # (which became Spec X-1).
+    "class_4_macro_bear_mode": "shadow",
+    "class_4_macro_bull_mode": "off",
+    "class_4_macro_vix_threshold": 18.0,
     # WC-10 (specs/108-wc-10-continuous-scalar-rating/): Tier 2 experiment to
     # test the categorical-bottleneck hypothesis. Replaces the framework's
     # 5-tier categorical PortfolioRating enum with a continuous scalar in
