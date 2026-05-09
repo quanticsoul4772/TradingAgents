@@ -270,25 +270,32 @@ The current framework is one specific choice (4 analysts → bull/bear debate �
 
 ## Cross-pollination opportunities (Principle V — Steal Liberally)
 
-Patterns from sibling projects worth porting:
+Patterns from sibling projects worth porting. **Relevance re-ranked 2026-05-08 post-WC-10**, see `claudedocs/cross-pollination-review-2026-05-08.md` for full deep-dive. Tier legend: L5=ship-eligible / L4=pilot-eligible / L3=worth-testing-in-design / L2=speculative / L1=superseded-or-deprioritized.
 
-| From | Pattern | Where it'd go in TradingAgents-lab |
-|---|---|---|
-| **agent-harness-v2** | Event sourcing — every agent action emits a structured event; analysis queries the event log | Replace per-experiment CSV + state-log JSON with a single event log; enables fine-grained pattern detection across runs |
-| **agent-harness-v2** | Structural enforcement / gates with DENY/WARN findings | Already partially done (EH-2 rating distribution gate). Could extend: a `pre_pm` gate that checks bull/bear evidence balance before allowing PM to commit |
-| **agent-harness-v2** | Knowledge digestion + antibodies | Periodic synthesis of "what we know about UW failure modes" auto-generated from accumulated state logs |
-| **ladybird** | Sentinel pattern — separate-process enforcement plane | The momentum filter is currently in-process; a Sentinel could run regime checks asynchronously and override decisions externally |
-| **battlecode2026 ratbot6** | Value function over assigned roles, structured signaling | Each analyst has an explicit value function for what counts as "good evidence" in their domain; signaling lets analysts coordinate without full debate |
-| **battlecode2026 ratbot6** | Unified value function architecture | Replace prose-output analysts with numeric feature emitters; aggregation via weighted sum, not LLM synthesis. Cheaper, interpretable, gradient-descent-tunable |
-| **battlecode2026 ratbot6** | Squeak (structured signaling between bots, compressed broadcasts) | Analysts emit `{bullish: 0.7, key_risks: ["memory_chip"], confidence: 0.6}` instead of 10K-token prose. Synthesis aggregates structured fields. Major token savings |
-| **battlecode2026 ratbot6** | Bytecode budget tracking + Profiler | Per-analyst token-spend tracker; warn when analyst exceeds budget. Enforces cost discipline without manual inspection |
-| **battlecode2026 ratbot6** | Explicit state machine (BabyRatStateMachineTest) | Make `state.debate_phase` explicit instead of regex-detecting "current_response.startswith('Bull')". Easier to test, easier to add new debate variants |
-| **battlecode2026 ratbot6** | Self-removal after idle threshold (attackers suicide after 100 rounds) | If an analyst's report is below a content threshold, skip it — don't pay for downstream debate on empty input. Aligns with Constitution VII |
-| **battlecode2026 ratbot6** | Pre-computed pathfinding routes (Pathfinding caches) | Decision-rule shortcuts for common patterns ("earnings beat + uptrend → default OW unless explicit bear evidence"). Avoids LLM call when rule fires |
-| **bruno-swarm** | Multi-agent coordination patterns, abliteration for specialization | Specialize each analyst via abliteration on their report style; test if specialization improves signal vs the current general-purpose Sonnet calls |
-| **mcp-reasoning** | 15+ reasoning modes (linear, tree, divergent, reflection, decision, evidence, mcts, graph, counterfactual, …) | Phase C operationalization items above are direct applications |
-| **mcp-reasoning** | Self-improvement system (4-phase: monitor → diagnose → execute → learn) | Auto-detect when calibration drifts (e.g. a new ticker added to the universe) and trigger re-analysis |
-| **branch-thinking / logic-thinking** | Structured reasoning tools | Alternative substrates for the synthesis stage |
+| Tier | From | Pattern | Where it'd go in TradingAgents-lab |
+|---|---|---|---|
+| **L4 (NEW post-WC-10)** | **battlecode2026 ratbot6** | **Squeak (structured signaling)** | Analysts emit `{bullish: 0.7, key_risks: [...]}` instead of 10K-token prose. WC-10 confirmed PM-stage bottleneck; this tests analyst-stage bottleneck. $5-10 pilot. **Top recommended next pollination action.** |
+| **L4 (NEW post-WC-10)** | **agent-harness-v2** | **Knowledge digestion + antibodies** | Auto-tag historical Hold commits as genuine-ambiguity vs schema-induced collapse via WC-10 replay. $0 LLM (saved data only). |
+| **L4 (NEW post-WC-10)** | **mcp-reasoning** | **Self-improvement system** | Extend `scripts/memory_log_integrity_check.py` to flag WC-10 commits that underperform 5-tier baseline. Closes Constitution v1.5.0 monitoring loop. $0. |
+| L5 (already pollinated) | mcp-reasoning | 15+ reasoning modes (linear/tree/divergent/reflection/decision/evidence/mcts/graph/counterfactual/…) | Reasoning_decision drove 8+ of 2026-05-08 PRs; pollination operationally complete |
+| L5 (already pollinated) | branch-thinking / logic-thinking | Structured reasoning tools | Already exercised via mcp-reasoning |
+| L3 | agent-harness-v2 | Event sourcing | Spec 002 partially shipped via signals/cache.py; unified event log for memory + checkpoint + paper-trade is Phase E |
+| L3 | agent-harness-v2 | Structural enforcement / gates | New post-WC-10: enforce SCHEMA-AWARENESS in spec-writing — every new filter spec MUST declare which v1.5.0 sub-population its mechanism targets |
+| L3 | battlecode2026 ratbot6 | Unified value function architecture | Sister to Squeak; together = "structured-output-throughout" Phase E variant |
+| L3 | battlecode2026 ratbot6 | Self-removal after idle threshold | Skip analyst if report below content threshold — analyst-stage equivalent of Constitution VII Hold |
+| L2 | ladybird | Sentinel pattern (out-of-process enforcement) | Operational complexity high; current in-process filter chain works |
+| L2 | battlecode2026 ratbot6 | Value function over assigned roles | Sister to Squeak; standalone harder to apply |
+| L2 | battlecode2026 ratbot6 | Bytecode budget tracking + Profiler | Useful tool, not strategic |
+| L2 | battlecode2026 ratbot6 | Explicit state machine | Engineering hygiene; not strategic |
+| **L1 (deprioritized 2026-05-08)** | battlecode2026 ratbot6 | Pre-computed decision-rule shortcuts | WC-10 finding: schema is already too constraining; pre-computed rules constrain it MORE. Deprioritize. |
+| **L1 (deprioritized 2026-05-08)** | bruno-swarm | abliteration for specialization | Squeak is cheaper + tests adjacent hypothesis; abliteration's infrastructure burden disproportionate |
+
+**New patterns surfaced 2026-05-08** (extractable as project tooling):
+
+| Tier | From | Pattern | Application |
+|---|---|---|---|
+| L4 | this project (today) | **Conditional-branch spec drafting** | Pre-write spec.md with N verdict-conditional branches (Spec 009 pattern). Could ship as `.specify/templates/spec-template-conditional.md` |
+| L4 | this project (today) | **Pre-scaffolded ANALYSIS templates** | Write ANALYSIS_TEMPLATE.md alongside HYPOTHESIS.md (PR #135 pattern). Could ship as `scripts/new_experiment.py --with-analysis-template` flag |
 
 ---
 
