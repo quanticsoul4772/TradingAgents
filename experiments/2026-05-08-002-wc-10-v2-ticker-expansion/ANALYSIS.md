@@ -46,7 +46,7 @@ Pooled across all 100 WC-10 propagates (20 from v1 + 80 from v2):
 
 *NVDA std=0.000: all 10 NVDA propagates emitted exactly +0.6200 — the LLM degenerate-collapsed to a single scalar value across all 10 dates. This is itself a noteworthy finding: continuous-scalar mode does NOT prevent intra-ticker mode collapse to a single value when the LLM's analyst+debate synthesis converges deterministically. NVDA was the Q1 2026 bull-rally ticker; the prompt+inputs apparently produced "Buy at +0.62" as a ROBUST attractor across 10 distinct dates.
 
-**JPM has a strongly NEGATIVE within-ticker IC (-0.6656)** — higher rating predicts LOWER alpha. Anti-signal at within-ticker resolution. AAPL + MSFT + AMZN also show negative within-ticker correlation. Only XOM shows a positive within-ticker IC (+0.2659).
+**JPM has a strongly NEGATIVE within-ticker IC (-0.6656)** — higher rating predicts LOWER alpha. Anti-signal at within-ticker resolution. AAPL + MSFT + AMZN also show negative within-ticker correlation. Both XOM (+0.2659) and GOOG (+0.0857) show positive within-ticker ICs.
 
 ## SC-007 ALT-A generalization across tickers (SECONDARY)
 
