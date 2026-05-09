@@ -6,9 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added (2026-05-09 — Triple-pilot landing arc COMPLETE + WC-10 research arc CLOSED + Constitution v1.5.1 → v1.5.2 + Spec 009 Branch C activated)
+### Added (2026-05-09 — Triple-pilot landing arc COMPLETE + WC-10 research arc CLOSED + Constitution v1.5.1 → v1.5.2 + Spec 009 Branch C activated + Spec 012 Class 4 macro DEPLOYED)
+
+**22 PRs merged today** (#179-#200) + 2 global-memory writes. Most productive shipping day on record. Filter portfolio: 8 → **10 sides**. Test count: 1146 → **1193** (+47 net). $48.40 LLM total ($48 pre-spent in prior session for 3 pilots; $0.40 net-new for Spec 009 Branch C smoke propagate). Wall-clock ~6h.
 
 **Triple-pilot landing arc** (8 PRs merged: #179-#186) lands all 3 in-flight pilots (WC-10 v2 + WC-11 + BR-3) plus consolidated docs + Spec 009 Branch C MVP + day-end synthesis + monitor smoke test. $48 LLM (3 pilots; pre-spent in prior session). Wall-clock ~2.5h. Demonstrates rank-driven shipping + pre-scaffolding ROI (~3-6× per-PR vs cold-draft baseline). Canonical day-end synthesis at `claudedocs/research-burst-2026-05-09.md`.
+
+**Class 4 macro-environment retrospective + Spec 012 5-PR bundle deployment** (PRs #193-#194-#197-#198-#199-#200): FIRST cross-asset/macro filter shipped. Retrospective (PR #193) PASSED at Constitution VIII v1.4.0 standalone (n=8 fires at VIX < 18; net Δα +24.07pp; cohort hit 75%) AND v1.4.3 additive vs A3 (mechanism-disjoint — A3 catches 0 of 22 ticker_strong cohort by definition; Class 4 catches 6 of 22). Discriminator: VIX 30d Δ% (ticker_strong cohort committed bear when VIX rising +10.50%/30d vs other-bear-cells +22.96%; -12.46pp Δ). Spec 012 deployed at default-SHADOW per Constitution VIII v1.4.0 small-sample-caution. New module `tradingagents/agents/utils/macro_environment_filter.py`; 22 net-new tests (13 unit + 4 PM integration + 3 audit + 2 state-log regression); audit script `scripts/class4_macro_shadow_audit.py` for SC-010 default-on flip readiness. Per-spec retrospective: `claudedocs/spec-012-class-4-deployment-retrospective-2026-05-09.md`. Total cost: $0 LLM, ~4.5h wall-clock from retrospective inception → deployment. Filter portfolio expanded 9 → 10 sides.
+
+**Bundle delivery pattern**: Spec 012 used 5-PR bundle (vs Spec X-1's 6-PR) — collapsed plan + research into single plan.md. Reusable pattern for retrospective-first filter deployments per `reference_speckit_6pr_workflow_pattern.md`.
+
+**Class 5 BULL retroactively row-resolved** (PR #191): the open ROADMAP question was actually closed via SKIP verdict on 2026-05-06 per v1.4.3 additive gate (89% Spec 007 overlap; union HURT net Δα -4.09pp). Cleanup pass.
+
+**Test-suite + mypy audit** (PR #195): 1171 unit tests confirmed; 1 mypy code regression FOUND + FIXED (PR #184 Branch C MVP introduced `tuple[float, ...]` widening; explicit fixed-arity construction restored mypy clean).
 
 **WC-10 v2 (n=80, 8 tickers × 10 Q1 2026 dates) → SC-005(b) NULL + Branch C selected** (PR #181, $32 LLM):
 - Combined v1+v2 (n=100): Pearson r **+0.0918**, Spearman ρ **+0.0410** (both BELOW ±0.197 critical at p=0.05). Scalar magnitude carries no detectable signal beyond what the binned tier captures.

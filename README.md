@@ -14,7 +14,7 @@ Bearish commits are regime-asymmetric (UW on bear-correct tickers ARE directiona
 
 Full synthesis + cross-period evidence + per-failure-mode analysis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadmap in [`ROADMAP.md`](ROADMAP.md). Per-experiment summaries in [`findings.md`](findings.md).
 
-## Filter portfolio (9 production filters)
+## Filter portfolio (10 production filters)
 
 | Filter | Mechanism | Default | Empirical support |
 |---|---|---|---|
@@ -27,8 +27,9 @@ Full synthesis + cross-period evidence + per-failure-mode analysis in [`RESEARCH
 | [Spec 007 forward-catalyst (bear)](specs/006-forward-catalyst-gate/) | LLM-extracted | SHADOW @ T=0.50 | +23.10pp discrim / 72.2% hit |
 | [Spec 008 Hybrid C calendar boost](specs/007-calendar-boost-filter/) | hybrid (Class 3 × calendar) | OFF | +3.35pp Δα improvement; SC-009 PRELIMINARY PASS-by-non-counterexample |
 | [Spec X-1 C-4 institutional rotation](specs/091-c4-institutional-rotation/) | quantitative 13F flow | SHADOW bear / OFF bull | +5.41pp standalone / +8.06pp additive vs Spec 007 |
+| [Spec 012 Class 4 macro-environment](specs/012-class-4-macro-filter/) | cross-asset macro (VIX-snapshot) | SHADOW bear @ VIX<18 / OFF bull | +24.07pp net Δα / 75% hit on n=8 retrospective; mechanism-disjoint vs A3 |
 
-8 candidates retrospectively SKIPPED before any spec was written (Spec 005, Spec 009, 5 of 6 PR #22 bear-side mechanism classes, Spec 010). Pre-spec validation per Constitution Principle VIII saved ~30-40h of empty-spec implementation. See [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) for module paths + spec directories.
+8 candidates retrospectively SKIPPED before any spec was written (Spec 005, Spec 009-cand, 5 of 6 PR #22 bear-side mechanism classes, Spec 010 Class 5 BULL fundamentals-delta). Pre-spec validation per Constitution Principle VIII saved ~30-40h of empty-spec implementation. See [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) for module paths + spec directories.
 
 ## Quick start
 
