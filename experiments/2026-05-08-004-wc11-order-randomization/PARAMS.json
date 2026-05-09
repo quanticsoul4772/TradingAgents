@@ -1,0 +1,20 @@
+{
+  "config_overrides": {
+    "wc_10_enabled": false,
+    "memory_log_path": "experiments/2026-05-08-004-wc11-order-randomization/wc11_memory.md"
+  },
+  "explicit_flags": {
+    "tickers": ["NVDA"],
+    "dates": [
+      "2026-01-30", "2026-02-13", "2026-02-27", "2026-03-13", "2026-03-27"
+    ],
+    "permutations": [
+      ["market", "news", "fundamentals"],
+      ["news", "fundamentals", "market"],
+      ["fundamentals", "market", "news"],
+      ["market", "fundamentals", "news"]
+    ]
+  },
+  "baseline": "Permutation [market, news, fundamentals] is the default production order; serves as within-experiment baseline. Cross-experiment baseline: WC-10 v1 pilot (NVDA Jan-Apr 2026) used the default order; per-date NVDA outcomes in v1 + (when v2 lands) v2 are the reference distribution.",
+  "notes": "WC-11 v1 scaffold: 5 dates × 1 ticker (NVDA) × 4 analyst-order permutations = 20 propagates × $0.40 = $8 (T1, ≤$10). Predicts NULL or detects ALT-A/ALT-B first/last-speaker bias. Implementation Option B recommended (new pilot harness, no structural change to trading_graph.py) per Constitution VI. NOT yet launched; HYPOTHESIS + PARAMS scaffold only — operator authorization required to invoke."
+}
