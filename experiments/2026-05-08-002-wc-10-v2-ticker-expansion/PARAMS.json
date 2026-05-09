@@ -1,0 +1,18 @@
+{
+  "config_overrides_wc_10_mode": {
+    "wc_10_enabled": true,
+    "wc_10_filter_mode": "bypass",
+    "wc_10_bin_thresholds": [-0.6, -0.2, 0.2, 0.6]
+  },
+  "explicit_flags": {
+    "tickers": ["NVDA", "AAPL", "MSFT", "GOOG", "AMZN", "JPM", "JNJ", "XOM"],
+    "dates": [
+      "2026-01-30", "2026-02-06", "2026-02-13", "2026-02-20",
+      "2026-02-27", "2026-03-06", "2026-03-13", "2026-03-20",
+      "2026-03-27", "2026-04-03"
+    ],
+    "modes": ["wc_10"]
+  },
+  "baseline": "v1 pilot (experiments/2026-05-08-001-wc-10-pilot/results.csv) provides n=20 paired (wc_10 + 5tier_baseline) baseline. v2 adds 80 unpaired WC-10 datapoints. Combined WC-10 cohort at analysis time: n=100 across 8 tickers.",
+  "notes": "v2 ticker-expansion grid: 8 tickers × 10 weekly-Friday dates (Q1 2026) × 1 mode (WC-10 only) = 80 propagates. ~$32 LLM (T2-boundary; cost overshoot deliberated in HYPOTHESIS.md per Constitution III escape hatch). Primary metric: SC-005(b) signed-rating × 21d-α correlation at n=100 (critical r ~ 0.197 at p=0.05). Secondary: ALT-A generalization across 6 new tickers. Tertiary: per-bucket realized α generalization beyond NVDA."
+}
