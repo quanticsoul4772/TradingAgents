@@ -1,6 +1,6 @@
 # ROADMAP — TradingAgents-lab
 
-_Forward-looking exploration map. **2026-05-06**: 17-ship-quality-unit research-burst day; v0.7.0-spec-007 + v0.8.0-spec-008 + v0.8.1-spec-008.5 tags; Constitution v1.3.0 → v1.4.3 (5 amendments). **2026-05-07**: 50+ PRs (all merged) — SC-009 backtest COMPLETE (36/36 rows; PRELIMINARY PASS-by-non-counterexample; recommend SHADOW-MODE-FIRST for Spec 008 v2 default-on flip); bear-side mechanism class survey from PR #22 CONCLUDES (6/6 evaluated; **C-4 institutional ownership delta is SOLE spec-eligible** — passed v1.4.0 standalone @ n=12 + v1.4.3 additive @ +8.06pp Δα improvement vs Spec 007); **Constitution v1.4.5 (Quality Gate #6 Memory-log discipline) + v1.4.6 (Behavioral-additive 4th interpretation) BOTH RATIFIED** (PRs #83 + #84; v1.4.4 draft content ratified as v1.4.6 to preserve monotone numbering); **Spec X-1 (C-4 institutional rotation filter) DEPLOYED end-to-end via 6-PR bundle (#88 spec → #89 plan → #90 tasks → #91 MVP → #92 tests → #93 polish)** at default-shadow bear-side / default-off bull-side; **Spec 010 (Hybrid D bear-side calendar-boosted) closed via PR #86 SKIP retrospective** on structural-incompatibility argument (3-converging-retrospective methodological closure of bear-side calendar-boost mechanism class); Path C analyst PT snapshot wiring shipped default-OFF; Spec 003 historical-recompute backfilled cache (9 tickers now clear FR-004 floor). Canonical meta-retrospective at `claudedocs/research-burst-2026-05-07.md`._
+_Forward-looking exploration map. **2026-05-06**: 17-ship-quality-unit research-burst day; v0.7.0-spec-007 + v0.8.0-spec-008 + v0.8.1-spec-008.5 tags; Constitution v1.3.0 → v1.4.3 (5 amendments). **2026-05-07**: 50+ PRs (all merged) — SC-009 backtest COMPLETE (36/36 rows; PRELIMINARY PASS-by-non-counterexample; recommend SHADOW-MODE-FIRST for Spec 008 v2 default-on flip); bear-side mechanism class survey from PR #22 CONCLUDES (6/6 evaluated; **C-4 institutional ownership delta is SOLE spec-eligible** — passed v1.4.0 standalone @ n=12 + v1.4.3 additive @ +8.06pp Δα improvement vs Spec 007); **Constitution v1.4.5 (Quality Gate #6 Memory-log discipline) + v1.4.6 (Behavioral-additive 4th interpretation) BOTH RATIFIED** (PRs #83 + #84); **Spec X-1 (C-4 institutional rotation filter) DEPLOYED end-to-end via 6-PR bundle (#88-#93)** at default-shadow bear-side; **Spec 010 closed via PR #86 SKIP retrospective**. **2026-05-08**: 20+ PRs (#117-#136) — **mypy floor 126 → 0 errors via 12 cleanup PRs** (the "deferred / complex" LLM-client cluster turned out to be 4-line dict-invariance fix, see PR #128 + memory `reference_llm_client_kwargs_dict_invariance.md`); **WC-10 v1 pilot SHIP** (`experiments/2026-05-08-001-wc-10-pilot/`) — first non-filter / non-prompt-tweak intervention to produce decisive SC-007 ALT-A verdict (3.6× commit ratio, categorical-bottleneck-confirmed, $16); **Constitution v1.4.3 → v1.5.0 amendment** adding "Schema-induced abstention is NOT calibrated abstention" sub-section to Principle VII (PR #131); **RESEARCH_FINDINGS reframe** of mode collapse as TWO-MECHANISM (genuine ambiguity + schema artifact); **WC-10 v2 expansion (n=100, $32) + v3 bear-regime test ($6.40) IN FLIGHT** — v3 ETA tonight, v2 ETA early next session; **Spec 011 behavioral-additive operational procedure SHIP** (PR #136) codifying v1.4.6 invocation pattern. Canonical meta-retrospectives at `claudedocs/research-burst-2026-05-07.md` + (forthcoming) `claudedocs/research-burst-2026-05-08.md`._
 
 This is a research playground, not a product. The roadmap is directions for exploration, not delivery milestones. Per Constitution Principle V ("Steal Liberally"), cross-pollination from sibling projects in the portfolio is a primary driver — many ideas listed here originate elsewhere.
 
@@ -116,6 +116,59 @@ Two C-classes show INVERTED bear-side mechanism (C-2 short-covering, C-5 price-r
 - **Re-run C-4 overlap analysis after 2026-05-15** to verify single-quarter robustness — codified as Spec X-1 SC-009. If either gate drops below v1.4.0 / v1.4.3 thresholds on Q1 2026 13F panel, ablate `institutional_rotation_bear_mode` to `"off"` default pending investigation.
 - **Final SC-009 ANALYSIS.md** writable ~2026-05-22+ when canonical 21d windows close (currently PRELIMINARY hand-edit preserved by analyzer guard)
 - **Bear-side mechanism class survey COMPLETE** — no more 6-class probes needed; future bear-side hypotheses must propose new mechanism class outside the 6 OR justify re-testing a SKIP'd class with new data
+
+## 2026-05-08 PRs #117-#136 — mypy sweep + WC-10 research arc + Constitution v1.5.0
+
+20+ PRs across two distinct work tracks: tech-debt cleanup + WC-10 research arc.
+
+**Track A — mypy floor sweep (PRs #117-#129, 12 PRs, all merged)**: cleared 124 errors / 17 files in 13 incremental zero-behavior-risk typing PRs. Headline finding: the CLAUDE.md baseline note characterized the LLM-client mypy cluster (~85 errors) as "complex / deferred / needs upstream stubs"; investigation revealed it was a trivial dict-invariance issue fixable with one `dict[str, Any]` annotation per file (PR #128, 4 lines, -85 errors). CLAUDE.md baseline note corrected in PR #129. Memory `reference_llm_client_kwargs_dict_invariance.md` codifies the "verify deferred/complex baseline classifications by trying the simple fix first" methodology lesson for future sweeps.
+
+Per-PR breakdown:
+
+| PR | Δ floor | Surface |
+|---|---:|---|
+| #117 | n/a | claudedocs cleanup |
+| #118 | n/a | gitignore broaden |
+| #119 | -7 | implicit-Optional widening (6 files, 14 sites) |
+| #120 | -7 | helper signature cascade fix from #119 |
+| #121 | -4 | `_make_api_request` return type tighten |
+| #122 | -4 | paper/state.py + signals/evaluation.py narrowing |
+| #123 | -3 | exa_news.py + macro.py None-narrowing |
+| #124 | -2 | trading_graph.py log_states_dict + tuple guard |
+| #125 | -3 | VENDOR_METHODS dispatch table annotation |
+| #126 | -4 | TypedDict receiver widening (4 files) |
+| #127 | -2 | research_manager renderer + checkpointer RunnableConfig |
+| #128 | **-85** | LLM client llm_kwargs annotation (4 files, 4 lines) |
+| #129 | -2 | types-requests stub + CLAUDE.md baseline correction |
+| | **-124** | mypy 126 → 0 |
+
+**Track B — WC-10 research arc (PRs #107-#114 from earlier session + PRs #130-#136 from this session arc)**:
+
+The full WC-10 arc shipped 14 PRs across the spec deployment + pilot + analysis + amendment + expansion + procedure codification:
+
+- Earlier session (PRs #107-#114): spec-kit 6-PR bundle (#107 spec → #108 plan → #109 tasks → #111 pilot harness → #112 tests) + 2 hotfix PRs (#113 prompt + #114 harness extract bug)
+- This session (PRs #130-#136):
+  - **#130** — v1 pilot ANALYSIS.md (40 propagates, $16, **SC-007 ALT-A confirmed at 3.6× commit ratio**, 75% paired decisions differ, NVDA Buy n=6 mean +4.67% α 21d, AAPL UW n=6 mean +3.56% α anti-calibrated)
+  - **#131** — Constitution v1.4.3 → **v1.5.0** amendment ("Schema-induced abstention is NOT calibrated abstention" sub-section to Principle VII)
+  - **#132** — RESEARCH_FINDINGS.md reframe of mode collapse as TWO-MECHANISM (genuine ambiguity + schema artifact)
+  - **#133** — v2 expansion scaffold (8 tickers × 10 dates × WC-10 mode = 80 propagates, $32, ~12h wall-clock; KICKED OFF in background)
+  - **#134** — v3 bear-regime test scaffold (Q4 2025 NVDA, 16 propagates, $6.40, ~2.5h wall-clock; KICKED OFF in background)
+  - **#135** — pre-scaffolded ANALYSIS_TEMPLATE.md for v2 + v3 (when data lands, plug in numbers)
+  - **#136** — Spec 011 behavioral-additive operational procedure (codifies Constitution v1.4.6 invocation pattern with 6 FRs)
+
+**WC-10 IS the first non-filter / non-prompt-tweak intervention to produce a decisive falsification verdict** in the corpus. Prior interventions (MR-1 through MR-3, EH-2, prompt variants, single-call baselines) either produced no signal or NULL verdicts. WC-10 produced ALT-A at p < 0.001 effect size (3.6× commit ratio with 75% decisions differing). The mode-collapse-to-Hold reframe converts Constitution VII from a unitary principle into a two-mechanism principle with empirical heuristics for distinguishing the two sub-populations.
+
+**In-flight work entering future sessions**:
+
+- **WC-10 v2 (n=100 ticker expansion)** — task `bad5dzvke` running in background; ~10h remaining as of 2026-05-08 evening. ANALYSIS template at `experiments/2026-05-08-002-wc-10-v2-ticker-expansion/ANALYSIS_TEMPLATE.md`. Verdict resolves SC-005(b) signed-rating × α correlation at n=100 (critical r=0.197 at p=0.05 vs v1's r=+0.065 at n=20).
+- **WC-10 v3 (bear-regime Q4 2025 NVDA)** — task `brlomrn3q` running in background; ~1.5h remaining. ANALYSIS template at `experiments/2026-05-08-003-wc-10-bear-regime-q4-2025-nvda/ANALYSIS_TEMPLATE.md`. Verdict feeds back into Constitution VII v1.5.0 caveat (NULL/ALT-A/ALT-B/PARTIAL ALT-A — see template's feedback table).
+- **Spec 011 first invocation deferred** — methodology spec is shipped; first filter spec to invoke v1.4.6 will cite Spec 011 in its retrospective. No specific candidate identified yet (bear-side survey is COMPLETE; bull-side may produce a candidate from continued state-log accumulation).
+- **WC-10 production deployment decision** — deferred until v2 + v3 verdicts land. Conditional on:
+  - v2 SC-005(b) STRONG → push toward operator-opt-in via `daily_signals.py` integration spec
+  - v2 MODERATE + v3 ALT-A → keep WC-10 as research-only mode; v1.5.0 caveat strengthens
+  - v2 NULL → bin-then-output pattern (continuous internal, 5-tier external) for ergonomic gain without false-precision claim
+
+**Test count**: 1146 → 1146 (no test additions in the cleanup arc; mypy fixes are typing-only). WC-10 unit tests landed in earlier session (10 unit + 2 integration tests for `bin_scalar_to_tier` + PM integration).
 
 ## Prior research-burst day — 14-work-unit (2026-05-06; tagged v0.8.0-spec-008)
 
@@ -279,6 +332,12 @@ These need new experiments to answer; no amount of analysis on existing CSVs wil
 | Does the Spec 008 Hybrid C bull-only retrofit hold under live-mode A/B ablation? | Run daily_signals.py with boost enabled vs disabled on n≥30 same propagates; verify +3.35pp at 21d. | $5-10 LLM | **open (Spec 008 SC-009 condition for default-on flip)** |
 | Does multi-window SC-003 replication strengthen all retrospectives? | Re-run SC-003 50-ticker on 3-5 additional dates; would expand corpus from 234 to 290+ commits + spec 003 eligible from 11 to 30+ + spec 006 ticker_strong cohort from 18 to 40+. | $40 (T3) | **open (NEW post-spec-006)** — biggest empirical-strengthening lever |
 | At what corpus size does Spec 005 percentile-based variant become viable? | Extend per-ticker history to 30+ obs per ticker; re-run `scripts/ticker_sector_alpha_retrospective.py` with `--percentile-history-floor 30`. May surface signal that washed at the absolute-threshold variant. | $0 retrospective; needs corpus-expansion first | **open (NEW post-spec-005-skip)** |
+| Does scalar magnitude predict α magnitude beyond binary commit/abstain at n=100? | WC-10 v2 expansion (8 tickers × 10 dates × WC-10 only = 80 propagates), $32, IN FLIGHT. Critical r at n=100/p=0.05 = 0.197. Verdicts: STRONG (\|r\|>0.30) → operator-opt-in production; MODERATE → research mode; NULL → bin-then-output ergonomic gain only. | $32 | **in flight (WC-10 v2)** |
+| Does WC-10 schema fix make bear-regime calibration WORSE, NEUTRAL, or BETTER on Q4 2025 NVDA cohort? | WC-10 v3 (8 dates × 1 ticker × 2 modes = 16 propagates), $6.40, IN FLIGHT. Verdict feeds Constitution VII v1.5.0 caveat: ALT-A → strengthens caveat, ALT-B → weakens, NULL → over-cautious, PARTIAL ALT-A → confirmed at predicted scope. | $6.40 | **in flight (WC-10 v3)** |
+| Does ALT-A categorical-bottleneck pattern generalize across tickers beyond NVDA + AAPL? | WC-10 v2 secondary metric (per-ticker commit rate across 8 tickers). Hypothesis: ≥6 of 8 tickers exhibit ≥80% commit rate. Counter-finding: any ticker that retains Hold-collapse under continuous-scalar mode would suggest the schema bottleneck is partially ticker-specific (or NVDA/AAPL-volatility-profile-specific). | $0 (subsumed by v2) | **in flight (WC-10 v2 secondary)** |
+| Does the v1 NVDA Buy bullish-amplification (n=6 mean +4.67% α 21d) generalize beyond NVDA? | WC-10 v2 tertiary metric (per-bucket mean α v1 vs v2). If v2 Buy mean α stays positive ≥+2% on the new 6 tickers, the bullish-side amplification finding generalizes. If collapses to near zero on new tickers, finding was NVDA-specific. | $0 (subsumed by v2) | **in flight (WC-10 v2 tertiary)** |
+| Should `daily_signals.py` integrate WC-10 as an opt-in mode for operator workflows? | Conditional on v2 + v3 verdicts. Spec needed for the integration: rating display in markdown digest, paper-trade harness consumption, 5-tier fallback for downstream filters. | $0 spec design + $5-10 validation | **deferred (post-WC-10 v2 + v3)** |
+| Can the behavioral-additive escape clause (Constitution v1.4.6 + Spec 011) ever be invoked, or is bear-side mechanism survey COMPLETE making it dormant? | Future state-log accumulation may reveal new bull-side filter candidates that fail v1.4.3 actual-fires gate but pass v1.4.6 counterfactual gate. Bear-side survey is closed (6/6 evaluated, only C-4 spec-eligible). | $0 (passive — depends on accumulated state logs) | **deferred (Spec 011 first invocation)** |
 
 ---
 
