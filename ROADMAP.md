@@ -276,7 +276,7 @@ Patterns from sibling projects worth porting. **Relevance re-ranked 2026-05-08 p
 |---|---|---|---|
 | **L4 (pilot landed 2026-05-09)** | **battlecode2026 ratbot6** | **Squeak (structured signaling) — BR-3 v1** | Analysts emit `{bullish, bearish, key_risks}` instead of prose. **Pilot result PARTIAL ALT-B** ($8, n=20, PR #178): commit shift +20pp triggered but α delta +0.24pp below threshold. Phase E NOT unblocked; L4 status preserved at "pilot-eligible" (not promoted). Sister extensions BR-3 v2 (news + fundamentals analysts; ~$8 each) would clarify generalization. |
 | **L4 (NEW post-WC-10)** | **agent-harness-v2** | **Knowledge digestion + antibodies** | Auto-tag historical Hold commits as genuine-ambiguity vs schema-induced collapse via WC-10 replay. $0 LLM (saved data only). |
-| **L4 (NEW post-WC-10)** | **mcp-reasoning** | **Self-improvement system** | Extend `scripts/memory_log_integrity_check.py` to flag WC-10 commits that underperform 5-tier baseline. Closes Constitution v1.5.0 monitoring loop. $0. |
+| **L5 (POLLINATED 2026-05-09 via PR #146 + PR #186)** | **mcp-reasoning** | **Self-improvement system → wc_10 underperformance monitor** | Sister script (NOT extension of `memory_log_integrity_check.py`) `scripts/wc_10_underperformance_monitor.py` shipped in PR #146; smoke test PASS post-Branch C verified in PR #186 (cohort cumulative Δα +22.42pp on v1; 2 per-pair alerts). Closes Constitution v1.5.0/v1.5.1 monitoring loop. v2 cross-corpus extension scope designed in PR #190 + DEFERRED until corpus n≥200. $0. |
 | L5 (already pollinated) | mcp-reasoning | 15+ reasoning modes (linear/tree/divergent/reflection/decision/evidence/mcts/graph/counterfactual/…) | Reasoning_decision drove 8+ of 2026-05-08 PRs; pollination operationally complete |
 | L5 (already pollinated) | branch-thinking / logic-thinking | Structured reasoning tools | Already exercised via mcp-reasoning |
 | L3 | agent-harness-v2 | Event sourcing | Spec 002 partially shipped via signals/cache.py; unified event log for memory + checkpoint + paper-trade is Phase E |
@@ -290,12 +290,15 @@ Patterns from sibling projects worth porting. **Relevance re-ranked 2026-05-08 p
 | **L1 (deprioritized 2026-05-08)** | battlecode2026 ratbot6 | Pre-computed decision-rule shortcuts | WC-10 finding: schema is already too constraining; pre-computed rules constrain it MORE. Deprioritize. |
 | **L1 (deprioritized 2026-05-08)** | bruno-swarm | abliteration for specialization | Squeak is cheaper + tests adjacent hypothesis; abliteration's infrastructure burden disproportionate |
 
-**New patterns surfaced 2026-05-08** (extractable as project tooling):
+**New patterns surfaced 2026-05-08 / 2026-05-09** (extractable as project tooling):
 
 | Tier | From | Pattern | Application |
 |---|---|---|---|
-| L4 | this project (today) | **Conditional-branch spec drafting** | Pre-write spec.md with N verdict-conditional branches (Spec 009 pattern). Could ship as `.specify/templates/spec-template-conditional.md` |
-| L4 | this project (today) | **Pre-scaffolded ANALYSIS templates** | Write ANALYSIS_TEMPLATE.md alongside HYPOTHESIS.md (PR #135 pattern). Could ship as `scripts/new_experiment.py --with-analysis-template` flag |
+| L4 | this project (2026-05-08) | **Conditional-branch spec drafting** | Pre-write spec.md with N verdict-conditional branches (Spec 009 pattern). Could ship as `.specify/templates/spec-template-conditional.md` |
+| L4 | this project (2026-05-08) | **Pre-scaffolded ANALYSIS templates** | Write ANALYSIS_TEMPLATE.md alongside HYPOTHESIS.md (PR #135 pattern). Could ship as `scripts/new_experiment.py --with-analysis-template` flag |
+| L4 | this project (2026-05-09) | **5-PR vs 6-PR spec-kit bundle pattern** | Spec X-1 (PRs #88-#93) used 6-PR; Spec 012 (PRs #194-#200) used 5-PR collapsed (single plan.md replacing plan + research + data-model + contracts). 4-criterion checklist in memory `reference_speckit_5pr_vs_6pr_pattern.md` (retrospective-already-PASSED + single-feature mechanism + wholesale-reusable integration pattern + config-only operator surface → 5-PR eligible). Saves ~30-45 min per bundle when collapse criteria met. |
+| L4 | this project (2026-05-09) | **Retrospective-first methodology validated 4× in 1 day** | Constitution VIII v1.4.1 (spec ships its retrospective; SKIP-spec-if-gate-fails) validated AGAIN today: Class 4 BEAR PASS (PR #193) + Class 5 BULL re-run SKIP (PR #202) + Class 4 BULL SKIP (PR #203) + local-high BULL DEFER (PR #205). Total ~$0 + ~2h retrospective time avoided ~24-32h of empty-spec implementation across the 3 SKIP/DEFER cases (~8h × 3). Methodology economics: ~$0/h saved factor 12-16x. |
+| L4 | this project (2026-05-09) | **Cost-per-ship-quality-unit metric** | Today's 28 PRs + 3 memory writes = 31 ship-quality units at $48.40 → ~$1.61 per unit (extreme efficiency from pre-spent pilot data + $0 retrospective methodology). Cumulative across 4-day arc: ~150+ PRs at ~$53 LLM → ~$0.35 per unit. Useful for cost-discipline framing in subsequent days; documented in `claudedocs/research-burst-2026-05-09.md`. |
 
 ---
 
