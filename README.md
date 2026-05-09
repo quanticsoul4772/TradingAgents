@@ -8,7 +8,9 @@ Upstream docs in [`README.upstream.md`](README.upstream.md). Upstream release hi
 
 **At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls are no better than coin flip.** At 21-day windows, the framework's bullish commits (Buy + Overweight) produce **+1.23% mean alpha across n=71 commits (~61% hit rate) — POSITIVE AT MODERATE CONFIDENCE.** Three-period NVDA cross-validation (Q1 2026 / Q4 2025 / Q3 2025): two of three periods positive; Q4 2025 is the negative outlier.
 
-Hold ≈ 0% median at every horizon — the framework's mode collapse to Hold is **calibrated abstention**, not a defect (Constitution Principle VII). Bearish commits are regime-asymmetric (UW on bear-correct tickers ARE directionally appropriate; UW on bull-regime tickers drive the aggregate anti-calibration).
+**WC-10 v1 pilot finding (2026-05-08)**: mode collapse to Hold is **TWO-MECHANISM**, not unitary calibrated abstention. Continuous-scalar output mode commits 3.6× more often than 5-tier categorical (90% vs 25% on the same 20 (ticker, date) pairs); SC-007 ALT-A confirmed. The 5-tier categorical scale was suppressing one-directional moderate-magnitude reads. Constitution VII amended v1.4.6 → v1.5.0 with "Schema-induced abstention is NOT calibrated abstention" sub-section. Bullish-side amplification well-calibrated (NVDA Buy n=6 mean +4.67% α 21d); bearish-side anti-calibrated on this cohort. v2 (n=100 ticker expansion, $32) + v3 (Q4 2025 NVDA bear-regime, $6.40) in flight to resolve generalization + bear-regime asymmetry. See [`experiments/2026-05-08-001-wc-10-pilot/ANALYSIS.md`](experiments/2026-05-08-001-wc-10-pilot/ANALYSIS.md).
+
+Bearish commits are regime-asymmetric (UW on bear-correct tickers ARE directionally appropriate; UW on bull-regime tickers drive the aggregate anti-calibration).
 
 Full synthesis + cross-period evidence + per-failure-mode analysis in [`RESEARCH_FINDINGS.md`](RESEARCH_FINDINGS.md). Forward roadmap in [`ROADMAP.md`](ROADMAP.md). Per-experiment summaries in [`findings.md`](findings.md).
 
@@ -77,13 +79,15 @@ python scripts/uw_suppression_filter.py    # A3 retrospective
 
 ## Constitution
 
-8 principles in [`.specify/memory/constitution.md`](.specify/memory/constitution.md) (v1.4.6): Save Everything · One Experiment Per Change · Stay Cheap (T0/T1/T2/T3 cost ladder) · No Production Claims · Steal Liberally · Spec Before Structural Change · **Calibrated Abstention is a Valid Output** · **Retrospective Before Spec for Backward-Looking Price Filters** (extended through v1.4.6 with forward-catalyst-class gate, magnitude fungibility, additive-to-existing-filter gate, behavioral-additive 4th interpretation).
+8 principles in [`.specify/memory/constitution.md`](.specify/memory/constitution.md) (**v1.5.0**): Save Everything · One Experiment Per Change · Stay Cheap (T0/T1/T2/T3 cost ladder) · No Production Claims · Steal Liberally · Spec Before Structural Change · **Calibrated Abstention is a Valid Output** · **Retrospective Before Spec for Backward-Looking Price Filters** (extended through v1.5.0 with forward-catalyst-class gate, magnitude fungibility, additive-to-existing-filter gate, behavioral-additive 4th interpretation, **Schema-induced abstention is NOT calibrated abstention** carve-out per WC-10 v1).
 
 Quality Gate #6 (v1.4.5): operators MUST cross-check memory log entry header data against reflection prose before citing prior entries as evidence. Tooling: `scripts/memory_log_integrity_check.py`.
 
+WC-10 production-deployment monitoring (v1.5.0 caveat enforcement): `scripts/wc_10_underperformance_monitor.py` — flag cohorts where WC-10 mode produces worse realized α than 5-tier baseline. Cron-friendly exit code (0 = no alerts, 1 = alert).
+
 ## Tests
 
-**1146 unit + 2 integration tests** (80.5% coverage). Production filter modules all at >80% coverage.
+**1153 unit + 2 integration tests** (80.5% coverage). Production filter modules all at >80% coverage. Mypy clean baseline at 0 errors as of 2026-05-08 sweep (PRs #117-#129 cleared 124 errors / 17 files).
 
 ```bash
 pytest                # full suite

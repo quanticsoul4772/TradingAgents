@@ -6,6 +6,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (2026-05-08 — WC-10 v1 ALT-A confirmed + Constitution v1.4.6 → v1.5.0 + mypy 126 → 0)
+
+**WC-10 v1 pilot ships the first non-filter / non-prompt-tweak intervention to produce a decisive falsification verdict in the corpus** (40 propagates / 10 dates × 2 tickers × 2 modes / $16 / `experiments/2026-05-08-001-wc-10-pilot/`). SC-007 ALT-A confirmed at distribution level: continuous-scalar mode emitted `|rating| > 0.2` on 18/20 (90%) vs 5-tier mode's 5/20 (25%) — **3.6× commit ratio**. 75% of paired decisions differ. NVDA case study: continuous-scalar emitted bullish reads on every date (+0.38 to +0.72) while 5-tier emitted Hold on 8 of 10 dates with realized 21d α from +2.83% to +8.53% — the schema was suppressing 8 commits the framework would have made under continuous output.
+
+**Constitution VII v1.4.3 → v1.5.0** (MINOR amendment) — added "Schema-induced abstention is NOT calibrated abstention" sub-section to Principle VII (Calibrated Abstention is a Valid Output). VII still applies to commits whose evidence is GENUINELY BALANCED (the original framing); v1.5.0 carves out cases where (a) evidence is one-directional but moderate-magnitude, (b) schema lacks a partial-confidence tier, (c) empirical evidence shows the framework would commit if the schema permitted it. Where these conditions hold, the fix is the scale, not the inference. New HYPOTHESIS.md operational test: structural changes that "reduce Hold rate" must justify which sub-population they target — genuine ambiguity (NOT VII-eligible) or schema-induced collapse (VII-eligible per WC-10 precedent).
+
+**Mode-collapse reframe** — RESEARCH_FINDINGS.md updated: mode collapse to Hold is now characterized as TWO-MECHANISM (genuine ambiguity + schema artifact), not unitary calibrated abstention. Prior "Hold-regime starves filters" pattern (memory `reference_pm_hold_regime_starves_filters.md`) is now decomposable into the two sub-populations.
+
+**Spec 011 (`specs/011-behavioral-additive-procedure/`)** — methodology spec codifying the operational procedure for invoking the Constitution v1.4.6 behavioral-additive escape clause. 6 FRs (required retrospective fields / sample-size minimum / regime-shift trigger specificity / mechanism-class novelty check / canonical re-runnable harness / 6-PR spec-kit bundle pattern). Future filter specs invoking v1.4.6 will cite Spec 011 in their retrospectives.
+
+**Spec 009 (`specs/009-wc-10-production-deployment/`)** — conditional draft scaffolds 4 verdict-conditional branches (A: STRONG → operator-opt-in via `daily_signals.py`; B: MODERATE → research-only; C: NULL → bin-then-output ergonomic-only; D: NULL+ALT-A → no deployment). Branch selection deterministic when v2 + v3 verdicts land.
+
+**WC-10 v2 + v3 in flight** (kicked off 2026-05-08 evening):
+- **v2 (n=100 ticker expansion)** — 8 tickers × 10 weekly-Friday Q1 2026 dates × WC-10 only = 80 propagates × $0.40 = $32. Resolves SC-005(b) signed-rating × 21d-α correlation at n=100. `experiments/2026-05-08-002-wc-10-v2-ticker-expansion/`.
+- **v3 (Q4 2025 NVDA bear-regime)** — 8 dates × 1 ticker × 2 modes = 16 propagates × $0.40 = $6.40. Tests v1's WC-10 caveat directly. `experiments/2026-05-08-003-wc-10-bear-regime-q4-2025-nvda/`.
+
+**WC-10 production-deployment monitoring**: `scripts/wc_10_underperformance_monitor.py` (sister to `scripts/memory_log_integrity_check.py`) — flag cohorts where WC-10 mode produces worse realized α than 5-tier baseline. 3 alert criteria (single-pair / streak / cohort cumulative). Cron-friendly exit code. v1 pilot smoke test: cohort cumulative Δα +22.42pp; 2 per-pair alerts (AAPL UW commits during +3-6% rally) — empirically validates v1.5.0 asymmetric-calibration caveat.
+
+**Pre-scaffolding pattern codified** (~5 PRs collectively cut v3 landing series from ~120 min to ~43 min): pre-scaffolded ANALYSIS templates with `<TBD>` placeholders + 4 verdict-conditional Constitution v1.5.1 patches + 3-PR landing series workflow template. New project-level reusable templates: `.specify/templates/spec-template-conditional.md` + `scripts/new_experiment.py --with-analysis-template` flag.
+
+**Mypy 126 → 0** via 12 cleanup PRs (#117-#129) — implicit-Optional widening, helper signature alignment, dict-invariance annotations on the LLM-client `llm_kwargs` (the 4-line PR #128 cleared 85 errors that CLAUDE.md previously characterized as "complex / deferred / needs upstream stubs"; correction: actually trivial dict invariance), TypedDict receiver widening for `TradingAgentsConfig`, and `types-requests` stub addition. Memory `reference_llm_client_kwargs_dict_invariance.md` codifies the "verify deferred classifications by trying the simple fix first" methodology lesson. CLAUDE.md baseline updated. 1146 → 1153 unit tests (+7 from PR #150 ANALYSIS template tests).
+
 ### Added (2026-05-07 — Spec X-1 deployed — C-4 institutional rotation filter (FIRST quantitative-flow bear-side filter))
 
 **Spec X-1 (`specs/091-c4-institutional-rotation/`)** ships the framework's FIRST quantitative-flow bear-side filter via 4 PRs (#88 spec → #89 plan + design → #90 tasks → #91 PR-A MVP implementation → #92 PR-B remaining tests → this PR-C polish).
