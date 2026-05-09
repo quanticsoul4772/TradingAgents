@@ -104,7 +104,7 @@ This is a useful prior for anyone considering "replace LLM PM with deterministic
 
 | Open question | What it'd resolve | Cost |
 |---|---|---|
-| Same-date rerun-variance: how much of date-level non-replication is stochastic LLM variance? | Whether Replicability-scope clarification is fundamental or fixable with more reps. If most variance is stochastic, the bucket-level signal is the load-bearing claim and date-level analysis should be retired. **Partial evidence**: 005-vs-007 NVDA case (10/10 OW → 6/10 OW + 4 Hold on same dates with same model) documented in Constitution VII Replicability-scope sub-section; suggests run-to-run variance is real but unquantified at the date level. | $15 (T2) |
+| Same-date rerun-variance: how much of date-level non-replication is stochastic LLM variance? | Whether Replicability-scope clarification is fundamental or fixable with more reps. If most variance is stochastic, the bucket-level signal is the load-bearing claim and date-level analysis should be retired. **Partial evidence**: 005-vs-007 NVDA case (10/10 OW → 6/10 OW + 4 Hold on same dates with same model) documented in Constitution VII Replicability-scope sub-section; suggests run-to-run variance is real but unquantified at the date level. **Refined 2026-05-09 (post-WC-11)**: WC-11 bounds the order-mechanism contribution to ±20pp on commit rate. The 005-vs-007 within-DEFAULT-order variance now sets a lower bound on stochastic-only variance. | $15 (T2) |
 | Model-swap matrix (GPT-5.4 / Gemini 3.x vs Anthropic on same grid): is period-conditional realized α a model property? | Would tell us whether the Q1 2026 / Q4 2025 sign flip is Anthropic-specific or general. **Partial evidence**: Sonnet 4.6 + Opus 4.7 cross-period both show the Q1+ / Q4- pattern (3-period validation); GPT-5.4 + Gemini are open. Spec 001 Phase 4 per-bot routing enables mix-and-match without rebuild. | $40 (T3) |
 | Bear-correct ticker generalization (XOM, PFE): does the bear-side regime-asymmetry hold beyond AAPL + INTC? | n=2 ticker base for the bear-asymmetry claim is thin. XOM + PFE adds 20 commit points in true bear regimes. **Note**: WC-10 v3 (Q4 2025 NVDA) tests bear-regime under continuous-scalar mode but uses NVDA which is a bull-regime ticker that fell — different mechanism from XOM/PFE which are bear-correct tickers in their own regime. The two tests are complementary, not substitutable. | $15 (T2) |
 | Phase 4 cost-tier validation (n≥10 with bot_models override): do per-bot model swaps shift rating distribution beyond mode-collapse? | Empirical validation of the Haiku-for-quick + Opus-for-deep cost-savings story. **Status**: Phase 4 wired + live-validated at n=1 in `experiments/2026-05-04-006-phase-4-bot-llm-routing/`; the operator-facing claim needs distribution evidence at n≥10. | $10 (T2) |
@@ -281,6 +281,52 @@ Both audits would PASS the v1.4.3 numerical criteria if applied retroactively (S
 - **One-directional moderate-magnitude cases** → schema-induced collapse → schema-fix WOULD surface signal (per WC-10 ALT-A)
 
 Future ANALYSIS.md framings should attempt to attribute Hold commits to one sub-population or the other where possible. The continuous-scalar replay is the operational test: re-run a Hold cohort under WC-10 mode; the dates that emit `|rating|>0.2` are the schema-induced sub-population.
+
+## WC-11 analyst-order randomization — first-speaker bias confirmed (added 2026-05-09)
+
+**Source**: `experiments/2026-05-08-004-wc11-order-randomization/ANALYSIS.md` (Landing PR #177). Cost: $8 (Constitution III T2). 20/20 propagates resolved without error.
+
+**Design**: 5 dates × NVDA × 4 analyst-order permutations (DEFAULT `[market, news, fundamentals]` + 3 alternatives) on the same date grid. Tests whether the framework's bucket-level commit rate is invariant under analyst ordering — i.e., whether prior corpus claims are robust to the implicit analyst-order choice.
+
+**Verdict**: PARTIAL — both ALT-A (first-speaker bias) and ALT-B (last-speaker bias) triggers fire on the SAME permutation (`news_fundamentals_market`). NULL clearly REJECTED; cannot disambiguate ALT-A vs ALT-B at n=20 because the permutation is consistent with either mechanism.
+
+| Metric | Result | Threshold | Trigger |
+|---|---|---|---|
+| Per-permutation commit rate range | **0% → 40%** | ±20pp from pooled mean | ALT-A AND ALT-B both met |
+| News-first commit rate vs pooled | **+20pp** | ≥+20pp | ALT-A trigger met |
+| Market-last commit rate vs pooled | **+20pp** | ≥+20pp | ALT-B trigger met |
+| Dates with divergent ratings across permutations | **2 of 5** | — | substantively non-trivial |
+| Pooled commit rate | 20% (4 of 20) | — | baseline |
+
+**Operational implication**: the project's DEFAULT analyst order `[market, news, fundamentals]` is empirically biased TOWARD Hold relative to alternative orderings. Prior corpus bucket-level claims under DEFAULT order systematically UNDER-COUNT commits the framework would have emitted under news-first orderings. The 005-vs-007 NVDA finding (10/10 OW → 6/10 OW + 4 Hold) — both runs under DEFAULT order — is unaffected by the order-mechanism but sets the within-order stochastic-variance baseline against which order-specific variance is now bounded.
+
+**Constitution amendment** (PR #179, v1.5.1 → v1.5.2): Principle VII gets an "Analyst-order scope" paragraph in its Replicability-scope sub-section. Future ablations targeting commit-rate metrics MUST either randomize analyst order within the cohort OR explicitly fix the order AND document analyst-order as a confounder + restrict claims to within-order-cohort comparisons.
+
+**Sister to WC-10**: WC-10 found schema (5-tier categorical) was a structural Hold-amplifier; WC-11 finds analyst-order is a SEPARATE structural Hold-modulator. The two mechanisms are orthogonal — both apply within the same propagate. Suggests the framework's mode-collapse-to-Hold has at least THREE structural sources: (1) genuine ambiguity (Constitution VII original), (2) schema-induced collapse (Constitution VII v1.5.0 sub-section), (3) analyst-order-biased pooling (Constitution VII v1.5.2 sub-section).
+
+## BR-3 Squeak market-analyst structured output — analyst-stage analog (added 2026-05-09)
+
+**Source**: `experiments/2026-05-09-001-br3-squeak-market-analyst/ANALYSIS.md` (Landing PR #178). Cost: $8 (Constitution III T2). 20/20 propagates resolved without error.
+
+**Design**: 5 dates × 2 tickers (NVDA + AAPL) × 2 modes (prose vs Pydantic-structured market analyst output) on the same (ticker, date) grid. Sister hypothesis to WC-10: WC-10 tests structured-vs-categorical at the PM stage; BR-3 tests prose-vs-structured at the analyst (market) stage.
+
+**Verdict**: PARTIAL ALT-B — direction matches ALT-B (structured surfaces commits prose suppresses) but α magnitude is too small to validate calibration at this n.
+
+| Metric | Result | Threshold | Trigger |
+|---|---|---|---|
+| Prose-mode commit rate | 0/10 (0%) | — | baseline |
+| Structured-mode commit rate | 2/10 (20%) | — | +20pp shift |
+| Commit shift (structured − prose) | **+20pp** | ALT-B requires ≥+20pp | TRIGGERED |
+| α delta (structured − prose) | +0.24pp | ALT-B requires ≥+1.0pp | NOT met (PARTIAL) |
+| Direction-correct commits | 1 of 2 | — | uninterpretable at n=2 |
+
+**NVDA observation**: unanimous Hold across all 10 propagates (5 prose + 5 structured) despite NVDA realized 21d α ranging -4.11% to +15.01% across dates. The structured-mode mechanism only differentiates from prose on AAPL in this cohort — consistent with WC-10 finding that AAPL was the bear-side-amplified ticker (under WC-10, scalar mode emitted UW commits 5-tier kept as Hold).
+
+**Constitution implication**: NO amendment required. PARTIAL ALT-B at n=20 doesn't meet ALT-B magnitude threshold. The Phase E architectural variant (structured-output-throughout) is NOT unblocked at this evidence level.
+
+**Sister-experiment recommendation**: BR-3 v2 (extend to news + fundamentals analysts; ~$8 each) would clarify whether the analyst-stage effect is market-analyst-specific or generalizes across the 3 analyst stages. Cross-pollination L4 status (Squeak structured signaling) preserved at "pilot-eligible" rather than "ship-eligible."
+
+**Joint WC-10 + WC-11 + BR-3 implication**: three separate structural choices (PM schema, analyst order, analyst output format) each independently move the framework's commit rate. The Hold-rate has at least 4 distinct structural sources now (Constitution VII original + v1.5.0 schema + v1.5.2 analyst-order + BR-3 weak analyst-format signal). Mode collapse is a multi-mechanism phenomenon, not a single-cause artifact.
 
 ## Key claims (load-bearing, n large enough)
 
