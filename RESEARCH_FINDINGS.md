@@ -6,9 +6,11 @@ _**Updated 2026-05-06 with 11-work-unit research-burst summary**: Spec 003 defau
 
 _**Updated 2026-05-07 (94+ PR day; bear-side survey CONCLUDES + Spec X-1 DEPLOYED + 2 constitution amendments RATIFIED)**: Spec 007 forward-catalyst gate (bull-active, bear-shadow) + Spec 008 Hybrid C calendar boost shipped 2026-05-06; **SC-009 live A/B ablation 2026-05-07: 36/36 rows COMPLETE; PRELIMINARY PASS-by-non-counterexample** — 0 decisions changed by boost across full sample; recommend SHADOW-MODE-FIRST for v2 default-on flip, NOT direct flip (PRs #57, #58, #61). Final canonical 21d-window verdict pending ~2026-05-22+. **Bear-side mechanism class survey from PR #22 CONCLUDES (6/6 evaluated)**: only **C-4 (institutional ownership delta)** cleared both Constitution VIII v1.4.0 standalone gate (n=12, mean α +5.41%, hit 75%, discrim +10.29pp; PR #75) AND v1.4.3 additive overlap vs Spec 007 (+8.06pp Δα improvement / +69pp hit improvement; C-4 catches 11 bearish commits Spec 007 entirely misses; PR #77). **Spec X-1 (C-4 institutional rotation filter) DEPLOYED end-to-end via 6-PR bundle (#88 spec → #89 plan → #90 tasks → #91 MVP → #92 tests → #93 polish)** at default-shadow bear-side / default-off bull-side; 18 tests + 4 config keys + ~190 LOC helper module. **Spec 010 (Hybrid D bear-side calendar-boosted) closed via PR #86 SKIP retrospective** on structural-incompatibility argument (3-converging-retrospective methodological closure of bear-side calendar-boost mechanism class). Two C-classes show INVERTED bear-side mechanism (C-2 short-covering + C-5 price-reaction): both originally hypothesized as mean-reversion; bear cohort empirically continuation. Three SKIP-types codified (empirical / data-availability / structural). **Constitution v1.4.3 → v1.4.5 → v1.4.6** — Quality Gate #6 (Memory-log data-vs-prose discipline; PR #83) + Behavioral-additive 4th interpretation (PR #84) both ratified; v1.4.4 draft content was ratified as v1.4.6 to preserve monotone numbering after v1.4.5 was ratified first per reasoning_decision rank ordering. Path C analyst PT snapshot wiring (`tradingagents/agents/utils/analyst_pt_snapshot.py`) shipped default-OFF unlocking future C-3-class retrospectives. Spec 003 historical-recompute backfilled 254 cache rows; 9 tickers now clear FR-004 N≥20 floor (NVDA / AAPL / INTC / XLE / MSFT / GOOGL / JPM / XLF / XLK). Test count: **1134 unit + 2 integration** post-Spec X-1 deployment. Cross-session memories 14 → **23**. Filter portfolio: **9 production filters** (Spec X-1 promoted from candidate to deployed)._
 
-## Headline (revised after 3-period NVDA cross-validation + Phase D substrate test)
+## Headline (revised after 3-period NVDA cross-validation + Phase D substrate test + WC-10 schema-bottleneck pilot)
 
 **At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls (Buy/OW/UW/Sell) are no better than coin flip. At 21-day windows, the framework's bullish commits (Buy + Overweight) produce +1.23% mean alpha across n=71 cross-experiment commits (~61% hit rate) — POSITIVE AT MODERATE CONFIDENCE.** Three-period NVDA cross-validation: Q3 2025 +0.80% (n=10, 60% hit), Q4 2025 -0.47% (n=9, 22% hit), Q1 2026 ~+3.5% blended (n=15, ~80% hit). **Two of three periods positive — Q4 2025 is the negative outlier, not Q1 2026 as 008 alone suggested.** Reasoning_evidence Bayesian posterior on "stable cross-period signal" trajectory: 0.64 (pre-008, single-period n=50) → 0.52 (post-008, 2-period split) → **0.63 (post-NVDA-Q3, 3-period 2/3 positive)**. The signal exists at modest magnitude; cross-period stability has 3-period evidence supporting it.
+
+**Architectural addition (2026-05-08, WC-10 pilot)**: the framework's mode collapse to Hold is a TWO-MECHANISM phenomenon, not a unitary "calibrated abstention." Mechanism A (genuine ambiguity → Hold, per original Constitution VII) coexists with Mechanism B (one-directional moderate-magnitude evidence collapses to Hold because the 5-tier categorical schema lacks a partial-confidence tier). WC-10 pilot (n=20 paired): continuous-scalar mode emitted `|rating|>0.2` on 18/20 (90%) vs 5-tier mode's 5/20 (25%) non-Hold rate — 3.6× ratio, falsification verdict ALT-A confirmed. Constitution VII amended v1.4.3 → **v1.5.0** to carve out the schema-artifact case. The schema fix is bullish-side-validated (NVDA Buy n=6 mean +4.67% α 21d) but bear-side-anti-calibrated on this cohort (AAPL UW n=6 mean +3.56% α — UW called bearish but ticker rose). Bear-regime validation required before universalizing.
 
 Phase D substrate test (XLK Q1 2026 vs NVDA Q1 2026 same dates): framework went 30pp more Hold-heavy on the sector ETF substrate (70% Hold vs NVDA's 40% Hold). All XLK buckets had positive realized α; framework over-abstained. **Decision architecture is portable across substrates; commit calibration is substrate-specific (single-stock-prompt-tuned).**
 
@@ -92,6 +94,7 @@ This is a useful prior for anyone considering "replace LLM PM with deterministic
 - **Weight tuning overfits (Spec 001 Phase 5)**: 100% weight on `investment_plan` (the bridge synthesis) won train but test IC stayed -0.062. The corpus is too small / the signal-to-noise too low for grid-search weight tuning to generalize. **Mechanism now characterized (2026-05-05)**: same as above — between-ticker information doesn't generalize across train/test folds when both folds contain the same tickers.
 - **Convergence shortcut needs different inputs (Spec 001 Phase 3)**: 0% fires at spec defaults — the featurization-derived magnitudes don't reach the >0.7 threshold.
 - **All 4 strongest featurizer ICs are between-ticker artifacts (2026-05-05)**: bear_bigram, conviction_density, hedge_density, bull_keyword_count. Within-ticker IC near zero or sign-inconsistent across tickers.
+- **Mode collapse to Hold is NOT unitary calibrated abstention (2026-05-08, WC-10 pilot)**: previously framed as a single "calibrated abstention" mechanism per Constitution VII v1.4.3. WC-10 ALT-A confirmation shows it's two-mechanism: (a) genuine ambiguity (the original framing) AND (b) schema-induced collapse (one-directional moderate-magnitude evidence trapped by the 5-tier categorical scale). Constitution amended to v1.5.0 to carve out the schema-artifact case. The original VII framing remains correct for sub-population (a); WC-10 is the empirical case for sub-population (b).
 
 ### What's still open (and what each would resolve)
 
@@ -102,6 +105,8 @@ This is a useful prior for anyone considering "replace LLM PM with deterministic
 | Bear-correct ticker generalization (XOM, PFE): does the bear-side regime-asymmetry hold beyond AAPL + INTC? | n=2 ticker base for the bear-asymmetry claim is thin. XOM + PFE adds 20 commit points in true bear regimes. | $15 (T2) |
 | Phase 4 cost-tier validation (n≥10 with bot_models override): do per-bot model swaps shift rating distribution beyond mode-collapse? | Empirical validation of the Haiku-for-quick + Opus-for-deep cost-savings story. Phase 4 wired + live-validated at n=1; the operator-facing claim needs distribution evidence. | $10 (T2) |
 | `bear_bigram_count` IC = +0.457 at 90d artifact check: real signal or small-n correlation? | Strongest single IC in the corpus. Either a genuine 90d predictor or a multiple-comparisons artifact. Cheap to investigate. | $0 (~2h work) |
+| WC-10 v2 expansion to n≥100 paired propagates: does signed-rating × 21d-α correlation become statistically detectable? | SC-005(b) at v1 n=20 produced Pearson r=+0.065, Spearman ρ=+0.009 — no signal at this n, but critical r at n=20/p=0.05 is 0.444 (very high bar). At n=100, critical r drops to 0.197, making weak-but-real correlations detectable. Resolves whether the scalar magnitude carries information beyond the binary commit/abstain decision the bin already captures. | $32 (T2) |
+| WC-10 bear-regime test (Q4 2025 NVDA cohort under continuous-scalar mode): does the schema fix make bear-side calibration WORSE or just NEUTRAL? | v1 cohort (Q1-Q2 2026 NVDA + AAPL) was bull-dominated; bullish-amplification was well-calibrated, bearish-amplification was anti-calibrated on AAPL. Q4 2025 NVDA was the period where the framework's bearish commits FAILED most clearly. Continuous-scalar replay tells us whether (a) bear-side amplification is universally bad (don't ship WC-10) or (b) regime-conditional (ship with caveats). | $8-16 (T2) |
 
 ### Research yield assessment
 
@@ -239,6 +244,39 @@ Both Spec 007 and Spec 008 EXEMPTED from Constitution v1.4.3 retroactive applica
 - **Spec 007 forward-catalyst** (`claudedocs/spec-007-v1.4.3-overlap-audit-2026-05-07.md`): cross-mechanism-class structural argument. Spec 007 is the FIRST forward-catalyst-class filter; existing default-active filters at invocation time were prose-density (Spec 003 + Spec 003.5) and backward-price (A3) — different mechanism classes per v1.4.0's separate gate tracks.
 
 Both audits would PASS the v1.4.3 numerical criteria if applied retroactively (Spec 008: +3.34pp net Δα improvement vs Spec 007 alone; Spec 007: +1.59pp vs Spec 003 alone). The exemption is consistent with the empirical reality.
+
+## WC-10 v1 pilot — categorical bottleneck confirmed (added 2026-05-08)
+
+**Source**: `experiments/2026-05-08-001-wc-10-pilot/ANALYSIS.md` + `specs/108-wc-10-continuous-scalar-rating/`. Cost: $16 (Constitution III T2). 40/40 propagates resolved without error.
+
+**Design**: 10 dates × 2 tickers (NVDA + AAPL) × 2 modes (continuous-scalar `[-1,+1]` vs 5-tier categorical) on the same (ticker, date) grid. Filter-bypass mode (all 9 filters skipped) to isolate the schema effect from filter behavior.
+
+**SC-007 falsification verdict**: ALT-A (categorical-bottleneck-confirmed) at distribution level. NULL + ALT-B both rejected.
+
+| Metric | Result | Interpretation |
+|---|---|---|
+| WC-10 commit rate (`\|rating\|>0.2`) | 18/20 (90%) | NULL ("clusters near 0") rejected |
+| 5-tier baseline non-Hold rate | 5/20 (25%) | Same dates, dramatically different |
+| Commit ratio | **3.6×** | ALT-A predicted "substantially higher" — confirmed |
+| Paired decisions differing | 15/20 (75%) | The schema change moves decisions, not just labels |
+| WC-10 Buy n=6 mean 21d α | **+4.67%** | Bullish-side amplification well-calibrated |
+| WC-10 Underweight n=6 mean 21d α | **+3.56%** | Bearish-side amplification anti-calibrated (all AAPL UW during +3-6% rally) |
+| Signed-rating × 21d-α Pearson r | +0.065 (n=20) | SC-005(b) inconclusive at this n; needs n≥100 |
+
+**NVDA case study**: continuous-scalar emitted bullish reads on every date (+0.38 to +0.72) while 5-tier emitted Hold on 8 of 10 dates. The 5-tier scale was suppressing 8 commits the framework would have made under continuous output. Realized 21d α on those 8 dates ranged +2.83% to +8.53% — the suppressed commits would have been profitable. The collapse-to-Hold on NVDA was a SCHEMA artifact, not calibrated abstention.
+
+**AAPL case study**: continuous-scalar emitted 6 bearish reads (-0.22 to -0.38) where 5-tier emitted 3 UW + 7 Hold. The 5-tier scale's Hold-default partially CAUGHT the AAPL anti-calibration that continuous-scalar amplified. WC-10 doubled the bad-direction commit count on AAPL.
+
+**Net signal value depends on the bull/bear regime mix.** Bullish-amplified commits (NVDA cohort) are well-calibrated; bearish-amplified commits (AAPL cohort) are anti-calibrated on this period. Generalization to bearish regimes is unverified.
+
+**Constitution amendment** (PR #131, v1.4.3 → v1.5.0): Principle VII gets a "Schema-induced abstention is NOT calibrated abstention" sub-section. VII still applies to commits whose evidence is GENUINELY BALANCED (the original framing). VII does NOT apply where (a) evidence is one-directional but moderate-magnitude, (b) schema lacks a partial-confidence tier between commit and abstain, (c) empirical evidence shows the framework would commit if the schema permitted it. Where these three conditions hold, the fix is the scale, not the inference. New HYPOTHESIS.md operational test: structural changes that "reduce Hold rate" must justify which mode they target — genuine ambiguity (not VII-eligible) or schema-induced collapse (VII-eligible per WC-10 precedent).
+
+**Empirical reframe of mode collapse**: prior corpus framings of "Hold rate is a load-bearing precondition for filter ablations" (`reference_pm_hold_regime_starves_filters.md`) and "Hold ≈ 0% median at every horizon" remain CORRECT but are now incomplete. The Hold rate is composed of two sub-populations:
+
+- **Genuinely balanced cases** → calibrated abstention → schema-fix would NOT improve outcomes (per Constitution VII original framing)
+- **One-directional moderate-magnitude cases** → schema-induced collapse → schema-fix WOULD surface signal (per WC-10 ALT-A)
+
+Future ANALYSIS.md framings should attempt to attribute Hold commits to one sub-population or the other where possible. The continuous-scalar replay is the operational test: re-run a Hold cohort under WC-10 mode; the dates that emit `|rating|>0.2` are the schema-induced sub-population.
 
 ## Key claims (load-bearing, n large enough)
 
