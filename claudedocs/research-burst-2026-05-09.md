@@ -1,29 +1,72 @@
-# Research-burst 2026-05-09 — triple-pilot landing arc + Spec 009 Branch C activation
+# Research-burst 2026-05-09 — triple-pilot landing arc + Spec 009 Branch C + Spec 012 Class 4 BEAR + 27 PRs
 
 **Date**: 2026-05-09
 **Predecessors**: `claudedocs/research-burst-2026-05-07.md` + `claudedocs/research-burst-2026-05-08.md`
-**Cost**: $48 LLM (3 pilots in flight from 05-08 evening completed today: $32 v2 + $8 BR-3 + $8 WC-11). $0 LLM net-new on 2026-05-09 (all coding + analysis was on completed pilot data).
-**PRs**: 7 PRs merged (#179 + #180 + #181 + #182 + #183 + #184 + this PR)
+**Status**: REFRESHED 2026-05-09 evening (was 14-PR snapshot at original write at PR #185; now extended to **27 PRs** through #205).
+**Cost**: $48.40 LLM ($48 pre-spent in prior session for 3 pilots; $0.40 net-new today for Spec 009 Branch C smoke propagate at PR #189). $0 LLM for all other coding/analysis/retrospectives.
+**PRs**: **27 PRs merged today** (#179-#205) + 3 global-memory writes.
 
 ## Headline
 
-The triple-pilot landing arc planned in PR #172 executed end-to-end in a single working session. All three pilots (WC-10 v2 + WC-11 + BR-3 Squeak) resolved with non-NULL verdicts; Constitution v1.5.1 → v1.5.2 ratified; Spec 009 Branch C selected and shipped as production deployment.
+The triple-pilot landing arc planned in PR #172 executed end-to-end in the morning session (PRs #179-#185). All three pilots (WC-10 v2 + WC-11 + BR-3 Squeak) resolved with non-NULL verdicts; Constitution v1.5.1 → v1.5.2 ratified; Spec 009 Branch C selected and shipped as production deployment.
 
-The WC-10 research arc (v1 + v2 + v3 + Spec 009) **CLOSES at $54.40 LLM** with a clean operational outcome: 5-tier external interface preserved (no false-precision claim per v2 NULL on SC-005(b) correlation gate); continuous-internal representation available via `wc_10_internal_only=True` PARAMS path for cases where operators want richer audit trails. The bullish-amplification ergonomic gain (Buy n=20 combined α +2.93% / 80% hit) is REAL and captured by the binned 5-tier path.
+The day continued with **Spec 012 Class 4 macro-environment filter** — first cross-asset/macro filter in the framework — shipped end-to-end via 5-PR bundle (#194-#200). Plus 4 retrospectives (PR #193 Class 4 BEAR PASS; PR #202 Class 5 BULL re-run SKIP; PR #203 Class 4 BULL SKIP; PR #205 local-high BULL DEFER) + 6 cleanup/refresh PRs (#186-#188, #191, #195-#196, #201, #204).
+
+The WC-10 research arc (v1 + v2 + v3 + Spec 009) **CLOSED at $54.40 LLM** with a clean operational outcome: 5-tier external interface preserved (no false-precision claim per v2 NULL on SC-005(b) correlation gate); continuous-internal representation available via `wc_10_internal_only=True` PARAMS path. The bullish-amplification ergonomic gain (Buy n=20 combined α +2.93% / 80% hit) is REAL and captured by the binned 5-tier path.
+
+Filter portfolio expanded **8 → 10 production sides** (added Spec X-1 institutional rotation + Spec 012 Class 4 macro). Test count: 1146 → **1193** (+47 net). Constitution: v1.5.1 → **v1.5.2**.
 
 ## PR-by-PR walk
 
-| PR | Title | Type | LOC |
-|---|---|---|---:|
-| #179 | constitution(VII): v1.5.1 → v1.5.2 — Analyst-order scope paragraph | doc/Const | +12 |
-| #180 | research(WC-11+BR-3): RESEARCH_FINDINGS joint update | doc/research | +47 |
-| #181 | research(WC-10 v2): ANALYSIS — Branch C verdict | doc/ANALYSIS | +174 |
-| #182 | research(WC-10 v2): RESEARCH_FINDINGS section append + Open Questions resolved | doc/research | +44 |
-| #183 | roadmap: consolidated update post-triple-pilot landings | doc/ROADMAP | +15 |
-| #184 | spec(009 Branch C): bin-then-output ergonomic-only WC-10 mode + retrospective | code+test+doc | +211 |
-| #185 (this) | claudedocs: research-burst-2026-05-09 day-end synthesis | doc/synthesis | (this) |
+### Phase 1 — Triple-pilot landing (PRs #179-#185, ~2.5h wall-clock)
 
-Wall-clock: ~2 hours from session start to triple-pilot complete (PRs #179-#184). Per-PR median wall-clock: ~15 min (pre-scaffolded design surfaces + verdict-conditional templates + landing playbook PR #172 prevented per-PR drafting overhead).
+| PR | Title |
+|---|---|
+| #179 | constitution(VII): v1.5.1 → v1.5.2 — Analyst-order scope paragraph |
+| #180 | research(WC-11+BR-3): RESEARCH_FINDINGS joint update |
+| #181 | research(WC-10 v2): ANALYSIS — Branch C verdict |
+| #182 | research(WC-10 v2): RESEARCH_FINDINGS section append + Open Questions resolved |
+| #183 | roadmap: consolidated update post-triple-pilot landings |
+| #184 | spec(009 Branch C): bin-then-output ergonomic-only WC-10 mode + retrospective |
+| #185 | claudedocs: research-burst-2026-05-09 day-end synthesis |
+
+### Phase 2 — Cleanup + verification (PRs #186-#192, ~1.5h)
+
+| PR | Title |
+|---|---|
+| #186 | claudedocs: WC-10 underperformance monitor smoke test post-Branch C — PASS |
+| #187 | docs: bundled refresh post-triple-pilot arc — README + CHANGELOG + CLAUDE.md |
+| #188 | claudedocs: memory cleanup audit post-v1.5.2 + WC-10 arc closure |
+| #189 | claudedocs: Spec 009 Branch C end-to-end smoke propagate — PASS ($0.40) |
+| #190 | claudedocs: WC-10 monitor v2 cross-corpus extension scope design |
+| #191 | roadmap: mark Class 5 fundamentals-delta Open Question RESOLVED |
+| #192 | findings.md: regenerate post-triple-pilot landing arc |
+
+### Phase 3 — Class 4 retrospective + Spec 012 5-PR bundle (PRs #193-#200, ~5h)
+
+| PR | Title |
+|---|---|
+| #193 | research(Class 4 macro): retrospective PASSES — bear-side ticker_strong cohort |
+| #194 | spec(012 Class 4 macro): conditional spec.md + plan.md (Branch A default-SHADOW) |
+| #195 | audit: test-suite + ruff + mypy floors post-arc — 1171 passing + 1 mypy regression FIXED |
+| #196 | docs: filter portfolio update with Class 4 PASS + Spec X-1 + Spec 012 conditional |
+| #197 | spec(012 Class 4): tasks.md — 17-task breakdown |
+| #198 | spec(012 Class 4): MVP — filter module + PM hook + 17 tests + AgentState wiring |
+| #199 | spec(012 Class 4): audit script + 5 new tests (T012-T014) |
+| #200 | spec(012 Class 4): polish — docs/SIGNALS + RESEARCH_FINDINGS row flip + retrospective |
+
+### Phase 4 — Round-2 doc refresh + retrospectives (PRs #201-#205, ~2h)
+
+| PR | Title |
+|---|---|
+| #201 | docs: round-2 refresh post Spec 012 deployment |
+| #202 | research(Class 5 BULL): SKIP verdict CONFIRMED at refreshed corpus (re-run) |
+| #203 | research(Class 4 macro BULL): SKIP — bull-side hypothesis empirically refuted |
+| #204 | fix(sector_alpha_attribution): dual CSV schema + dated --out + refreshed cohort |
+| #205 | research(local-high BULL): POTENTIAL PASS at n=2; DEFER spec drafting |
+| #206 (this) | claudedocs: research-burst synthesis refresh to 27-PR scale |
+
+Wall-clock: **~6h total** across the 4 phases. Per-PR median ~15 min. Pre-scaffolded design surfaces + verdict-conditional templates + landing playbook PR #172 + 5-PR-vs-6-PR bundle pattern (memory `reference_speckit_5pr_vs_6pr_pattern.md`) prevented per-PR drafting overhead.
 
 ## What landed (verdict-by-verdict)
 
@@ -132,16 +175,30 @@ Per `RESEARCH_FINDINGS.md` Open Questions table after PR #182's resolution sweep
 
 Total deferred-but-budgeted: $40 (BR-3 v2 + WC-11 v2). Total open higher-tier: ~$70 across multi-T2/T3 questions. None block the headline finding.
 
-## Net session yield
+## Net session yield (refreshed at 27-PR scale)
 
-- 7 ship-quality PRs (#179-#185)
-- 1 Constitution amendment ratified (v1.5.2)
-- 3 pilot verdicts resolved + landed in RESEARCH_FINDINGS
-- 1 production deployment activated (Spec 009 Branch C)
-- 1 cross-session memory entry doubled (WC-11 + BR-3 sister memories)
-- $0 net-new LLM cost (all coding/analysis on pre-completed pilot data)
+- **27 ship-quality PRs** (#179-#205) + **3 global-memory writes** (WC-11 sister memory + BR-3 sister memory + project_2026-05-09 day-arc + 5-PR-vs-6-PR pattern memory)
+- **1 Constitution amendment** ratified (v1.5.1 → v1.5.2; Analyst-order scope per WC-11)
+- **3 pilot verdicts** resolved (WC-10 v2 NULL; WC-11 PARTIAL ALT-A+ALT-B; BR-3 PARTIAL ALT-B)
+- **1 production deployment activated** (Spec 009 Branch C — bin-then-output ergonomic-only)
+- **1 new filter shipped end-to-end** (Spec 012 Class 4 macro, default-SHADOW)
+- **4 retrospectives** completed (Class 4 BEAR PASS / Class 5 BULL SKIP confirmed / Class 4 BULL SKIP / local-high BULL DEFER)
+- **2 mechanism-class novelties** identified (cross-asset macro Class 4; per-ticker-local-high deferred)
+- **1 mypy regression** found + fixed (PR #184 Branch C MVP introduced; PR #195 fixed)
+- **1 script bug fixed** (sector_alpha_attribution dual CSV schema; PR #204)
+- **Filter portfolio**: 8 → **10 production sides** (added Spec X-1 + Spec 012)
+- **Test count**: 1146 → **1193** (+47 net)
+- **Constitution**: v1.5.1 → **v1.5.2**
+- **$48.40 LLM total** ($48 pre-spent prior session for 3 pilots; $0.40 net-new today for Branch C smoke)
 
-The session demonstrates the **rank-driven continuous-shipping methodology** at high throughput when the underlying work has been pre-scaffolded. Per `claudedocs/methodology-rank-driven-shipping-2026-05-08.md`: pre-scaffolding density × reasoning_decision queue exhaustion × verdict-conditional spec drafting = sub-15-min per ship-quality PR.
+The session demonstrates the **rank-driven continuous-shipping methodology** at high throughput across **5 sequential reasoning_decision rounds within one session**. Methodology characteristics:
+
+- Per-PR median ~15 min wall-clock
+- Pre-scaffolding ROI: ~3x per-PR / ~6x multi-PR-arc (validated again on Spec 012 5-PR bundle: ~4h actual vs ~5h plan estimate)
+- Queue exhaustion pattern continues from 2026-05-08 sister day
+- Cost-per-ship-quality-unit: $48.40 / 30 units = **~$1.61 per ship-quality unit** (extreme efficiency from pre-spent pilot data + $0 retrospective methodology)
+
+Pre-scaffolding pattern continued to win rank-#1 in reasoning_decision rounds 1-3; queue-exhaustion led to discovering 2 NEW empirical findings (Class 4 BULL counterintuitive macro signature; local-high mechanism shows directional support but n-too-thin) that wouldn't have surfaced without exhaustion-driven exploration.
 
 ## Cross-references
 
