@@ -63,7 +63,20 @@ class GraphSetup:
         tool_nodes = {}
 
         if "market" in selected_analysts:
-            analyst_nodes["market"] = create_market_analyst(self._llm_for("market"))
+            # BR-3 Squeak: route to structured-output variant when
+            # config["market_analyst_format"] == "structured". Default
+            # "prose" preserves existing behavior.
+            from tradingagents.dataflows.config import get_config
+
+            cfg = get_config()
+            if cfg.get("market_analyst_format", "prose") == "structured":
+                from tradingagents.agents.analysts.market_analyst_structured import (
+                    create_market_analyst_structured,
+                )
+
+                analyst_nodes["market"] = create_market_analyst_structured(self._llm_for("market"))
+            else:
+                analyst_nodes["market"] = create_market_analyst(self._llm_for("market"))
             delete_nodes["market"] = create_msg_delete()
             tool_nodes["market"] = self.tool_nodes["market"]
 
