@@ -100,7 +100,7 @@ This is a useful prior for anyone considering "replace LLM PM with deterministic
 
 ### What's still open (and what each would resolve)
 
-> **Status note (refreshed 2026-05-08)**: WC-10 v2 + v3 in-flight (see WC-10 row entries below). Question #5 (`bear_bigram_count` artifact check) RESOLVED 2026-05-04 (between-ticker artifact, not genuine 90d predictor — see "What got ruled out" section + `claudedocs/featurizer-artifact-check-2026-05-04.md`). The 4 remaining non-WC-10 questions retain their original priorities; cross-references added to the partial-answer evidence each has accumulated.
+> **Status note (refreshed 2026-05-09)**: WC-10 v2 + v3 BOTH RESOLVED (rows below); the WC-10 research arc is now complete at the question-resolution level. Question #5 (`bear_bigram_count` artifact check) RESOLVED 2026-05-04 (between-ticker artifact, not genuine 90d predictor — see "What got ruled out" section + `claudedocs/featurizer-artifact-check-2026-05-04.md`). The 4 remaining non-WC-10 questions retain their original priorities; cross-references added to the partial-answer evidence each has accumulated.
 
 | Open question | What it'd resolve | Cost |
 |---|---|---|
@@ -109,7 +109,7 @@ This is a useful prior for anyone considering "replace LLM PM with deterministic
 | Bear-correct ticker generalization (XOM, PFE): does the bear-side regime-asymmetry hold beyond AAPL + INTC? | n=2 ticker base for the bear-asymmetry claim is thin. XOM + PFE adds 20 commit points in true bear regimes. **Note**: WC-10 v3 (Q4 2025 NVDA) tests bear-regime under continuous-scalar mode but uses NVDA which is a bull-regime ticker that fell — different mechanism from XOM/PFE which are bear-correct tickers in their own regime. The two tests are complementary, not substitutable. | $15 (T2) |
 | Phase 4 cost-tier validation (n≥10 with bot_models override): do per-bot model swaps shift rating distribution beyond mode-collapse? | Empirical validation of the Haiku-for-quick + Opus-for-deep cost-savings story. **Status**: Phase 4 wired + live-validated at n=1 in `experiments/2026-05-04-006-phase-4-bot-llm-routing/`; the operator-facing claim needs distribution evidence at n≥10. | $10 (T2) |
 | ~~`bear_bigram_count` IC = +0.457 at 90d artifact check~~ — **RESOLVED 2026-05-04**, see `claudedocs/featurizer-artifact-check-2026-05-04.md` + the "What got ruled out" entry above ("All 4 strongest featurizer ICs are between-ticker artifacts"). Pooled IC passes Bonferroni @ 0.05/280 (p<0.0001), but per-ticker IC is near-zero / sign-inconsistent across all 6 tickers. **Verdict: between-ticker artifact, not genuine 90d predictor.** No further investigation warranted. | (resolved) | $0 |
-| WC-10 v2 expansion to n≥100 paired propagates: does signed-rating × 21d-α correlation become statistically detectable? | SC-005(b) at v1 n=20 produced Pearson r=+0.065, Spearman ρ=+0.009 — no signal at this n, but critical r at n=20/p=0.05 is 0.444 (very high bar). At n=100, critical r drops to 0.197, making weak-but-real correlations detectable. Resolves whether the scalar magnitude carries information beyond the binary commit/abstain decision the bin already captures. | $32 (T2) |
+| ~~WC-10 v2 expansion to n≥100 paired propagates: does signed-rating × 21d-α correlation become statistically detectable?~~ — **RESOLVED 2026-05-09**, verdict **NULL on SC-005(b)** per `experiments/2026-05-08-002-wc-10-v2-ticker-expansion/ANALYSIS.md` (Landing PR #181). Combined v1+v2 (n=100) Pearson r = **+0.0918**, Spearman ρ = **+0.0410** — both BELOW ±0.197 critical at p=0.05. Scalar magnitude carries no detectable signal beyond what the binned-tier captures. SC-007 ALT-A generalization: **PARTIAL** — 5 of 8 tickers met ≥80% commit threshold; JNJ + GOOG + JPM fall back into VII original sub-population. SC-005(c) bullish-amplification REPLICATES (Buy n=20 α +2.93% / 80% hit). Branch C selected: bin-then-output pattern (5-tier external interface preserved; continuous internal). | (resolved) | $32 |
 | ~~WC-10 bear-regime test (Q4 2025 NVDA cohort under continuous-scalar mode)~~ — **RESOLVED 2026-05-08**, verdict **PARTIAL ALT-A** per `experiments/2026-05-08-003-wc-10-bear-regime-q4-2025-nvda/ANALYSIS.md` (Landing PR #153). v3 emitted 8/8 dates as Buy/OW (binned) where 5-tier emitted 0 OW + 1 UW + 7 Hold; α delta -0.22pp (within ±100bps NULL region; direction matches ALT-A). Constitution VII v1.5.0 → v1.5.1 (Patch D) per Landing PR #154 — caveat language preserved at v1.5.0 scope; empirical magnitude bound documented. Operational: Spec 009 Branch A activation does NOT require regime-aware gating as a hard requirement; runtime monitoring via `scripts/wc_10_underperformance_monitor.py` suffices. | (resolved) | $6.40 |
 
 ### Research yield assessment
@@ -327,6 +327,48 @@ Future ANALYSIS.md framings should attempt to attribute Hold commits to one sub-
 **Sister-experiment recommendation**: BR-3 v2 (extend to news + fundamentals analysts; ~$8 each) would clarify whether the analyst-stage effect is market-analyst-specific or generalizes across the 3 analyst stages. Cross-pollination L4 status (Squeak structured signaling) preserved at "pilot-eligible" rather than "ship-eligible."
 
 **Joint WC-10 + WC-11 + BR-3 implication**: three separate structural choices (PM schema, analyst order, analyst output format) each independently move the framework's commit rate. The Hold-rate has at least 4 distinct structural sources now (Constitution VII original + v1.5.0 schema + v1.5.2 analyst-order + BR-3 weak analyst-format signal). Mode collapse is a multi-mechanism phenomenon, not a single-cause artifact.
+
+## WC-10 v2 ticker expansion — Branch C selected, partial ALT-A generalization (added 2026-05-09)
+
+**Source**: `experiments/2026-05-08-002-wc-10-v2-ticker-expansion/ANALYSIS.md` (Landing PR #181). Cost: $32 (Constitution III T2-boundary). 80/80 propagates resolved without error. Combined v1+v2 cohort: n=100.
+
+**Design**: 8 tickers (NVDA, AAPL, MSFT, GOOG, AMZN, JPM, JNJ, XOM) × 10 dates (Q1 2026 window) under continuous-scalar mode. Filter-bypass mode (matches v1). Predecessor: v1 (n=20 NVDA + AAPL paired); sister: v3 (Q4 2025 NVDA bear-regime, PARTIAL ALT-A).
+
+**SC-005(b) primary verdict: NULL** — combined v1+v2 (n=100) Pearson r = **+0.0918**, Spearman ρ = **+0.0410**. Both BELOW ±0.197 critical at p=0.05. The signed-scalar magnitude carries NO information beyond what the binned-tier captures.
+
+**SC-007 ALT-A generalization: PARTIAL**
+
+| Ticker bucket | Commit rate | Pattern |
+|---|---:|---|
+| NVDA, AMZN | 100% | ALT-A confirmed; full schema-induced |
+| MSFT, AAPL, XOM | 80-90% | ALT-A confirmed |
+| JPM, GOOG | 60-70% | ALT-A partial; intermediate band |
+| **JNJ** | **10%** | **ALT-A REJECTED**; defensive-sector retains genuine Hold-default under continuous-scalar mode |
+
+5 of 8 tickers cross the ≥80% threshold; JNJ + GOOG + JPM fall back into Constitution VII's ORIGINAL "genuine ambiguity" sub-population. The v1.5.0 carve-out is empirically validated as a sub-population, not a wholesale replacement of VII.
+
+**SC-005(c) per-bucket replication** (combined v1+v2):
+
+| Bucket | n | Mean α | Hit |
+|---|---:|---:|---:|
+| Buy | 20 | **+2.93%** | **80%** |
+| Overweight | 32 | +2.10% | 53% |
+| Hold | 23 | +0.16% | — |
+| Underweight | 25 | +1.30% (wrong) | 32% |
+| Sell | 0 | — | — |
+
+Bullish-side amplification GENERALIZES at expanded n (Buy +2.93% / 80% hit is the strongest bullish signal in the WC-10 corpus); bearish-side anti-calibration also GENERALIZES except XOM (UW n=8 mean -1.45%, calibrated when ticker is in bear regime — matches the broader bear-side regime-asymmetry finding).
+
+**Notable counter-findings**:
+- **NVDA degenerate-attractor**: all 10 NVDA propagates emitted exactly +0.6200. Continuous-scalar mode does NOT prevent intra-ticker mode collapse to a single value when the LLM debate synthesis converges deterministically.
+- **JPM strongly NEGATIVE within-ticker IC (-0.6656)** — anti-signal at within-ticker resolution. AAPL + MSFT + AMZN also show negative within-ticker correlation. Only XOM (+0.2659) and GOOG (+0.0857) show positive within-ticker ICs.
+- **XOM bear-correct case** with UW α calibrated at -1.45% confirms bear-side regime-asymmetry holds under continuous-scalar mode.
+
+**Branch C operational implication** (per pre-scaffolded landing playbook PR #161): WC-10 continuous-scalar mode SHOULD NOT ship as the operator-facing output schema. The bullish-amplification ergonomic gain is captured equally well by binning-then-emitting 5-tier. **Spec 009 Branch C activation** (PR #4 of v2 landing series) implements the bin-then-output pattern: continuous internal representation for richer audit trail; 5-tier external interface preserved.
+
+**Constitution implication**: NO new amendment required. v1.5.0 + v1.5.1 framing is consistent with v2's findings — schema-induced collapse is real but bounded, sub-population carve-out generalizes to majority of ticker base, JNJ-style defensive tickers retain genuine ambiguity sub-population.
+
+**WC-10 research arc complete**: v1 (categorical bottleneck confirmed at PM stage on 2 tickers) + v2 (PARTIAL generalization + Branch C verdict on 8 tickers, n=100) + v3 (PARTIAL ALT-A on Q4 2025 NVDA bear-regime) + Constitution v1.5.0 + v1.5.1 amendments. The arc spent **$54.40 LLM total** (v1 $16 + v2 $32 + v3 $6.40) and produced 4 ratified Constitution sub-sections + 1 selected production-deployment branch.
 
 ## Key claims (load-bearing, n large enough)
 
