@@ -47,6 +47,45 @@ python main.py
 tradingagents analyze --checkpoint
 ```
 
+## WC-10 mode (research preview; activation gated on v2 verdict)
+
+WC-10 replaces the 5-tier categorical PortfolioRating enum (Buy / Overweight / Hold / Underweight / Sell) with a continuous scalar in `[-1.0, +1.0]` (signed conviction magnitude). Per Constitution VII v1.5.0/v1.5.1, the 5-tier scale is now characterized as TWO-MECHANISM: some Holds are calibrated abstention (Mechanism A), others are schema-induced collapse (Mechanism B) where the framework would commit if the schema permitted partial confidence.
+
+**Status (as of 2026-05-08)**: WC-10 v1 pilot confirmed SC-007 ALT-A at 3.6× commit ratio; v3 confirmed PARTIAL ALT-A on Q4 2025 NVDA bear regime (caveat scope bounded at `|delta| < 1.0pp`). v2 (n=100 ticker expansion) in flight to resolve generalization across 8 tickers. Full operator activation guide at [`specs/009-wc-10-production-deployment/quickstart.md`](specs/009-wc-10-production-deployment/quickstart.md). **Branch A activation** (operator-opt-in via `daily_signals.py --wc-10-enabled` flag) blocked on v2 verdict.
+
+```bash
+# Research mode — opt in via PARAMS.json today (Spec 108):
+# {
+#   "config_overrides": {
+#     "wc_10_enabled": true,
+#     "wc_10_filter_mode": "bypass"
+#   }
+# }
+python scripts/backtest.py --experiment-id <id> --out experiments/<id>/results.csv
+
+# Dry-run digest from saved data (PR #141; $0 LLM):
+python scripts/wc_10_dryrun_digest.py --date 2026-04-15
+
+# Production-tier monitoring (PR #146; cron-friendly):
+python scripts/wc_10_underperformance_monitor.py --csv <paired-mode-csv>
+```
+
+When Branch A activates post-v2:
+
+```bash
+# Operator-facing daily workflow (Branch A only)
+python scripts/daily_signals.py --tickers tickers.txt --wc-10-enabled \
+    --emit-csv ~/.tradingagents/paper/today-wc10.csv
+
+# paper_trade.py consumes scalar for position-sizing
+python scripts/paper_trade.py step --signals-csv ~/.tradingagents/paper/today-wc10.csv
+```
+
+**Caveats** (mandatory reading; per Constitution v1.5.1 Bear-regime validation paragraph):
+1. Bullish-side amplification well-calibrated on bull-regime tickers; bearish-side anti-calibrated on rising tickers (v1 AAPL UW pattern + v3 NVDA Buy-on-falling pattern)
+2. Magnitude bound: `|α delta vs 5-tier| < 1.0pp` per v3 cohort empirical evidence
+3. Runtime monitoring (`wc_10_underperformance_monitor.py`) is the production enforcement of the caveat — wire it into nightly cron when Branch A activates
+
 ## Backtest
 
 ```bash
