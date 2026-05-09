@@ -54,7 +54,7 @@ ticker trailing-α signal) that disables WC-10 in bear regimes.
 to Principle VII sub-section "Schema-induced abstention is NOT
 calibrated abstention" after WC-10 v3 ALT-A confirmation. Empirical
 basis: experiments/2026-05-08-003-wc-10-bear-regime-q4-2025-nvda/
-ANALYSIS.md showed mean 21d α delta of <X>pp WORSE under WC-10 mode
+ANALYSIS.md showed mean 21d α delta of <FILL: delta>pp WORSE under WC-10 mode
 on Q4 2025 NVDA. Operational implication: WC-10 production deployment
 requires regime-aware gating. v1.5.0 → v1.5.1 (PATCH per scope-
 narrowing rule).
@@ -93,7 +93,7 @@ in production" caveat.
 **Last amended**: 2026-05-XX — added "Bear-regime validation" paragraph
 to Principle VII sub-section after WC-10 v3 NULL verdict. Empirical
 basis: experiments/2026-05-08-003-wc-10-bear-regime-q4-2025-nvda/
-ANALYSIS.md showed mean 21d α delta of <±X>pp on Q4 2025 NVDA —
+ANALYSIS.md showed mean 21d α delta of <FILL: delta>pp on Q4 2025 NVDA —
 indistinguishable from baseline. Caveat weakened from hard requirement
 to monitor-and-adjust. v1.5.0 → v1.5.1 (PATCH per scope-narrowing rule).
 ```
@@ -102,7 +102,7 @@ to monitor-and-adjust. v1.5.0 → v1.5.1 (PATCH per scope-narrowing rule).
 
 ## Patch C — v3 verdict ALT-B (bear-regime corrects direction)
 
-**Apply when**: v3 ANALYSIS.md headline reads "ALT-B" — `mean_α(WC-10) − mean_α(5-tier) ≥ +100bps` on Q4 2025 NVDA cohort, AND ≥30% of WC-10 commits bin to UW/Sell (i.e., the framework actually went bearish under continuous-scalar mode where 5-tier didn't).
+**Apply when**: v3 ANALYSIS.md headline reads "ALT-B" — `mean_α(WC-10) − mean_α(5-tier) ≥ +100bps` on Q4 2025 NVDA cohort.
 
 **Edit target**: same Principle VII sub-section → append the following paragraph:
 
