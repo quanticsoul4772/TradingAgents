@@ -131,7 +131,13 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
             from tradingagents.wc_10.bin import bin_scalar_to_tier
 
             rating_scalar = extract_scalar_rating(final_trade_decision)
-            bin_thresholds = tuple(get_config().get("wc_10_bin_thresholds", (-0.6, -0.2, 0.2, 0.6)))
+            _bin_raw = get_config().get("wc_10_bin_thresholds", (-0.6, -0.2, 0.2, 0.6))
+            bin_thresholds: tuple[float, float, float, float] = (
+                float(_bin_raw[0]),
+                float(_bin_raw[1]),
+                float(_bin_raw[2]),
+                float(_bin_raw[3]),
+            )
             wc_10_internal_only = bool(get_config().get("wc_10_internal_only", False))
             if wc_10_internal_only and rating_scalar is not None:
                 binned_tier = bin_scalar_to_tier(rating_scalar, bin_thresholds)
