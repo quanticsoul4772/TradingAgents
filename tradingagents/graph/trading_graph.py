@@ -466,6 +466,9 @@ class TradingAgentsGraph:
             # mirrors the contrarian_gate / sector_momentum / bear_sector_symmetry
             # persistence paths above per spec 007 R-5; same precedent as commit 4c14d0f.
             "forward_catalyst": final_state.get("forward_catalyst"),
+            # Spec 012 Class 4 macro-environment filter annotation (None when bear_mode=='off');
+            # per specs/012-class-4-macro-filter/spec.md FR-008.
+            "class_4_macro": final_state.get("class_4_macro"),
             # WC-10 continuous scalar rating annotation (absent when wc_10_enabled=False);
             # per specs/108-wc-10-continuous-scalar-rating/data-model.md.
             "wc_10": final_state.get("wc_10"),

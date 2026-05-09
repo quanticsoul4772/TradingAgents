@@ -95,6 +95,15 @@ class AgentState(MessagesState):
         dict, "Spec 007 forward-catalyst-filter annotation; None when both modes=='off'"
     ]
 
+    # Spec 012 Class 4 macro-environment filter: PM emits this block when
+    # class_4_macro_bear_mode != "off". Keys per
+    # specs/012-class-4-macro-filter/spec.md FR-008. Absent when bear_mode=="off"
+    # (backward-compat; no overhead when disabled).
+    # Must be declared here so LangGraph propagates it from PM's return dict to final_state.
+    class_4_macro: Annotated[
+        dict, "Spec 012 Class 4 macro-environment filter annotation; absent when bear_mode=='off'"
+    ]
+
     # WC-10 continuous scalar rating: PM emits this block when wc_10_enabled=True.
     # Keys per specs/108-wc-10-continuous-scalar-rating/data-model.md
     # ({rating_scalar, filter_mode, bin_thresholds_snapshot}). Absent when
