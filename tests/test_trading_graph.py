@@ -757,3 +757,107 @@ def test_state_log_forward_catalyst_is_none_when_field_absent(mocked_graph, tmp_
     )
     persisted = json.loads(log_path.read_text(encoding="utf-8"))
     assert persisted["forward_catalyst"] is None
+
+
+@pytest.mark.unit
+def test_state_log_persists_class_4_macro_field(mocked_graph, tmp_path):
+    """Spec 012 regression-guard mirroring test_state_log_persists_forward_catalyst_field.
+
+    Per spec 012 FR-008, the state-log writer in trading_graph.py:_log_state
+    must include `class_4_macro` in its whitelist or shadow-mode annotations
+    are silently dropped (the same bug commit `4c14d0f` fixed for
+    `contrarian_gate`).
+    """
+    final_state = {
+        "company_of_interest": "AAPL",
+        "trade_date": "2026-04-30",
+        "market_report": "",
+        "sentiment_report": "",
+        "news_report": "",
+        "fundamentals_report": "",
+        "investment_debate_state": {
+            "bull_history": "",
+            "bear_history": "",
+            "history": "",
+            "current_response": "",
+            "judge_decision": "",
+        },
+        "trader_investment_plan": "",
+        "risk_debate_state": {
+            "aggressive_history": "",
+            "conservative_history": "",
+            "neutral_history": "",
+            "history": "",
+            "judge_decision": "",
+        },
+        "investment_plan": "",
+        "final_trade_decision": "**Rating**: Underweight",
+        "class_4_macro": {
+            "vix_snapshot": 15.42,
+            "vix_threshold": 18.0,
+            "bear_mode": "shadow",
+            "would_fire_bear": True,
+            "fired_bear": False,
+            "pre_rating": "Underweight",
+            "post_rating": "Underweight",
+        },
+    }
+    mocked_graph.ticker = "AAPL"
+    mocked_graph._log_state("2026-04-30", final_state)
+    log_path = (
+        tmp_path
+        / "results"
+        / "AAPL"
+        / "TradingAgentsStrategy_logs"
+        / "full_states_log_2026-04-30.json"
+    )
+    persisted = json.loads(log_path.read_text(encoding="utf-8"))
+    assert "class_4_macro" in persisted, (
+        "class_4_macro field missing from persisted state log "
+        "(would silently lose shadow-mode filter annotations)"
+    )
+    assert persisted["class_4_macro"]["would_fire_bear"] is True
+    assert persisted["class_4_macro"]["bear_mode"] == "shadow"
+    assert persisted["class_4_macro"]["vix_snapshot"] == 15.42
+
+
+@pytest.mark.unit
+def test_state_log_class_4_macro_is_none_when_field_absent(mocked_graph, tmp_path):
+    """When bear_mode='off' the PM doesn't add class_4_macro; persisted value is None."""
+    final_state = {
+        "company_of_interest": "AAPL",
+        "trade_date": "2026-04-30",
+        "market_report": "",
+        "sentiment_report": "",
+        "news_report": "",
+        "fundamentals_report": "",
+        "investment_debate_state": {
+            "bull_history": "",
+            "bear_history": "",
+            "history": "",
+            "current_response": "",
+            "judge_decision": "",
+        },
+        "trader_investment_plan": "",
+        "risk_debate_state": {
+            "aggressive_history": "",
+            "conservative_history": "",
+            "neutral_history": "",
+            "history": "",
+            "judge_decision": "",
+        },
+        "investment_plan": "",
+        "final_trade_decision": "**Rating**: Hold",
+        # No class_4_macro key
+    }
+    mocked_graph.ticker = "AAPL"
+    mocked_graph._log_state("2026-04-30", final_state)
+    log_path = (
+        tmp_path
+        / "results"
+        / "AAPL"
+        / "TradingAgentsStrategy_logs"
+        / "full_states_log_2026-04-30.json"
+    )
+    persisted = json.loads(log_path.read_text(encoding="utf-8"))
+    assert persisted["class_4_macro"] is None
