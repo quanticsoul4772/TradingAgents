@@ -107,7 +107,11 @@ def _compute_three_returns(
 
 
 def _load_commits(rating_filter: set[str]) -> pd.DataFrame:
-    """Walk experiments/*/results.csv; return DataFrame of unique commits."""
+    """Walk experiments/*/results.csv; return DataFrame of unique commits.
+
+    Handles both 'analysis_date' (legacy CSV schema) and 'date' (newer
+    CSV schema introduced with WC-10 v2 + WC-11 + BR-3 cohorts).
+    """
     rows = []
     for p in sorted(EXPERIMENTS_DIR.glob("*/results.csv")):
         try:
@@ -115,6 +119,13 @@ def _load_commits(rating_filter: set[str]) -> pd.DataFrame:
         except Exception:
             continue
         if "rating" not in df.columns or "ticker" not in df.columns:
+            continue
+        date_col = (
+            "analysis_date"
+            if "analysis_date" in df.columns
+            else ("date" if "date" in df.columns else None)
+        )
+        if date_col is None:
             continue
         df = df[df["rating"].isin(rating_filter)]
         if "error" in df.columns:
@@ -124,7 +135,7 @@ def _load_commits(rating_filter: set[str]) -> pd.DataFrame:
                 {
                     "experiment": p.parent.name,
                     "ticker": str(r["ticker"]).upper().strip(),
-                    "trade_date": str(r["analysis_date"]).strip(),
+                    "trade_date": str(r[date_col]).strip(),
                     "rating": str(r["rating"]).strip(),
                 }
             )
@@ -181,8 +192,8 @@ def main():
     parser.add_argument(
         "--out",
         type=Path,
-        default=Path("claudedocs/sector-alpha-attribution-2026-05-06.md"),
-        help="Output markdown path",
+        default=Path(f"claudedocs/sector-alpha-attribution-{_date.today().isoformat()}.md"),
+        help="Output markdown path (default: claudedocs/sector-alpha-attribution-<today>.md)",
     )
     parser.add_argument(
         "--export-csv",
