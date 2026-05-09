@@ -13,6 +13,7 @@ from rich.console import Console
 
 from tradingagents.experiments.ids import next_experiment_id, validate_slug
 from tradingagents.experiments.templates import (
+    render_analysis_template,
     render_hypothesis,
     render_params_json,
     render_run_ps1,
@@ -34,6 +35,7 @@ def _create_experiment(
     cost: float | None,
     on_date: date | None,
     tier: str | None = None,
+    with_analysis_template: bool = False,
 ) -> Path:
     """Create the experiment directory and populate templates.
 
@@ -69,6 +71,11 @@ def _create_experiment(
     (exp_dir / "PARAMS.json").write_text(render_params_json(), encoding="utf-8")
     (exp_dir / "run.sh").write_text(render_run_sh(id_str), encoding="utf-8")
     (exp_dir / "run.ps1").write_text(render_run_ps1(id_str), encoding="utf-8")
+
+    if with_analysis_template:
+        (exp_dir / "ANALYSIS_TEMPLATE.md").write_text(
+            render_analysis_template(id_str), encoding="utf-8"
+        )
 
     return exp_dir
 
@@ -107,6 +114,13 @@ def main(
         "--date",
         help="Override the date prefix (YYYY-MM-DD; advanced/testing only).",
     ),
+    with_analysis_template: bool = typer.Option(
+        False,
+        "--with-analysis-template",
+        help="Also write ANALYSIS_TEMPLATE.md scaffold (per PR #135 pattern). "
+        "When the experiment completes, replace <TBD> placeholders with computed "
+        "values, fill verdict sections, and rename to ANALYSIS.md.",
+    ),
 ):
     """Scaffold a new experiment directory."""
     parsed_date: date | None = None
@@ -125,6 +139,7 @@ def main(
             cost=cost,
             on_date=parsed_date,
             tier=tier,
+            with_analysis_template=with_analysis_template,
         )
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
@@ -139,7 +154,12 @@ def main(
     console.print(f"  1. Edit {rel}/HYPOTHESIS.md")
     console.print(f"  2. Edit {rel}/run.sh (or run.ps1) with the actual command")
     console.print(f"  3. Run: bash {rel}/run.sh")
-    console.print(f"  4. After it completes, write {rel}/ANALYSIS.md")
+    if with_analysis_template:
+        console.print(
+            f"  4. After it completes, fill {rel}/ANALYSIS_TEMPLATE.md and rename to ANALYSIS.md"
+        )
+    else:
+        console.print(f"  4. After it completes, write {rel}/ANALYSIS.md")
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ import json
 import pytest
 
 from tradingagents.experiments.templates import (
+    render_analysis_template,
     render_hypothesis,
     render_params_json,
     render_run_ps1,
@@ -218,3 +219,55 @@ def test_run_ps1_has_pwsh_shebang():
 def test_run_ps1_uses_strict_error_action():
     out = render_run_ps1("2026-05-02-001-foo")
     assert "$ErrorActionPreference = 'Stop'" in out
+
+
+# ---- render_analysis_template -------------------------------------------
+
+
+def test_analysis_template_includes_id_and_slug_and_date_from_id():
+    out = render_analysis_template("2026-05-02-001-foo")
+    assert "2026-05-02-001-foo" in out
+    assert "foo" in out
+    assert "2026-05-02" in out
+
+
+def test_analysis_template_marked_as_template():
+    out = render_analysis_template("2026-05-02-001-foo")
+    assert "STATUS" in out
+    assert "TEMPLATE" in out
+
+
+def test_analysis_template_has_required_sections():
+    out = render_analysis_template("2026-05-02-001-foo")
+    required = (
+        "## Headline verdict",
+        "## Per-row results",
+        "## Aggregate metrics",
+        "## Falsification framework verdict",
+        "## Constitution adherence checklist",
+        "## Next steps",
+        "## Cross-references",
+    )
+    for section in required:
+        assert section in out, f"missing section: {section}"
+
+
+def test_analysis_template_includes_TBD_placeholders():
+    out = render_analysis_template("2026-05-02-001-foo")
+    assert "<TBD>" in out
+
+
+def test_analysis_template_constitution_checklist_covers_all_principles():
+    out = render_analysis_template("2026-05-02-001-foo")
+    # Roman numerals I, II, III, IV, VI, VII, VIII (V is "Steal Liberally" -
+    # not a runtime adherence concern). Eight principles per Constitution v1.5.0.
+    for principle in (
+        "I (Save Everything)",
+        "II (One Experiment",
+        "III (Stay Cheap)",
+        "IV (No Production Claims)",
+        "VI (Spec Before Structural Change)",
+        "VII (Calibrated Abstention)",
+        "VIII (Retrospective",
+    ):
+        assert principle in out, f"missing principle: {principle}"

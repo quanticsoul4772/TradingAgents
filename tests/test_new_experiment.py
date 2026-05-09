@@ -222,3 +222,34 @@ def test_cost_prefills_hypothesis(tmp_path):
     )
     text = (out / "HYPOTHESIS.md").read_text(encoding="utf-8")
     assert "~$12.50" in text
+
+
+# ---- ANALYSIS template flag ---------------------------------------------
+
+
+def test_with_analysis_template_default_false_omits_file(tmp_path):
+    out = _create_experiment(
+        "foo",
+        experiments_dir=tmp_path,
+        source_idea=None,
+        cost=None,
+        on_date=date(2026, 5, 2),
+    )
+    assert not (out / "ANALYSIS_TEMPLATE.md").exists()
+
+
+def test_with_analysis_template_true_writes_file(tmp_path):
+    out = _create_experiment(
+        "foo",
+        experiments_dir=tmp_path,
+        source_idea=None,
+        cost=None,
+        on_date=date(2026, 5, 2),
+        with_analysis_template=True,
+    )
+    template = out / "ANALYSIS_TEMPLATE.md"
+    assert template.exists()
+    text = template.read_text(encoding="utf-8")
+    assert "2026-05-02-001-foo" in text
+    assert "## Headline verdict" in text
+    assert "## Falsification framework verdict" in text
