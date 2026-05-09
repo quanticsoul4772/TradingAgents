@@ -74,6 +74,11 @@ class TradingAgentsConfig(TypedDict):
     wc_10_enabled: bool
     wc_10_filter_mode: Literal["bypass", "passthrough"]
     wc_10_bin_thresholds: tuple[float, float, float, float]
+    # BR-3 Squeak (per experiments/2026-05-09-001-br3-squeak-market-analyst/):
+    # When "structured", swap market_analyst.py for market_analyst_structured.py
+    # which emits Pydantic MarketAnalystSquared via second LLM call instead of
+    # free-form prose. Default "prose" preserves existing behavior.
+    market_analyst_format: Literal["prose", "structured"]
     bot_models: dict[str, str]
     data_vendors: dict[str, str]
     tool_vendors: dict[str, str]
@@ -274,6 +279,10 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     "wc_10_enabled": False,
     "wc_10_filter_mode": "bypass",
     "wc_10_bin_thresholds": (-0.6, -0.2, 0.2, 0.6),
+    # BR-3 Squeak (per experiments/2026-05-09-001-br3-squeak-market-analyst/).
+    # When "structured", market analyst emits MarketAnalystSquared Pydantic
+    # via second LLM call. "prose" preserves existing behavior (default).
+    "market_analyst_format": "prose",
     # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
     # (str). When set, the framework instantiates a per-bot client for that
     # model using the configured llm_provider; bots not in this dict use the

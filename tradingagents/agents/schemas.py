@@ -302,3 +302,88 @@ def render_pm_decision(decision: PortfolioDecision) -> str:
     if decision.time_horizon:
         parts.extend(["", f"**Time Horizon**: {decision.time_horizon}"])
     return "\n".join(parts)
+
+
+# ---------------------------------------------------------------------------
+# BR-3 Squeak — analyst-stage structured output
+# ---------------------------------------------------------------------------
+
+
+class MarketAnalystSquared(BaseModel):
+    """Structured output from the BR-3 Squeak market analyst.
+
+    Per `experiments/2026-05-09-001-br3-squeak-market-analyst/HYPOTHESIS.md`,
+    BR-3 tests whether the analyst-stage prose-to-structured bottleneck is
+    analogous to WC-10's confirmed PM-stage bottleneck. This schema defines
+    what the structured market analyst emits in place of free-form prose.
+    """
+
+    bullish_score: float = Field(
+        ge=-1.0,
+        le=+1.0,
+        description=(
+            "Continuous bullishness score in [-1.0, +1.0]. -1.0 = max bearish, "
+            "0.0 = balanced, +1.0 = max bullish."
+        ),
+    )
+    confidence: float = Field(
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Confidence in the bullish_score, 0.0 (no conviction) to 1.0 (strong conviction)."
+        ),
+    )
+    key_drivers: list[str] = Field(
+        default_factory=list,
+        max_length=5,
+        description=(
+            "Up to 5 short bullet-style drivers supporting the bullish_score (each ≤ 80 chars)."
+        ),
+    )
+    key_risks: list[str] = Field(
+        default_factory=list,
+        max_length=5,
+        description=(
+            "Up to 5 short bullet-style risks against the bullish_score (each ≤ 80 chars)."
+        ),
+    )
+    citations: list[str] = Field(
+        default_factory=list,
+        max_length=10,
+        description=("Up to 10 short citation strings referencing tool outputs."),
+    )
+
+
+def render_market_analyst_squared(squared: MarketAnalystSquared) -> str:
+    """Render structured market analyst output as a short markdown table.
+
+    Output shape is COMPACT (table + 2 short bullet lists) so downstream
+    consumers see a structured but markdown-formatted state["market_report"]
+    that they can parse without code changes.
+    """
+    parts: list[str] = ["## Market Analyst (structured) report\n"]
+    parts.append("| Field | Value |")
+    parts.append("|---|---|")
+    parts.append(f"| Bullish score | `{squared.bullish_score:+.3f}` |")
+    parts.append(f"| Confidence | `{squared.confidence:.2f}` |")
+    parts.append("")
+
+    if squared.key_drivers:
+        parts.append("**Key drivers**:")
+        for d in squared.key_drivers:
+            parts.append(f"- {d}")
+        parts.append("")
+
+    if squared.key_risks:
+        parts.append("**Key risks**:")
+        for r in squared.key_risks:
+            parts.append(f"- {r}")
+        parts.append("")
+
+    if squared.citations:
+        parts.append("**Tool citations**:")
+        for c in squared.citations:
+            parts.append(f"- {c}")
+        parts.append("")
+
+    return "\n".join(parts)
