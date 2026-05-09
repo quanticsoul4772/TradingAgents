@@ -1,5 +1,15 @@
 # Feature Specification: [FEATURE NAME]
 
+<!--
+  STANDARD SPEC TEMPLATE. For VERDICT-CONDITIONAL specs (where the spec's
+  user stories depend on an in-flight experiment / observation / data event),
+  use `.specify/templates/spec-template-conditional.md` instead. That template
+  scaffolds N verdict-conditional branches NOW so the post-verdict edit is a
+  deterministic pick + plug-in vs draft-from-scratch.
+
+  Pattern source: PRs #140 / #144 / #148 (2026-05-08 WC-10 series).
+-->
+
 **Feature Branch**: `[###-feature-name]`
 **Created**: [DATE]
 **Status**: Draft
