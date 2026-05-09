@@ -1,0 +1,24 @@
+{
+  "config_overrides": {
+    "llm_provider": "anthropic",
+    "deep_think_llm": "claude-sonnet-4-6",
+    "quick_think_llm": "claude-haiku-4-5",
+    "max_debate_rounds": 1,
+    "max_risk_discuss_rounds": 1,
+    "checkpoint_enabled": false
+  },
+  "explicit_flags": {
+    "tickers": ["NVDA", "AAPL", "MSFT"],
+    "dates": [
+      "2026-01-30", "2026-02-13", "2026-02-27", "2026-03-13", "2026-03-27"
+    ],
+    "permutations": [
+      "market_news_fundamentals",
+      "news_fundamentals_market",
+      "fundamentals_market_news",
+      "market_fundamentals_news"
+    ]
+  },
+  "baseline": "Within-experiment: DEFAULT permutation [market, news, fundamentals]. Cross-experiment: WC-11 v1 (NVDA-only n=20) at experiments/2026-05-08-004-wc11-order-randomization/results.csv. v1 found PARTIAL ALT-A + ALT-B on news_fundamentals_market permutation; v2 disambiguates via cross-ticker generalization.",
+  "notes": "WC-11 v2 disambiguation. 3 tickers × 5 dates × 4 perms = 60 propagates × ~$0.40 = ~$24 LLM (T2). NVDA repeated for cross-rerun-variance check; AAPL + MSFT NEW for cross-ticker generalization. Explicit user authorization 2026-05-09 evening. Sister cohort BR-3 v2 (news + fundamentals analyst structured-output) launches same authorization batch."
+}

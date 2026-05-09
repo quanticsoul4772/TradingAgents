@@ -83,6 +83,8 @@ class TradingAgentsConfig(TypedDict):
     # which emits Pydantic MarketAnalystSquared via second LLM call instead of
     # free-form prose. Default "prose" preserves existing behavior.
     market_analyst_format: Literal["prose", "structured"]
+    news_analyst_format: Literal["prose", "structured"]
+    fundamentals_analyst_format: Literal["prose", "structured"]
     bot_models: dict[str, str]
     data_vendors: dict[str, str]
     tool_vendors: dict[str, str]
@@ -311,6 +313,13 @@ DEFAULT_CONFIG: TradingAgentsConfig = {
     # When "structured", market analyst emits MarketAnalystSquared Pydantic
     # via second LLM call. "prose" preserves existing behavior (default).
     "market_analyst_format": "prose",
+    # BR-3 v2 (per experiments/2026-05-09-003-br3-v2-news-fundamentals/).
+    # Sister extensions to BR-3 v1: when "structured", news/fundamentals analysts
+    # emit MarketAnalystSquared Pydantic via second LLM call instead of free-form
+    # prose. Default "prose" preserves existing behavior. Tests whether the
+    # analyst-stage prose-to-structured effect generalizes beyond market analyst.
+    "news_analyst_format": "prose",
+    "fundamentals_analyst_format": "prose",
     # Spec 001 Phase 4: per-bot LLM model routing. Maps bot_id -> model_name
     # (str). When set, the framework instantiates a per-bot client for that
     # model using the configured llm_provider; bots not in this dict use the
