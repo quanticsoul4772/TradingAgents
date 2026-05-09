@@ -1,0 +1,19 @@
+{
+  "config_overrides": {
+    "llm_provider": "anthropic",
+    "deep_think_llm": "claude-sonnet-4-6",
+    "quick_think_llm": "claude-haiku-4-5",
+    "max_debate_rounds": 1,
+    "max_risk_discuss_rounds": 1,
+    "checkpoint_enabled": false
+  },
+  "explicit_flags": {
+    "tickers": ["NVDA", "AAPL"],
+    "dates": [
+      "2026-01-30", "2026-02-13", "2026-02-27", "2026-03-13", "2026-03-27"
+    ],
+    "modes": ["news_prose", "news_structured", "fund_prose", "fund_structured"]
+  },
+  "baseline": "Within-experiment: prose mode (current production). Cross-experiment: BR-3 v1 (market analyst prose vs structured) at experiments/2026-05-09-001-br3-squeak-market-analyst/. v1 found PARTIAL ALT-B on AAPL (commit shift +20pp; α delta +0.24pp below threshold).",
+  "notes": "BR-3 v2 sister extensions. 2 sub-experiments × 5 dates × 2 tickers × 2 modes = 40 propagates × ~$0.40 = ~$16 LLM (T2). Sub-A: news_prose vs news_structured. Sub-B: fund_prose vs fund_structured. Same tickers/dates as v1 for direct comparability. Explicit user auth 2026-05-09 evening. Sister cohort WC-11 v2 launching same authorization batch."
+}

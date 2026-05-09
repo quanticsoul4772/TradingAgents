@@ -86,14 +86,41 @@ class GraphSetup:
             tool_nodes["social"] = self.tool_nodes["social"]
 
         if "news" in selected_analysts:
-            analyst_nodes["news"] = create_news_analyst(self._llm_for("news"))
+            # BR-3 v2: route to structured-output variant when
+            # config["news_analyst_format"] == "structured". Default
+            # "prose" preserves existing behavior.
+            from tradingagents.dataflows.config import get_config
+
+            cfg = get_config()
+            if cfg.get("news_analyst_format", "prose") == "structured":
+                from tradingagents.agents.analysts.news_analyst_structured import (
+                    create_news_analyst_structured,
+                )
+
+                analyst_nodes["news"] = create_news_analyst_structured(self._llm_for("news"))
+            else:
+                analyst_nodes["news"] = create_news_analyst(self._llm_for("news"))
             delete_nodes["news"] = create_msg_delete()
             tool_nodes["news"] = self.tool_nodes["news"]
 
         if "fundamentals" in selected_analysts:
-            analyst_nodes["fundamentals"] = create_fundamentals_analyst(
-                self._llm_for("fundamentals")
-            )
+            # BR-3 v2: route to structured-output variant when
+            # config["fundamentals_analyst_format"] == "structured".
+            from tradingagents.dataflows.config import get_config
+
+            cfg = get_config()
+            if cfg.get("fundamentals_analyst_format", "prose") == "structured":
+                from tradingagents.agents.analysts.fundamentals_analyst_structured import (
+                    create_fundamentals_analyst_structured,
+                )
+
+                analyst_nodes["fundamentals"] = create_fundamentals_analyst_structured(
+                    self._llm_for("fundamentals")
+                )
+            else:
+                analyst_nodes["fundamentals"] = create_fundamentals_analyst(
+                    self._llm_for("fundamentals")
+                )
             delete_nodes["fundamentals"] = create_msg_delete()
             tool_nodes["fundamentals"] = self.tool_nodes["fundamentals"]
 

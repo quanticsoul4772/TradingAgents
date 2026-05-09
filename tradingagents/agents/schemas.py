@@ -354,14 +354,17 @@ class MarketAnalystSquared(BaseModel):
     )
 
 
-def render_market_analyst_squared(squared: MarketAnalystSquared) -> str:
-    """Render structured market analyst output as a short markdown table.
+def render_analyst_squared(
+    squared: MarketAnalystSquared, analyst_name: str = "Market Analyst"
+) -> str:
+    """Render structured analyst output as a short markdown table.
 
-    Output shape is COMPACT (table + 2 short bullet lists) so downstream
-    consumers see a structured but markdown-formatted state["market_report"]
-    that they can parse without code changes.
+    Generic helper used by market / news / fundamentals structured-output
+    analysts (BR-3 v1 + v2). The MarketAnalystSquared schema is structurally
+    analyst-agnostic (bullish_score / confidence / drivers / risks / citations);
+    the only per-analyst variation is the heading.
     """
-    parts: list[str] = ["## Market Analyst (structured) report\n"]
+    parts: list[str] = [f"## {analyst_name} (structured) report\n"]
     parts.append("| Field | Value |")
     parts.append("|---|---|")
     parts.append(f"| Bullish score | `{squared.bullish_score:+.3f}` |")
@@ -387,3 +390,9 @@ def render_market_analyst_squared(squared: MarketAnalystSquared) -> str:
         parts.append("")
 
     return "\n".join(parts)
+
+
+def render_market_analyst_squared(squared: MarketAnalystSquared) -> str:
+    """Render structured market analyst output. Backward-compat wrapper around
+    render_analyst_squared with analyst_name='Market Analyst'."""
+    return render_analyst_squared(squared, analyst_name="Market Analyst")
