@@ -1,0 +1,20 @@
+{
+  "config_overrides_wc_10_mode": {
+    "wc_10_enabled": true,
+    "wc_10_filter_mode": "bypass",
+    "wc_10_bin_thresholds": [-0.6, -0.2, 0.2, 0.6]
+  },
+  "config_overrides_5tier_baseline_mode": {
+    "wc_10_enabled": false
+  },
+  "explicit_flags": {
+    "tickers": ["NVDA"],
+    "dates": [
+      "2025-11-07", "2025-11-14", "2025-11-21", "2025-11-28",
+      "2025-12-05", "2025-12-12", "2025-12-19", "2025-12-26"
+    ],
+    "modes": ["wc_10", "5tier_baseline"]
+  },
+  "baseline": "Within-experiment: 5tier_baseline mode (wc_10_enabled=false) on the same 8 dates. Cross-experiment: experiments/2026-05-03-008-opus47-cross-period/ provides 8/8 dates of NVDA Q4 2025 ratings under Opus 4.7 (this experiment uses Sonnet 4.6, so cross-experiment comparison is approximate; within-experiment paired comparison is the load-bearing measurement).",
+  "notes": "v3 bear-regime test: 8 dates × 1 ticker (NVDA) × 2 modes = 16 propagates × ~$0.40 = ~$6.40 LLM (T1, ≤$10). Predicts ALT-A per v1's WC-10 caveat: WC-10 will commit MORE bullishly on Q4 2025 NVDA, amplifying framework's anti-calibrated direction → WORSE realized α than 5-tier. Confirmation strengthens Constitution VII v1.5.0's regime-asymmetry caveat."
+}
