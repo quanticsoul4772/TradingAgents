@@ -10,6 +10,7 @@ back gracefully to free-text generation.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from tradingagents.agents.schemas import PortfolioDecision, render_pm_decision
@@ -127,14 +128,24 @@ Be decisive and ground every conclusion in specific evidence from the analysts.{
         wc_10_filter_mode = get_config().get("wc_10_filter_mode", "bypass")
         if wc_10_enabled and wc_10_filter_mode == "bypass":
             from tradingagents.graph.signal_processing import extract_scalar_rating
+            from tradingagents.wc_10.bin import bin_scalar_to_tier
 
             rating_scalar = extract_scalar_rating(final_trade_decision)
+            bin_thresholds = tuple(get_config().get("wc_10_bin_thresholds", (-0.6, -0.2, 0.2, 0.6)))
+            wc_10_internal_only = bool(get_config().get("wc_10_internal_only", False))
+            if wc_10_internal_only and rating_scalar is not None:
+                binned_tier = bin_scalar_to_tier(rating_scalar, bin_thresholds)
+                final_trade_decision = re.sub(
+                    r"\*\*Rating\*\*:\s*[+-]?\d+\.?\d*",
+                    f"**Rating**: {binned_tier}",
+                    final_trade_decision,
+                    count=1,
+                )
             wc_10_dict = {
                 "rating_scalar": rating_scalar,
                 "filter_mode": "bypass",
-                "bin_thresholds_snapshot": tuple(
-                    get_config().get("wc_10_bin_thresholds", (-0.6, -0.2, 0.2, 0.6))
-                ),
+                "internal_only": wc_10_internal_only,
+                "bin_thresholds_snapshot": bin_thresholds,
             }
             new_risk_debate_state_bypass = {
                 "judge_decision": final_trade_decision,
