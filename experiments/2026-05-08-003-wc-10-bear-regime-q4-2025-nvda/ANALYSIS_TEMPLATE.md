@@ -100,3 +100,175 @@ If v3 5-tier ≈ 008 5-tier in direction (but with Sonnet's likely higher Hold r
 2. If ALT-B → schema fix may be universally beneficial; v1.5.0 caveat language could be loosened
 3. If NULL → schema fix is regime-neutral; bullish-amplification finding from v1 + v2 is the dominant claim and bear-regime concern was over-cautious
 4. If PARTIAL ALT-A → caveat is correctly bounded; document the regime-asymmetry pattern in `RESEARCH_FINDINGS.md` headline
+
+---
+
+## Pre-scaffolding extensions (added 2026-05-08, PR #147)
+
+### A. Ready-to-run computation snippet
+
+When `results.csv` reaches 16 rows, run this against it to populate every `<TBD>` placeholder above:
+
+```python
+# Run from project root after results.csv has 16 rows.
+# Outputs: per-date table + aggregate stats + verdict.
+
+import csv
+from collections import defaultdict
+from tradingagents.graph.trading_graph import fetch_returns
+
+CSV = "experiments/2026-05-08-003-wc-10-bear-regime-q4-2025-nvda/results.csv"
+ROWS = []
+with open(CSV) as f:
+    for row in csv.DictReader(f):
+        if row["error"]: continue
+        ROWS.append(row)
+
+# Fetch realized α once per (ticker, date)
+ret_cache = {}
+for r in ROWS:
+    key = (r["ticker"], r["date"])
+    if key not in ret_cache:
+        raw, alpha, days = fetch_returns(r["ticker"], r["date"], holding_days=21)
+        ret_cache[key] = (raw, alpha, days)
+
+# Aggregate per mode
+def attr(rating, alpha):
+    if rating in ("Buy", "Overweight"): return alpha
+    if rating in ("Underweight", "Sell"): return -alpha
+    return 0.0
+
+per_mode = defaultdict(list)
+for r in ROWS:
+    raw, alpha, days = ret_cache[(r["ticker"], r["date"])]
+    if alpha is None: continue
+    rating = r["binned_tier"] if r["mode"] == "wc_10" else r["rating"]
+    per_mode[r["mode"]].append({"date": r["date"], "rating": rating, "alpha": alpha * 100, "attr": attr(rating, alpha * 100)})
+
+print("Mode,n,Mean rating-attributed α %,Buy/OW count,UW/Sell count,Hold count")
+for mode in ("wc_10", "5tier_baseline"):
+    rs = per_mode[mode]
+    n = len(rs)
+    mean_attr = sum(r["attr"] for r in rs) / n if n else 0
+    bull = sum(1 for r in rs if r["rating"] in ("Buy", "Overweight"))
+    bear = sum(1 for r in rs if r["rating"] in ("Underweight", "Sell"))
+    hold = sum(1 for r in rs if r["rating"] == "Hold")
+    print(f"{mode},{n},{mean_attr:+.2f},{bull},{bear},{hold}")
+
+# Verdict
+wc_mean = sum(r["attr"] for r in per_mode["wc_10"]) / max(1, len(per_mode["wc_10"]))
+bs_mean = sum(r["attr"] for r in per_mode["5tier_baseline"]) / max(1, len(per_mode["5tier_baseline"]))
+delta = wc_mean - bs_mean
+wc_bull = sum(1 for r in per_mode["wc_10"] if r["rating"] in ("Buy", "Overweight"))
+wc_bear = sum(1 for r in per_mode["wc_10"] if r["rating"] in ("Underweight", "Sell"))
+
+print(f"\nα delta (WC-10 - 5-tier): {delta:+.2f}pp")
+print(f"WC-10 commit direction: {wc_bull} bull / {wc_bear} bear")
+if delta <= -1.0:
+    print("→ VERDICT: ALT-A (bear-regime amplifies failure) — apply Patch A from constitution-v1.5.1-conditional-patch-drafts-2026-05-08.md")
+elif delta >= +1.0:
+    if wc_bear / max(1, len(per_mode["wc_10"])) >= 0.30:
+        print("→ VERDICT: ALT-B (bear-regime corrects direction) — apply Patch C")
+    else:
+        print("→ VERDICT: ALT-B candidate but bear count <30% — investigate before applying Patch C")
+elif abs(delta) < 1.0:
+    if wc_bull > 4:  # WC-10 went mostly bullish on a falling cohort
+        print("→ VERDICT: PARTIAL ALT-A (direction matches ALT-A but magnitude <100bps) — apply Patch D")
+    else:
+        print("→ VERDICT: NULL (regime-neutral) — apply Patch B")
+```
+
+Output:
+- One CSV row per mode (n / mean attributed α / bin counts)
+- Headline α delta + verdict line
+- Verdict line directly cites the matching Constitution v1.5.1 patch (per PR #144)
+
+### B. Verdict-conditional ANALYSIS prose blocks
+
+After running the script above, KEEP one of the four blocks below + DELETE the other three. Each block is pre-written for its verdict; just plug in computed numbers.
+
+#### Block ALT-A (apply if `delta_pp ≤ -1.0`)
+
+> **SC-007 v3 falsification: ALT-A confirmed (bear-regime amplifies failure).**
+>
+> WC-10 v3 on Q4 2025 NVDA produced mean rating-attributed 21d α of <FILL: WC-10 mean>%, vs 5-tier baseline's <FILL: 5-tier mean>%. The α delta of <FILL: delta>pp is in the ALT-A region (`delta ≤ -1.0pp`).
+>
+> Direction matches the v1 caveat: WC-10 emitted <FILL: WC-10 bull count>/8 dates as Buy/OW (binned), reading bullish on a falling cohort. The schema fix amplifies the framework's existing bullish reads regardless of whether those reads are direction-correct; on Q4 2025 NVDA where the framework reads wrong, the amplification produces worse outcomes.
+>
+> **Constitution VII v1.5.0 caveat STRENGTHENED.** Apply Constitution v1.5.1 Patch A from `claudedocs/constitution-v1.5.1-conditional-patch-drafts-2026-05-08.md` — adds "Bear-regime validation" paragraph requiring regime-aware gating for WC-10 production deployment.
+>
+> **Spec 009 branch selection**: Branch A activation requires regime-detection signal (e.g., VIX > 25 heuristic or per-ticker trailing-α). Branch B (research-only) is the safer default until regime-aware gating ships. v3 verdict pushes Spec 009 v2 plan toward Branch A + B hybrid: B by default, A opt-in with regime gate.
+
+#### Block NULL (apply if `|delta_pp| < 1.0` AND `WC-10 bull count ≤ 4`)
+
+> **SC-007 v3 falsification: NULL (regime-neutral).**
+>
+> WC-10 v3 on Q4 2025 NVDA produced mean rating-attributed 21d α of <FILL: WC-10 mean>%, vs 5-tier baseline's <FILL: 5-tier mean>%. The α delta of <FILL: delta>pp is statistically indistinguishable from baseline at n=8 (the NULL region: `|delta| < 1.0pp`).
+>
+> The schema fix is regime-NEUTRAL on this cohort. The v1 AAPL UW anti-calibration finding may have been a single-cohort artifact rather than a universal bear-side mechanism.
+>
+> **Constitution VII v1.5.0 caveat WEAKENED to "monitor and adjust if observed in production."** Apply Constitution v1.5.1 Patch B — preserves the caveat for documentation but downgrades it from a hard requirement to a runtime-monitoring trigger via `scripts/wc_10_underperformance_monitor.py` (PR #146).
+>
+> **Spec 009 branch selection**: Branch A activation does NOT require regime-aware gating per this evidence. Operator-opt-in WC-10 mode in `daily_signals.py` is unblocked.
+
+#### Block ALT-B (apply if `delta_pp ≥ +1.0` AND `WC-10 bear count / n ≥ 0.30`)
+
+> **SC-007 v3 falsification: ALT-B confirmed (bear-regime corrects direction).**
+>
+> WC-10 v3 on Q4 2025 NVDA produced mean rating-attributed 21d α of <FILL: WC-10 mean>%, vs 5-tier baseline's <FILL: 5-tier mean>%. The α delta of <FILL: delta>pp is in the ALT-B region (`delta ≥ +1.0pp`).
+>
+> Direction REVERSES the v1 caveat: WC-10 emitted <FILL: WC-10 bear count>/8 dates as Underweight (binned), surfacing bearish reads that 5-tier suppressed on a falling cohort. The schema fix surfaces direction-correct signal independent of regime — including bearish signal on falling tickers that the 5-tier scale's Hold-default was hiding.
+>
+> **Constitution VII v1.5.0 caveat REVERSED in direction.** Apply Constitution v1.5.1 Patch C — reframes the v1 AAPL UW finding as a regime-specific counter-case rather than a universal bear-side mechanism.
+>
+> **Spec 009 branch selection**: Branch A activation is universally beneficial across the bull/bear spectrum on this evidence. WC-10 mode in `daily_signals.py` ships without regime-aware gating.
+
+#### Block PARTIAL ALT-A (apply if `|delta_pp| < 1.0` AND `WC-10 bull count > 4`)
+
+> **SC-007 v3 falsification: PARTIAL ALT-A (direction matches but magnitude < 1.0pp).**
+>
+> WC-10 v3 on Q4 2025 NVDA produced mean rating-attributed 21d α of <FILL: WC-10 mean>%, vs 5-tier baseline's <FILL: 5-tier mean>%. The α delta of <FILL: delta>pp falls below the ALT-A magnitude threshold (`|delta| < 1.0pp`) but the direction matches: WC-10 emitted <FILL: WC-10 bull count>/8 dates as Buy/OW (binned), reading bullish on a falling cohort.
+>
+> The v1.5.0 caveat language ("WC-10 amplifies whatever signal the framework was already generating") is correct as-written. The magnitude is small enough that strengthening to "amplifies in a way that produces statistically worse outcomes" would over-claim from this sample.
+>
+> **Constitution VII v1.5.0 caveat CONFIRMED at predicted scope.** Apply Constitution v1.5.1 Patch D — preserves caveat language; documents empirical magnitude bound at < 1.0pp on this cohort.
+>
+> **Spec 009 branch selection**: Branch A activation ships with the v1.5.0 caveat documented in `docs/SIGNALS.md` per Spec 009 FR-006 but does NOT require regime-aware gating as a hard requirement. Operator discretion suffices.
+
+### C. Monitoring loop integration
+
+After v3 ANALYSIS lands, the WC-10 underperformance monitor (PR #146) provides the runtime monitoring tier:
+
+```bash
+python scripts/wc_10_underperformance_monitor.py --csv experiments/2026-05-08-003-wc-10-bear-regime-q4-2025-nvda/results.csv
+```
+
+Smoke test on v3 data — operators can verify:
+1. The script flags the v3 cohort consistently with the verdict above
+2. If verdict is ALT-A: monitor's per-pair alerts should fire on dates where WC-10 amplified bullish reads on falling NVDA
+3. If verdict is NULL: monitor should NOT fire any alerts
+4. If verdict is ALT-B: monitor's alerts should be inverted (5-tier mode dates would alert if cron-checked instead)
+
+This converts the v3 verdict from a one-time research finding into ongoing operational tooling.
+
+### D. Cross-references
+
+- **PR #144** (Constitution v1.5.1 conditional patch drafts) — apply patch matching v3 verdict
+- **PR #140** (Spec 009 conditional draft) — branch selection per v3 verdict
+- **PR #146** (`scripts/wc_10_underperformance_monitor.py`) — runtime monitoring; smoke test on v3 data
+- **PR #135** (this template's predecessor) — original template that this PR extends
+- `experiments/2026-05-08-001-wc-10-pilot/ANALYSIS.md` — v1 verdict (ALT-A at distribution level)
+- v2 ANALYSIS_TEMPLATE.md — sister template; v2 verdict feeds Spec 009 Branch A vs B vs C selection
+
+### E. Estimated time-to-PR after data lands
+
+With this extended pre-scaffolding:
+
+1. Run computation snippet (1 min)
+2. Pick matching verdict block (1 min)
+3. Plug in `<FILL: X>` numbers (3 min)
+4. Delete 3 non-matching verdict blocks (1 min)
+5. Update Constitution adherence checklist + Next-steps section (3 min)
+6. Open PR (5 min)
+
+**Total: ~15 minutes** (vs ~45-60 min if drafting from scratch). Sister to PR #144's "~15 min vs ~45 min" Constitution v1.5.1 estimate; both compose into a single ~30-minute v3 landing PR series.
