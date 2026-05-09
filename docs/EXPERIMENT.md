@@ -223,26 +223,45 @@ Organized by source of inspiration. None of these are committed; many are bad. T
 
 Filtering the brainstorm against: (a) costs <$10 to test, (b) produces a clear yes/no signal, (c) leverages the existing 65-run corpus or only needs a few new runs.
 
+**Status refresh (2026-05-09)**: ~7 of the 12 original Tier 1/2/3 ideas are now DONE. Tier numbering preserved for historical traceability; status badges added inline.
+
 **Tier 1 — would do tomorrow, low cost, high information**:
-- **MR-1** (contradiction analysis on existing 65 bull/bear pairs) — already in the strategic doc. Free, uses existing corpus.
-- **WC-12** (PM blind to debate) — modify the harness to strip debate from PM input, run 10 dates, compare ratings to a 10-date debate-included baseline. ~$10. Tests whether the debate adds anything.
-- **EH-2** (rating distribution gate) — pure code, no extra runs. Lights up red on existing data immediately.
-- **WC-11** (order randomization) — re-run 10 dates with shuffled analyst order, see if first-speaker effect is real. ~$10.
+- ~~**MR-1** (contradiction analysis on existing 65 bull/bear pairs)~~ — **DONE 2026-05-02**: confirmed two-sided evidence in 100% of debates. Two-sidedness is real; framework's Hold response is correct.
+- ~~**WC-12** (PM blind to debate)~~ — **DONE 2026-05-02**: broke 5d mode collapse; 5 NVDA Buys at α=-0.22%. At 21d, those Buys would have been directionally correct.
+- ~~**EH-2** (rating distribution gate)~~ — **DONE**: DENY findings on every experiment. Gate enforces 5-tier surface; framework legitimately mostly uses 3 tiers.
+- ~~**WC-11** (order randomization)~~ — **DONE 2026-05-09 (v1) + v2 IN FLIGHT**: v1 PARTIAL ALT-A + ALT-B (cannot disambiguate at n=20); v2 disambiguation cohort (3 tickers × 5 dates × 4 perms = 60 propagates; ETA 2026-05-10). Constitution v1.5.2 "Analyst-order scope" amendment.
 
 **Tier 2 — medium investment, medium signal**:
-- **BR-1** (value-function alternative — single model, no debate) — implement, run on same 50 (ticker, date) pairs as pilot, compare distributions. ~$25.
-- **WC-10** (continuous scalar rating) — modify schema, run 20 dates, see if scalar avoids collapse. ~$20.
-- **WC-2** (multi-temporal — 5d/30d/90d/1yr debates) — 4× run cost on small grid. ~$30.
-- **MR-3** (`reasoning_decision` weighted scoring instead of free-text PM) — replace PM, run 20 dates, compare. ~$20.
+- ~~**BR-1** (value-function alternative — single model, no debate)~~ — **DONE 2026-05-03**: single-call baselines on NVDA + AAPL; broke Hold collapse but produced wrong commits at 5d AND 21d. Framework's structural value IS the 21-day lift that single-call lacks.
+- ~~**WC-10** (continuous scalar rating)~~ — **DONE 2026-05-08/09 + arc CLOSED**: full v1+v2+v3 + Spec 009 Branch C. v1 SC-007 ALT-A confirmed (3.6× commit ratio); v2 SC-005(b) NULL (Pearson r +0.0918 at n=100); v3 PARTIAL ALT-A. Branch C activated (bin-then-output ergonomic-only). Constitution v1.5.0 + v1.5.1 amendments. Total: $54.40 LLM.
+- **WC-2** (multi-temporal — 5d/30d/90d/1yr debates) — STILL DEFERRED. ~$30.
+- ~~**MR-3** (`reasoning_decision` weighted scoring instead of free-text PM)~~ — **DONE 2026-05-02 (v1) + 2026-05-03 (v2)**: synthesis prompt fix produced 6 OW + 3 Hold at NVDA; "no calibration win" at 5d. At 21d, 6 OW commits would have been correct.
 
 **Tier 3 — bigger investment, bigger swing**:
-- **EH-1** (hash-chained event log replacing JSON-per-run) — engineering work, no new runs.
-- **BR-3** (structured signaling instead of natural-language debate) — moderate engineering, run on 20 dates.
-- **WC-4** (5 debate topologies in parallel) — significant engineering + 5× run cost on small grid. ~$50.
-- **BS-2** (local Ollama for analysts) — engineering + new infra, but cuts ongoing cost dramatically.
+- **EH-1** (hash-chained event log replacing JSON-per-run) — STILL DEFERRED (Spec 002 partially shipped via `tradingagents/signals/cache.py`; full unified event log for memory + checkpoint + paper-trade is Phase E per ROADMAP).
+- ~~**BR-3** (structured signaling instead of natural-language debate)~~ — **DONE 2026-05-09 (v1) + v2 IN FLIGHT**: v1 PARTIAL ALT-B (commit shift +20pp; α delta below threshold); v2 sister extensions to news + fundamentals analysts (40 propagates; ETA 2026-05-10). Phase E architectural variant NOT unblocked at v1 evidence level.
+- **WC-4** (5 debate topologies in parallel) — STILL DEFERRED. ~$50.
+- **BS-2** (local Ollama for analysts) — STILL DEFERRED.
 
 **Backlog — interesting but defer**:
-- Everything else.
+- Everything else from Part 5 brainstorm above (most never ranked into Tier 1/2/3).
+
+**NEW ideas surfaced 2026-05-06 → 2026-05-09 (NOT in original Part 5 brainstorm)**:
+- ~~**Class 4 macro filter**~~ — **DONE 2026-05-09 (BEAR PASSED → Spec 012 deployed; BULL SKIP per PR #203)**. FIRST cross-asset/macro filter in the framework.
+- ~~**Class 5 fundamentals-delta filter**~~ — **DONE 2026-05-06 (BULL SKIP per v1.4.3 additive gate; 89% Spec 007 overlap)**.
+- ~~**Spec 008 Hybrid C calendar boost**~~ — **DONE 2026-05-06 (default-off pending live SC-009 ablation)**.
+- ~~**C-4 institutional rotation (bear-side)**~~ — **DONE 2026-05-07 (Spec X-1 deployed at default-shadow)**.
+- ~~**Local-high BULL filter**~~ — **DONE 2026-05-09 (DEFER per PR #205; n=2 below Spec 012 sample-size floor)**.
+- **EH-4** Knowledge digestion pipeline — partially DONE per `claudedocs/historical-hold-attribution-2026-05-08.md` (Hold-attribution analysis); full pipeline per the original brainstorm not yet implemented.
+
+**Tier 1/2/3 completion summary** (2026-05-09 EOD):
+- Tier 1: 4 of 4 DONE (100%)
+- Tier 2: 3 of 4 DONE (75%; WC-2 multi-temporal deferred)
+- Tier 3: 1 of 4 DONE (25%; EH-1 + WC-4 + BS-2 deferred)
+- Total Tier 1+2+3: **8 of 12 DONE (67%)**
+- Plus 5 NEW ideas DONE (Class 4 + Class 5 + Spec 008 + C-4 + local-high) — exceeded original backlog
+
+The original "Tier 1 = would do tomorrow" framing aged well (all 4 DONE within 7 days of writing). Tier 3 items are by-construction higher-effort + lower-priority; their 25% completion rate is consistent with their Tier 3 ranking.
 
 ---
 
