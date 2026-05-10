@@ -41,9 +41,15 @@ def main(
     csv_paths = sorted(Path().glob(pattern))
     console.print(f"[bold]Found {len(csv_paths)} experiment CSVs; horizons={horizon_list}[/bold]\n")
 
+    def _normalize_date_col(df: pd.DataFrame) -> pd.DataFrame:
+        if "analysis_date" not in df.columns and "date" in df.columns:
+            df = df.rename(columns={"date": "analysis_date"})
+        return df
+
     all_dates, all_tickers = [], set()
     for p in csv_paths:
         df = pd.read_csv(p)
+        df = _normalize_date_col(df)
         df = df[df["error"].isna() | (df["error"] == "")]
         all_dates.extend(df["analysis_date"].tolist())
         all_tickers.update(df["ticker"].unique())
@@ -56,6 +62,7 @@ def main(
     for csv_path in csv_paths:
         exp_id = csv_path.parent.name
         df = pd.read_csv(csv_path)
+        df = _normalize_date_col(df)
         df = df[df["error"].isna() | (df["error"] == "")]
         for h in horizon_list:
             for _, row in df.iterrows():
