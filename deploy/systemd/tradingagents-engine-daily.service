@@ -1,0 +1,65 @@
+# TradingAgents engine — daily scheduled run.
+#
+# Per spec 250 FR-033: triggered by tradingagents-engine-daily.timer at
+# OnCalendar=Mon..Fri 17:00 America/New_York (after market close ET).
+#
+# Install path: /etc/systemd/system/tradingagents-engine-daily.service
+#
+# Setup:
+#   sudo cp deploy/systemd/tradingagents-engine-daily.service /etc/systemd/system/
+#   sudo cp deploy/systemd/tradingagents-engine-daily.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now tradingagents-engine-daily.timer
+#
+# Manual fire (for testing):
+#   sudo systemctl start tradingagents-engine-daily.service
+#
+# Tail logs:
+#   journalctl -u tradingagents-engine-daily.service -f
+
+[Unit]
+Description=TradingAgents engine — daily watchlist run
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+
+# Run as the operator user (NOT root). Adjust to match the VPS account
+# that owns ~/.tradingagents/ and the project checkout.
+User=rawcell
+Group=rawcell
+
+# Working directory = the TradingAgents checkout on the VPS.
+# Adjust if deployed to a different path.
+WorkingDirectory=/srv/tradingagents
+
+# API keys via systemd-creds (matches agent-harness-v2 secrets pattern).
+# Provision once: sudo systemd-creds encrypt - /etc/credstore.encrypted/anthropic-api-key
+# then paste sk-ant-... and Ctrl-D.
+LoadCredentialEncrypted=anthropic-api-key:/etc/credstore.encrypted/anthropic-api-key
+LoadCredentialEncrypted=exa-api-key:/etc/credstore.encrypted/exa-api-key
+
+# Python venv path — adjust to match VPS install.
+Environment=PATH=/srv/tradingagents/.venv/bin:/usr/local/bin:/usr/bin:/bin
+
+# Engine command. Reads ANTHROPIC_API_KEY + EXA_API_KEY from the
+# CREDENTIALS_DIRECTORY exposed by systemd-creds.
+ExecStart=/bin/sh -c '\
+    export ANTHROPIC_API_KEY="$(cat ${CREDENTIALS_DIRECTORY}/anthropic-api-key)" && \
+    export EXA_API_KEY="$(cat ${CREDENTIALS_DIRECTORY}/exa-api-key)" && \
+    /srv/tradingagents/.venv/bin/python -m tradingagents.engine run \
+        --watchlist /srv/tradingagents/data/watchlists/tech_weighted.txt'
+
+# Don't restart on failure — daily timer re-fires tomorrow.
+Restart=no
+
+# 4h timeout — full 25-ticker run takes ~3-4h at 8-10 min/ticker.
+TimeoutStartSec=4h
+
+# Logs go to journald.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

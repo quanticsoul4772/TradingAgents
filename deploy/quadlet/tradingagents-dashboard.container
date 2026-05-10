@@ -1,0 +1,60 @@
+# TradingAgents dashboard — Podman Quadlet (template, Phase 2 will fill in image).
+#
+# Per spec 250 FR-028: Podman Quadlet rootful container, systemd-integrated.
+# Matches existing agent-harness-v2 pattern (sidecar.container reference).
+#
+# Install path: /etc/containers/systemd/tradingagents-dashboard.container
+#
+# This file references `localhost/tradingagents/dashboard:latest` — that image
+# is BUILT BY Phase 2 (deploy/Containerfile + dashboard module). Until Phase 2
+# lands, this Quadlet definition is templated; do NOT enable it on the VPS yet.
+#
+# Setup (after Phase 2 ships and image is buildable):
+#   cd /srv/tradingagents
+#   podman build -t localhost/tradingagents/dashboard:latest -f deploy/Containerfile .
+#   sudo cp deploy/quadlet/tradingagents-dashboard.container /etc/containers/systemd/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now tradingagents-dashboard.service
+#
+# Verification:
+#   podman ps | grep tradingagents-dashboard
+#   curl -u rawcell:<password> https://rawcell.duckdns.org/trading/
+
+[Unit]
+Description=TradingAgents dashboard — FastAPI + HTMX (Phase 2)
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image=localhost/tradingagents/dashboard:latest
+ContainerName=tradingagents-dashboard
+
+# Read-only mounts to engine output + state logs + paper portfolio.
+# Per FR-003 the dashboard is a read-only consumer; never writes to engine state.
+Volume=%h/.tradingagents/engine:/var/lib/tradingagents/engine:ro,Z
+Volume=%h/.tradingagents/logs:/var/lib/tradingagents/logs:ro,Z
+Volume=%h/.tradingagents/paper:/var/lib/tradingagents/paper:ro,Z
+
+# Bind to 127.0.0.1 only — Caddy reverse-proxies the public surface.
+# Per FR-010: trigger endpoint MUST NOT be reachable through the proxy;
+# binding to localhost is half of that contract; Caddyfile.snippet handles
+# the other half by not proxying /trigger/*.
+PublishPort=127.0.0.1:8000:8000
+
+Environment=TA_ENGINE_DIR=/var/lib/tradingagents/engine
+Environment=TA_LOGS_DIR=/var/lib/tradingagents/logs
+Environment=TA_PAPER_DIR=/var/lib/tradingagents/paper
+Environment=TA_DASHBOARD_PORT=8000
+
+# Run as the same UID as the engine writes (1000 = operator user `rawcell`
+# on the VPS) so reads work cleanly under SELinux Z labels.
+User=1000:1000
+
+Exec=/srv/tradingagents/.venv/bin/uvicorn tradingagents.dashboard.app:app --host 127.0.0.1 --port 8000
+
+[Service]
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target
