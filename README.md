@@ -4,6 +4,14 @@ Personal experimental fork of [TauricResearch/TradingAgents](https://github.com/
 
 Upstream docs in [`README.upstream.md`](README.upstream.md). Upstream release history in [`CHANGELOG.upstream.md`](CHANGELOG.upstream.md). Local changes in [`CHANGELOG.md`](CHANGELOG.md).
 
+## Live signals product (paper-trading)
+
+```bash
+python scripts/run_daily.py    # daily flow: signals → paper-trade step → status
+```
+
+One-command daily orchestrator wrapping the framework's `propagate(ticker, today)` over a curated 25-name tech-weighted watchlist into actionable bullish 21d-horizon recommendations + a persistent paper portfolio. Operator runbook + product definition + opinionated defaults rationale in [`docs/LIVE_SIGNALS_PRODUCT.md`](docs/LIVE_SIGNALS_PRODUCT.md). ~$10/day LLM at the default watchlist; paper-only per Constitution Principle IV.
+
 ## Headline finding
 
 **At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls are no better than coin flip.** At 21-day windows, the framework's bullish commits (Buy + Overweight) produce **+1.23% mean alpha across n=71 commits (~61% hit rate) — POSITIVE AT MODERATE CONFIDENCE.** Three-period NVDA cross-validation (Q1 2026 / Q4 2025 / Q3 2025): two of three periods positive; Q4 2025 is the negative outlier.
