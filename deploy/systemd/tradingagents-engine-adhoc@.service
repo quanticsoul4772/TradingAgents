@@ -1,0 +1,45 @@
+# TradingAgents engine — ad-hoc single-ticker run (templated unit).
+#
+# Per spec 250 FR-012: dashboard's POST /trigger/{ticker} spawns this via
+#   systemd-run --user --unit=tradingagents-engine-adhoc@<ticker>.service start
+# This decouples the engine subprocess from the dashboard's uvicorn lifetime
+# (the engine survives uvicorn restarts).
+#
+# The %i instance argument is the ticker symbol.
+#
+# Install path: /etc/systemd/system/tradingagents-engine-adhoc@.service
+#
+# Manual fire (testing):
+#   sudo systemctl start tradingagents-engine-adhoc@NVDA.service
+#
+# Tail logs:
+#   journalctl -u tradingagents-engine-adhoc@NVDA.service -f
+
+[Unit]
+Description=TradingAgents engine — ad-hoc run for %i
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=rawcell
+Group=rawcell
+WorkingDirectory=/srv/tradingagents
+
+LoadCredentialEncrypted=anthropic-api-key:/etc/credstore.encrypted/anthropic-api-key
+LoadCredentialEncrypted=exa-api-key:/etc/credstore.encrypted/exa-api-key
+
+Environment=PATH=/srv/tradingagents/.venv/bin:/usr/local/bin:/usr/bin:/bin
+
+ExecStart=/bin/sh -c '\
+    export ANTHROPIC_API_KEY="$(cat ${CREDENTIALS_DIRECTORY}/anthropic-api-key)" && \
+    export EXA_API_KEY="$(cat ${CREDENTIALS_DIRECTORY}/exa-api-key)" && \
+    /srv/tradingagents/.venv/bin/python -m tradingagents.engine run --ticker %i'
+
+Restart=no
+
+# 15-min timeout — single propagate is ~8-10 min.
+TimeoutStartSec=15min
+
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,29 @@
+# TradingAgents engine — daily timer.
+#
+# Per spec 250 FR-033: fires at 17:00 America/New_York Mon-Fri (after market close).
+#
+# Requires systemd >= 240 for OnCalendar timezone qualifier; older versions
+# silently treat the TZ as UTC. Verify on the VPS:
+#   systemctl --version | head -1
+#   # systemd 252  -> OK
+#   # systemd 230  -> need to convert to absolute UTC time
+
+[Unit]
+Description=Daily TradingAgents engine run (Mon..Fri 17:00 ET)
+Requires=tradingagents-engine-daily.service
+
+[Timer]
+# 17:00 ET = market close + ~minutes. Markets close 16:00 ET; the extra
+# hour gives time for end-of-day news to land before the framework runs.
+OnCalendar=Mon..Fri 17:00 America/New_York
+
+# If the VPS was off when the timer should have fired, run on next boot.
+Persistent=true
+
+# Random delay 0-300s to avoid thundering-herd on Anthropic API at 17:00:00 ET.
+RandomizedDelaySec=300
+
+Unit=tradingagents-engine-daily.service
+
+[Install]
+WantedBy=timers.target
