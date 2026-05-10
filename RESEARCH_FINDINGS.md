@@ -372,6 +372,39 @@ Bullish-side amplification GENERALIZES at expanded n (Buy +2.93% / 80% hit is th
 
 **WC-10 research arc complete**: v1 (categorical bottleneck confirmed at PM stage on 2 tickers) + v2 (PARTIAL generalization + Branch C verdict on 8 tickers, n=100) + v3 (PARTIAL ALT-A on Q4 2025 NVDA bear-regime) + Constitution v1.5.0 + v1.5.1 amendments. The arc spent **$54.40 LLM total** (v1 $16 + v2 $32 + v3 $6.40) and produced 4 ratified Constitution sub-sections + 1 selected production-deployment branch.
 
+## BR-3 v2 (news + fundamentals analyst structured-output) — DIFFERENTIAL verdict (added 2026-05-09 evening)
+
+**Source**: `experiments/2026-05-09-003-br3-v2-news-fundamentals/ANALYSIS.md` (Landing PR #225). Cost: $16 (Constitution III T2; user-authorized via PR #214). 40/40 propagates resolved.
+
+**Design**: 2 sub-experiments × 5 dates × 2 tickers (NVDA + AAPL) × 2 modes. Sub-A: news_analyst_format prose vs structured. Sub-B: fundamentals_analyst_format prose vs structured. Sister to BR-3 v1 (market analyst) at PR #178.
+
+**Verdict: DIFFERENTIAL**:
+
+| Sub-experiment | Verdict | Commit shift | α delta | Per-ticker pattern |
+|---|---|---:|---:|---|
+| A (news_analyst) | **NULL-leaning** | 0pp | +1.60pp* | mixed (NVDA +1; AAPL -1) |
+| B (fundamentals_analyst) | **PARTIAL ALT-B** | **+40pp** | +0.11pp | consistent (BOTH +2) |
+
+*α delta on sub-A is single-row noise (1 NVDA structured Buy at +20% realized α dominates n=10 cohort); not a mechanism finding.
+
+**Joint synthesis across all 3 analyst stages** (BR-3 v1 + v2):
+
+| Stage | Verdict | Commit shift | Source |
+|---|---|---:|---|
+| Market analyst (BR-3 v1) | PARTIAL ALT-B | +20pp | PR #178 |
+| News analyst (BR-3 v2 sub-A) | **NULL** | 0pp | PR #225 |
+| Fundamentals analyst (BR-3 v2 sub-B) | PARTIAL ALT-B | **+40pp** | PR #225 |
+
+**2 of 3 analyst stages carry the structured-output commit-shift bottleneck** (market + fundamentals); 1 of 3 does NOT (news).
+
+**Asymmetric mechanism interpretation**: tools-rich analysts (market = technical indicators / fundamentals = financial metrics) carry the bottleneck; prose-heavy analyst (news = narrative) does NOT. When analyst output is fundamentally NUMERIC, prose serialization loses information that structured emission preserves. When NARRATIVE, prose IS the natural medium and structured-output forces compression that doesn't add value.
+
+**Phase E architectural variant ("structured-output throughout") still NOT unblocked** at this evidence level: PARTIAL ALT-B α magnitudes BELOW ±1pp threshold can't validate calibration. Phase E remains conditional on a v3 cohort with n=30+ commits per analyst stage.
+
+**Constitution implication**: NO amendment required. The pattern strengthens BR-3 v1 PARTIAL ALT-B framing rather than overturning it.
+
+**Cross-pollination L4 status update**: Squeak structured signaling pattern preserved at "pilot-eligible (focus on fundamentals analyst stage)" — narrowed scope per BR-3 v2 strongest evidence on fundamentals.
+
 ## Key claims (load-bearing, n large enough)
 
 1. **5-day strong calls are noise.** Buy α=-1.27% (25% hit), OW α=-0.59% (44%) — bull commits underperform on the realized 5-day window. UW α=+1.04% (60% positive) — bear commits also underperform their direction. **007 single-experiment OW hit rate climb 56→67→75% across 5d→10d→21d** is the cleanest single-experiment evidence yet for horizon-dependent signal emergence.
