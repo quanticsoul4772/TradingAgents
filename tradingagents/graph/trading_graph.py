@@ -479,8 +479,13 @@ class TradingAgentsGraph:
         directory.mkdir(parents=True, exist_ok=True)
 
         log_path = directory / f"full_states_log_{trade_date}.json"
-        with open(log_path, "w", encoding="utf-8") as f:
+        # Atomic write: temp file + os.replace prevents readers (e.g., a dashboard
+        # tailer) from seeing a truncated/partial JSON during the ~milliseconds
+        # the file is being written. os.replace is atomic on POSIX and Windows.
+        tmp_path = log_path.with_suffix(".json.tmp")
+        with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(self.log_states_dict[str(trade_date)], f, indent=4)
+        os.replace(tmp_path, log_path)
 
     def process_signal(self, full_signal):
         """Process a signal to extract the core decision."""
