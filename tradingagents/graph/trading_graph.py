@@ -287,7 +287,7 @@ class TradingAgentsGraph:
         if updates:
             self.memory_log.batch_update_with_outcomes(updates)
 
-    def propagate(self, company_name, trade_date):
+    def propagate(self, company_name, trade_date, *, callbacks: list | None = None):
         """Run the trading agents graph for a company on a specific date.
 
         When ``checkpoint_enabled`` is set in config, the graph is recompiled
@@ -299,6 +299,12 @@ class TradingAgentsGraph:
         computed value to ``~/.tradingagents/signals/cache.db`` keyed by this
         (ticker, date). The cache hook lives in ``route_to_vendor`` and is
         a no-op when the context is unset (tools called outside a propagate).
+
+        Spec 250 (dashboard) Phase 1b: optional ``callbacks`` arg is forwarded
+        to the LangGraph invoke as ``config['callbacks']``. The engine
+        (tradingagents/engine/) passes a BaseCallbackHandler that emits
+        per-agent-stage events (FR-001 + FR-005) for the dashboard live viewer.
+        Default ``None`` preserves existing behavior — no test impact.
         """
         from tradingagents.signals.bootstrap import bootstrap_initial_signals
         from tradingagents.signals.context import propagate_context
@@ -330,14 +336,14 @@ class TradingAgentsGraph:
 
         try:
             with propagate_context(company_name, str(trade_date)):
-                return self._run_graph(company_name, trade_date)
+                return self._run_graph(company_name, trade_date, callbacks=callbacks)
         finally:
             if self._checkpointer_ctx is not None:
                 self._checkpointer_ctx.__exit__(None, None, None)
                 self._checkpointer_ctx = None
                 self.graph = self.workflow.compile()
 
-    def _run_graph(self, company_name, trade_date):
+    def _run_graph(self, company_name, trade_date, *, callbacks: list | None = None):
         """Execute the graph and write the resulting state to disk and memory log."""
         # Initialize state — inject memory log context for PM.
         past_context = self.memory_log.get_past_context(company_name)
@@ -350,6 +356,12 @@ class TradingAgentsGraph:
         if self.config.get("checkpoint_enabled"):
             tid = thread_id(company_name, str(trade_date))
             args.setdefault("config", {}).setdefault("configurable", {})["thread_id"] = tid
+
+        # Spec 250 dashboard: forward optional callbacks to LangGraph invoke
+        # so the engine can emit per-agent-stage events. No-op when callbacks
+        # is None (existing behavior preserved).
+        if callbacks:
+            args.setdefault("config", {}).setdefault("callbacks", []).extend(callbacks)
 
         if self.debug:
             trace = []

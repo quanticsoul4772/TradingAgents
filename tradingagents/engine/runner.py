@@ -7,8 +7,11 @@ This module is the writer side of the dashboard contract. The dashboard backend
 
 from __future__ import annotations
 
+import csv
 import logging
 import os
+import subprocess
+import sys
 import threading
 import time
 from collections.abc import Callable
@@ -172,6 +175,17 @@ class EngineRunner:
                 self._progress.current_ticker_started_at = None
                 self._progress.current_agent_stage = None
                 self._write_progress_atomic()
+                # FR-007: paper-trade integration after the run completes.
+                # Skipped on dry-run (signals are fake; would corrupt paper portfolio).
+                if not dry_run and self._progress.completed_tickers:
+                    try:
+                        self._run_paper_trade_step()
+                    except Exception as exc:  # noqa: BLE001
+                        logger.warning("paper_trade.py step failed: %s", exc)
+                        self._emit_event(
+                            EventType.ERROR,
+                            payload={"phase": "paper_trade_step", "error": str(exc)},
+                        )
                 self._emit_event(EventType.RUN_FINISHED)
 
             return self._progress
@@ -221,22 +235,108 @@ class EngineRunner:
         return "Hold"
 
     def _real_run_ticker(self, ticker: str) -> str:
-        """Real run via injected propagate_fn or default TradingAgentsGraph.propagate.
+        """Real run with per-agent-stage events (FR-001 + FR-005).
 
-        Phase 1 MVP: uses the existing propagate (graph.invoke). Per-agent-stage
-        events for real runs are deferred to Phase 1b (graph.astream wiring).
+        Wires an EngineEventCallback into propagate's callbacks chain so each
+        LangGraph node start/end becomes an agent_started/agent_finished event.
+        Test injection: the propagate_fn override path skips the callback wiring
+        (tests pass a stub returning a string directly).
         """
-        propagate = self._propagate_fn or _default_propagate
-        return propagate(ticker, self.trade_date)
+        if self._propagate_fn is not None:
+            return self._propagate_fn(ticker, self.trade_date)
+
+        # Lazy import to avoid pulling LangChain into test process startup.
+        from tradingagents.engine.callbacks import EngineEventCallback
+
+        assert self._progress is not None
+
+        def _on_started(stage: AgentStage) -> None:
+            assert self._progress is not None
+            self._progress.current_agent_stage = stage
+            self._write_progress_atomic()
+            self._emit_event(EventType.AGENT_STARTED, ticker=ticker, agent_stage=stage)
+
+        def _on_finished(stage: AgentStage) -> None:
+            self._emit_event(EventType.AGENT_FINISHED, ticker=ticker, agent_stage=stage)
+
+        callback = EngineEventCallback(on_stage_started=_on_started, on_stage_finished=_on_finished)
+        return _default_propagate(ticker, self.trade_date, callbacks=[callback])
+
+    # ---------------------------------------------------------- paper trade
+
+    def _signals_csv_path(self) -> Path:
+        return self.run_dir / "signals.csv"
+
+    def _write_signals_csv(self) -> Path:
+        """Write completed_tickers as a paper_trade.py-consumable CSV per
+        specs/002-paper-trading-harness/contracts/signals_csv.md.
+
+        Required columns: ticker, analysis_date, rating.
+        """
+        assert self._progress is not None
+        csv_path = self._signals_csv_path()
+        with csv_path.open("w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["ticker", "analysis_date", "rating", "error"])
+            writer.writeheader()
+            for ct in self._progress.completed_tickers:
+                writer.writerow(
+                    {
+                        "ticker": ct.ticker,
+                        "analysis_date": self.trade_date,
+                        "rating": ct.rating,
+                        "error": "",
+                    }
+                )
+            for ft in self._progress.failed_tickers:
+                writer.writerow(
+                    {
+                        "ticker": ft.ticker,
+                        "analysis_date": self.trade_date,
+                        "rating": "Hold",
+                        "error": ft.error,
+                    }
+                )
+        return csv_path
+
+    def _run_paper_trade_step(self) -> None:
+        """FR-007: spawn `paper_trade.py step --signals-csv ... --portfolio-id live`.
+
+        Subprocess (not in-process) so paper_trade's typer/exit semantics are
+        clean and a paper_trade crash doesn't propagate into the engine. Run
+        synchronously after all tickers finish so the dashboard sees the
+        portfolio update reflected in the same poll cycle as RUN_FINISHED.
+        """
+        csv_path = self._write_signals_csv()
+        repo_root = Path(__file__).resolve().parents[2]
+        script = repo_root / "scripts" / "paper_trade.py"
+        cmd = [
+            sys.executable,
+            str(script),
+            "step",
+            "--signals-csv",
+            str(csv_path),
+            "--portfolio-id",
+            "live",
+            "--date",
+            self.trade_date,
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"paper_trade.py step exited {result.returncode}: {result.stderr.strip()[:500]}"
+            )
 
 
-def _default_propagate(ticker: str, trade_date: str) -> str:
+def _default_propagate(ticker: str, trade_date: str, callbacks: list | None = None) -> str:
     """Lazy-import the framework so test code can construct EngineRunner without
     pulling in TradingAgentsGraph (which loads LLM clients).
+
+    Spec 250 Phase 1b: propagates ``callbacks`` through to the LangGraph for
+    per-agent-stage event emission (FR-005).
     """
     from tradingagents.default_config import DEFAULT_CONFIG
     from tradingagents.graph.trading_graph import TradingAgentsGraph
 
     ta = TradingAgentsGraph(config=DEFAULT_CONFIG.copy())
-    _, rating = ta.propagate(ticker, trade_date)
+    _, rating = ta.propagate(ticker, trade_date, callbacks=callbacks)
     return rating
