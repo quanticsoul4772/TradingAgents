@@ -6,9 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added (2026-05-09 — Triple-pilot landing arc COMPLETE + WC-10 research arc CLOSED + Constitution v1.5.1 → v1.5.2 + Spec 009 Branch C activated + Spec 012 Class 4 macro DEPLOYED)
+### Added (2026-05-09 — Triple-pilot landing + Dual-pilot landing arcs COMPLETE + WC-10 research arc CLOSED + Constitution v1.5.1 → v1.5.2 → v1.5.3 + Spec 009 Branch C activated + Spec 012 Class 4 macro DEPLOYED + bear-side mechanism survey 6 → 7 evaluated)
 
-**22 PRs merged today** (#179-#200) + 2 global-memory writes. Most productive shipping day on record. Filter portfolio: 8 → **10 sides**. Test count: 1146 → **1193** (+47 net). $48.40 LLM total ($48 pre-spent in prior session for 3 pilots; $0.40 net-new for Spec 009 Branch C smoke propagate). Wall-clock ~6h.
+**52 PRs merged today** (#179-#233) + 7 global-memory writes. Most productive shipping day on record. Filter portfolio: 8 → **10 sides**. Test count: 1146 → **1193** (+47 net; verified PR #233 via live `pytest -m unit -q`). $88.40 LLM total ($48 pre-spent in prior session for 3 pilots; $0.40 net-new for Spec 009 Branch C smoke propagate; **$40 net-new for dual-pilot launch — BR-3 v2 + WC-11 v2 — both LANDED today**). Wall-clock ~12h.
 
 **Triple-pilot landing arc** (8 PRs merged: #179-#186) lands all 3 in-flight pilots (WC-10 v2 + WC-11 + BR-3) plus consolidated docs + Spec 009 Branch C MVP + day-end synthesis + monitor smoke test. $48 LLM (3 pilots; pre-spent in prior session). Wall-clock ~2.5h. Demonstrates rank-driven shipping + pre-scaffolding ROI (~3-6× per-PR vs cold-draft baseline). Canonical day-end synthesis at `claudedocs/research-burst-2026-05-09.md`.
 
@@ -39,6 +39,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 **WC-10 research arc total**: $54.40 LLM (v1 $16 + v2 $32 + v3 $6.40) across 4 ratified Constitution sub-sections (v1.5.0 + v1.5.1 + v1.5.2 Analyst-order; plus pre-existing v1.4.0/v1.4.3 framing). 1 production-deployment branch selected (Branch C). Open Questions table (RESEARCH_FINDINGS.md) reflects 5 WC-10 rows resolved + 2 new rows (WC-11 + BR-3) added.
 
 **Test count**: 1146 → **1171 unit tests** passing (+25 net across the multi-day arc). mypy floor 0; ruff floor 0; both preserved.
+
+---
+
+**Round 2 (PRs #201-#233) — post-Spec-012 cleanup, audits, dual-pilot launch + landing, day-end synthesis**
+
+**Dual-pilot launch + landing arc** (PRs #214-#231): BR-3 v2 ($16) + WC-11 v2 ($24) launched at user authorization end of Phase 6; both landed within ~12h via 4-PR-per-pilot template (PR #218). 8 PRs total in landing arc.
+
+**BR-3 v2 → DIFFERENTIAL VERDICT** (PRs #225-#227 + memory write): NVDA + AAPL × 5 dates × 4 modes (n=40, $16). Sub-A `news_analyst` NULL-leaning (0pp commit shift); sub-B `fundamentals_analyst` PARTIAL ALT-B (+40pp commit shift consistent across both NVDA + AAPL). **2 of 3 analyst stages carry the structured-output bottleneck (market + fundamentals); news does NOT.** Tools-rich analysts carry it; narrative analyst doesn't. Phase E STILL not unblocked (calibration unproven). L4 Squeak status narrowed to "fundamentals-stage focus".
+
+**WC-11 v2 → PARTIAL VERDICT + Constitution v1.5.3** (PRs #228-#231): NVDA + AAPL + MSFT × 5 dates × 4 permutations (n=60, $24). NVDA reproduces v1 EXACTLY (`news_fundamentals_market` 40%); AAPL elevates with NEWS-LAST ordering; MSFT elevates with fundamentals-EARLY. **No single analyst-position rule explains all 3 tickers simultaneously.** Constitution VII v1.5.2 → **v1.5.3** PATCH: new "Ticker-conditional clarification" paragraph in Analyst-order scope sub-section. Analyst-order effect is **TICKER-CONDITIONAL**, not framework-general first-speaker bias.
+
+**Bear-side mechanism class survey 6 → 7 evaluated** (memory update): Class 4 PASS adds the FIRST cross-asset/macro mechanism class; survey framing is now OPEN-ENDED (Class 4 proved new mechanism class hypotheses can surface). Updated `reference_bear_side_mechanism_survey_complete.md` to 7-evaluated / 2-PASS.
+
+**Pre-scaffolding density** (PRs #214 + #215 + #218): dual-pilot launch playbook (PR #214) + Constitution v1.5.3 conditional patches × 5 (PR #215) + 4-PR-per-pilot landing template (PR #218). Saved ~30-45 min on landing arc PRs #225-#231.
+
+**Audits + retrospectives** (PRs #201-#213, #220-#224): release notes + bear-side mechanism class re-check + EXPERIMENT.md backlog refresh + ROADMAP open-questions row updates + `sector_alpha_attribution.py` dual-schema fix + sector_alpha output-path fix + L4 Squeak status narrowing + `claudedocs/research-burst-2026-05-09.md` synthesis refreshes (14 → 27 → 39 → 52 PRs across 4 cycles).
+
+**Day-end synthesis + verification** (PRs #232-#233): research-burst synthesis refreshed to full 52-PR scope (PR #232); CLAUDE.md test count synced 1146 → 1193 via live pytest verification (PR #233).
+
+**Day-end status**: Both dual-pilot landing arcs COMPLETE. v0.12.0-spec-012 release tag applied. Constitution v1.5.3 ratified. WC-10 research arc CLOSED. Bear-side mechanism class survey at 7-evaluated / 2-PASS. Cumulative 4-day arc: ~214+ PRs across 2026-05-06/07/08/09 / ~$96.40 LLM / ~$0.45/PR cumulative.
 
 ### Added (2026-05-08 — WC-10 v1 ALT-A confirmed + Constitution v1.4.6 → v1.5.0 + mypy 126 → 0)
 
