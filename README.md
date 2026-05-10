@@ -8,7 +8,7 @@ Upstream docs in [`README.upstream.md`](README.upstream.md). Upstream release hi
 
 **At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls are no better than coin flip.** At 21-day windows, the framework's bullish commits (Buy + Overweight) produce **+1.23% mean alpha across n=71 commits (~61% hit rate) — POSITIVE AT MODERATE CONFIDENCE.** Three-period NVDA cross-validation (Q1 2026 / Q4 2025 / Q3 2025): two of three periods positive; Q4 2025 is the negative outlier.
 
-**WC-10 research arc CLOSED (v1 + v2 + v3 + Spec 009 Branch C, $54.40 LLM total)**: mode collapse to Hold is **MULTI-MECHANISM** (4 distinct structural sources documented per Constitution VII v1.5.0/v1.5.1/v1.5.2). v1 (n=20) confirmed SC-007 ALT-A at 3.6× commit ratio. **v2 (n=100, 8 tickers) verdict: SC-005(b) NULL** (Pearson r +0.0918, Spearman ρ +0.0410; both below ±0.197 critical) — scalar magnitude carries no signal beyond what the bin captures. **SC-007 ALT-A PARTIAL** (5/8 tickers ≥80% commit; JNJ 10% + GOOG 60% + JPM 70% retain Hold-default → fall back into VII original sub-population). **Bullish-amplification REPLICATES at expanded n** (Buy n=20 combined α +2.93% / 80% hit; OW n=32 α +2.10% / 53% hit). v3 (Q4 2025 NVDA) PARTIAL ALT-A within ±100bps NULL region. **Spec 009 Branch C activated**: bin-then-output ergonomic-only mode (5-tier external preserved; continuous internal for audit). See [`experiments/2026-05-08-002-wc-10-v2-ticker-expansion/ANALYSIS.md`](experiments/2026-05-08-002-wc-10-v2-ticker-expansion/ANALYSIS.md). Sister pilots: WC-11 analyst-order randomization PARTIAL ALT-A + ALT-B (Constitution v1.5.2); BR-3 Squeak market-analyst PARTIAL ALT-B (Phase E NOT unblocked).
+**WC-10 research arc CLOSED (v1 + v2 + v3 + Spec 009 Branch C, $54.40 LLM total)**: mode collapse to Hold is **MULTI-MECHANISM** (4 distinct structural sources documented per Constitution VII v1.5.0/v1.5.1/v1.5.2/v1.5.3). v1 (n=20) confirmed SC-007 ALT-A at 3.6× commit ratio. **v2 (n=100, 8 tickers) verdict: SC-005(b) NULL** (Pearson r +0.0918, Spearman ρ +0.0410; both below ±0.197 critical) — scalar magnitude carries no signal beyond what the bin captures. **SC-007 ALT-A PARTIAL** (5/8 tickers ≥80% commit; JNJ 10% + GOOG 60% + JPM 70% retain Hold-default → fall back into VII original sub-population). **Bullish-amplification REPLICATES at expanded n** (Buy n=20 combined α +2.93% / 80% hit; OW n=32 α +2.10% / 53% hit). v3 (Q4 2025 NVDA) PARTIAL ALT-A within ±100bps NULL region. **Spec 009 Branch C activated**: bin-then-output ergonomic-only mode (5-tier external preserved; continuous internal for audit). See [`experiments/2026-05-08-002-wc-10-v2-ticker-expansion/ANALYSIS.md`](experiments/2026-05-08-002-wc-10-v2-ticker-expansion/ANALYSIS.md). Sister pilots: **WC-11 v1 PARTIAL ALT-A + ALT-B** (Constitution v1.5.2 Analyst-order scope) + **WC-11 v2 PARTIAL ticker-conditional** (Constitution v1.5.3 Ticker-conditional clarification — analyst-order effect is TICKER-CONDITIONAL not framework-general; NVDA news-first / AAPL news-last / MSFT fundamentals-early); **BR-3 v1 market-analyst PARTIAL ALT-B** + **BR-3 v2 DIFFERENTIAL** (sub-A news_analyst NULL / sub-B fundamentals_analyst PARTIAL ALT-B at +40pp commit shift — 2 of 3 analyst stages carry the structured-output bottleneck; tools-rich analysts carry it, narrative analyst doesn't; Phase E STILL not unblocked).
 
 Bearish commits are regime-asymmetric (UW on bear-correct tickers ARE directionally appropriate; UW on bull-regime tickers drive the aggregate anti-calibration).
 
@@ -29,7 +29,7 @@ Full synthesis + cross-period evidence + per-failure-mode analysis in [`RESEARCH
 | [Spec X-1 C-4 institutional rotation](specs/091-c4-institutional-rotation/) | quantitative 13F flow | SHADOW bear / OFF bull | +5.41pp standalone / +8.06pp additive vs Spec 007 |
 | [Spec 012 Class 4 macro-environment](specs/012-class-4-macro-filter/) | cross-asset macro (VIX-snapshot) | SHADOW bear @ VIX<18 / OFF bull | +24.07pp net Δα / 75% hit on n=8 retrospective; mechanism-disjoint vs A3 |
 
-8 candidates retrospectively SKIPPED before any spec was written (Spec 005, Spec 009-cand, 5 of 6 PR #22 bear-side mechanism classes, Spec 010 Class 5 BULL fundamentals-delta). Pre-spec validation per Constitution Principle VIII saved ~30-40h of empty-spec implementation. See [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) for module paths + spec directories.
+10 candidates retrospectively SKIPPED/DEFERRED before any spec was written (Spec 005, Spec 009-cand, 5 of 7 evaluated bear-side mechanism classes — original 6 from PR #22 plus Class 4 macro added 2026-05-09 → bear-side survey now at **7-evaluated / 2-PASS** with C-4 institutional rotation + Class 4 macro both shipped, Spec 010 Class 5 BULL fundamentals-delta, **Class 4 BULL SKIP** + **local-high BULL DEFER** added 2026-05-09). Pre-spec validation per Constitution Principle VIII saved ~30-40h of empty-spec implementation. Bear-side mechanism class survey is now **OPEN-ENDED** post-Class 4 (new mechanism class hypotheses can surface). See [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) for module paths + spec directories.
 
 ## Quick start
 
@@ -50,12 +50,12 @@ tradingagents analyze --checkpoint
 
 ## WC-10 mode (research arc CLOSED; Spec 009 Branch C active)
 
-WC-10 replaces the 5-tier categorical PortfolioRating enum (Buy / Overweight / Hold / Underweight / Sell) with a continuous scalar in `[-1.0, +1.0]` (signed conviction magnitude). Per Constitution VII v1.5.0/v1.5.1/v1.5.2, the 5-tier scale is now characterized as MULTI-MECHANISM (4 distinct structural sources of mode collapse to Hold).
+WC-10 replaces the 5-tier categorical PortfolioRating enum (Buy / Overweight / Hold / Underweight / Sell) with a continuous scalar in `[-1.0, +1.0]` (signed conviction magnitude). Per Constitution VII v1.5.0/v1.5.1/v1.5.2/v1.5.3, the 5-tier scale is now characterized as MULTI-MECHANISM (4 distinct structural sources of mode collapse to Hold).
 
 **Status (as of 2026-05-09)**: WC-10 research arc CLOSED. v1 (n=20): SC-007 ALT-A confirmed (3.6× commit ratio). v2 (n=80, 8 tickers): SC-005(b) **NULL** (combined v1+v2 Pearson r +0.0918 < ±0.197 critical at n=100); SC-007 ALT-A **PARTIAL** (5/8 tickers ≥80% commit). v3 (Q4 2025 NVDA): PARTIAL ALT-A within ±100bps NULL region. **Spec 009 Branch C selected** — bin-then-output ergonomic-only mode (5-tier external; continuous internal). Operator activation: `wc_10_enabled=True` + `wc_10_filter_mode="bypass"` + `wc_10_internal_only=True` in PARAMS.json. **Branch A** (`daily_signals.py --wc-10-enabled` flag) **NOT activated** per v2 NULL verdict; production-facing signals remain 5-tier. Full guide at [`docs/SIGNALS.md`](docs/SIGNALS.md) WC-10 section.
 
 ```bash
-# Research mode — opt in via PARAMS.json today (Spec 108):
+# Research mode — opt in via PARAMS.json today (Spec 009):
 # {
 #   "config_overrides": {
 #     "wc_10_enabled": true,
@@ -71,16 +71,7 @@ python scripts/wc_10_dryrun_digest.py --date 2026-04-15
 python scripts/wc_10_underperformance_monitor.py --csv <paired-mode-csv>
 ```
 
-When Branch A activates post-v2:
-
-```bash
-# Operator-facing daily workflow (Branch A only)
-python scripts/daily_signals.py --tickers tickers.txt --wc-10-enabled \
-    --emit-csv ~/.tradingagents/paper/today-wc10.csv
-
-# paper_trade.py consumes scalar for position-sizing
-python scripts/paper_trade.py step --signals-csv ~/.tradingagents/paper/today-wc10.csv
-```
+**Branch A NOT activated** per v2 SC-005(b) NULL verdict — `daily_signals.py` and `paper_trade.py` consume the 5-tier external interface only. The v1 NVDA bullish-amplification ergonomic gain is captured by Branch C's bin-then-output pattern internally; no scalar exposure to operator workflows. Future re-evaluation triggers: SC-005(b) re-test at corpus n≥200 OR new mechanism evidence for scalar-magnitude predictiveness.
 
 **Caveats** (mandatory reading; per Constitution v1.5.1 Bear-regime validation paragraph):
 1. Bullish-side amplification well-calibrated on bull-regime tickers; bearish-side anti-calibrated on rising tickers (v1 AAPL UW pattern + v3 NVDA Buy-on-falling pattern)
@@ -119,7 +110,7 @@ python scripts/uw_suppression_filter.py    # A3 retrospective
 
 ## Constitution
 
-8 principles in [`.specify/memory/constitution.md`](.specify/memory/constitution.md) (**v1.5.2**): Save Everything · One Experiment Per Change · Stay Cheap (T0/T1/T2/T3 cost ladder) · No Production Claims · Steal Liberally · Spec Before Structural Change · **Calibrated Abstention is a Valid Output** · **Retrospective Before Spec for Backward-Looking Price Filters** (extended through v1.5.2 with forward-catalyst-class gate, magnitude fungibility, additive-to-existing-filter gate, behavioral-additive 4th interpretation, **Schema-induced abstention is NOT calibrated abstention** carve-out per WC-10 v1, **Bear-regime validation** paragraph per WC-10 v3, **Analyst-order scope** paragraph per WC-11).
+8 principles in [`.specify/memory/constitution.md`](.specify/memory/constitution.md) (**v1.5.3**): Save Everything · One Experiment Per Change · Stay Cheap (T0/T1/T2/T3 cost ladder) · No Production Claims · Steal Liberally · Spec Before Structural Change · **Calibrated Abstention is a Valid Output** · **Retrospective Before Spec for Backward-Looking Price Filters** (extended through v1.5.3 with forward-catalyst-class gate, magnitude fungibility, additive-to-existing-filter gate, behavioral-additive 4th interpretation, **Schema-induced abstention is NOT calibrated abstention** carve-out per WC-10 v1, **Bear-regime validation** paragraph per WC-10 v3, **Analyst-order scope** paragraph per WC-11, **Ticker-conditional clarification** paragraph per WC-11 v2).
 
 Quality Gate #6 (v1.4.5): operators MUST cross-check memory log entry header data against reflection prose before citing prior entries as evidence. Tooling: `scripts/memory_log_integrity_check.py`.
 
@@ -127,7 +118,7 @@ WC-10 production-deployment monitoring (v1.5.0 caveat enforcement): `scripts/wc_
 
 ## Tests
 
-**1153 unit + 2 integration tests** (80.5% coverage). Production filter modules all at >80% coverage. Mypy clean baseline at 0 errors as of 2026-05-08 sweep (PRs #117-#129 cleared 124 errors / 17 files).
+**1193 unit + 2 integration tests** (81%+ coverage; verified 2026-05-09 PR #233 via `pytest -m unit -q`). Production filter modules all at >80% coverage. Mypy clean baseline at 0 errors maintained since 2026-05-08 sweep (PRs #117-#129 cleared 124 errors / 17 files; ruff also at 0 errors).
 
 ```bash
 pytest                # full suite
