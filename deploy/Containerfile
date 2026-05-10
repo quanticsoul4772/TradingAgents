@@ -1,0 +1,35 @@
+# TradingAgents dashboard container — Phase 2 MVP.
+# Mirrors agent-harness-v2/deploy/Containerfile structure (Python image, slim base).
+# Install path on VPS: /home/agent/tradingagents/deploy/Containerfile
+
+FROM docker.io/library/python:3.12-slim AS dashboard
+
+WORKDIR /app
+
+# Slim deps — dashboard reads JSON files; doesn't need LangChain/etc.
+RUN pip install --no-cache-dir \
+        fastapi \
+        'uvicorn[standard]' \
+        jinja2
+
+# Copy only what the dashboard needs (NOT the engine module — dashboard reads
+# state via filesystem, doesn't import engine code).
+COPY tradingagents/__init__.py /app/tradingagents/__init__.py
+COPY tradingagents/dashboard /app/tradingagents/dashboard
+
+# Mount points (FR-003 read-only separation). Quadlet's Volume= directives
+# bind-mount host dirs here.
+ENV TA_ENGINE_DIR=/var/lib/tradingagents/engine
+ENV TA_LOGS_DIR=/var/lib/tradingagents/logs
+ENV TA_PAPER_DIR=/var/lib/tradingagents/paper
+ENV TA_WATCHLIST=/app/data/watchlists/tech_weighted.txt
+ENV PYTHONUNBUFFERED=1
+
+# Watchlist baked into the image so the trigger endpoint can validate against it.
+COPY data/watchlists /app/data/watchlists
+
+EXPOSE 8000
+
+# Bind 0.0.0.0 inside the container; Quadlet's PublishPort=127.0.0.1:8000
+# enforces localhost-only on the host (FR-010 firewall pattern).
+CMD ["uvicorn", "tradingagents.dashboard.app:app", "--host", "0.0.0.0", "--port", "8000"]

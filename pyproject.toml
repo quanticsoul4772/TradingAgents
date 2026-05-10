@@ -38,6 +38,12 @@ dependencies = [
     "typing-extensions>=4.14.0",
     "tzdata>=2024.2",
     "yfinance>=0.2.63",
+    # Spec 250 dashboard backend (Phase 2). FastAPI for routes, jinja2 for
+    # server-rendered HTML, uvicorn for the ASGI server (also bundled in
+    # the deploy/Containerfile so the container has them too).
+    "fastapi>=0.115.0",
+    "jinja2>=3.1.0",
+    "uvicorn[standard]>=0.32.0",
 ]
 # Removed 2026-05-05 (zero references in code; verified by tech-debt audit
 # claudedocs/tech-debt-2026-05-05.md): redis, parsel, tqdm, pytz,
