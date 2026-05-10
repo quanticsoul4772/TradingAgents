@@ -8,7 +8,15 @@ Upstream docs in [`README.upstream.md`](README.upstream.md). Upstream release hi
 
 **At 5-day windows the framework is at the LLM single-call calibration ceiling — strong calls are no better than coin flip.** At 21-day windows, the framework's bullish commits (Buy + Overweight) produce **+1.23% mean alpha across n=71 commits (~61% hit rate) — POSITIVE AT MODERATE CONFIDENCE.** Three-period NVDA cross-validation (Q1 2026 / Q4 2025 / Q3 2025): two of three periods positive; Q4 2025 is the negative outlier.
 
-**WC-10 research arc CLOSED (v1 + v2 + v3 + Spec 009 Branch C, $54.40 LLM total)**: mode collapse to Hold is **MULTI-MECHANISM** (4 distinct structural sources documented per Constitution VII v1.5.0/v1.5.1/v1.5.2/v1.5.3). v1 (n=20) confirmed SC-007 ALT-A at 3.6× commit ratio. **v2 (n=100, 8 tickers) verdict: SC-005(b) NULL** (Pearson r +0.0918, Spearman ρ +0.0410; both below ±0.197 critical) — scalar magnitude carries no signal beyond what the bin captures. **SC-007 ALT-A PARTIAL** (5/8 tickers ≥80% commit; JNJ 10% + GOOG 60% + JPM 70% retain Hold-default → fall back into VII original sub-population). **Bullish-amplification REPLICATES at expanded n** (Buy n=20 combined α +2.93% / 80% hit; OW n=32 α +2.10% / 53% hit). v3 (Q4 2025 NVDA) PARTIAL ALT-A within ±100bps NULL region. **Spec 009 Branch C activated**: bin-then-output ergonomic-only mode (5-tier external preserved; continuous internal for audit). See [`experiments/2026-05-08-002-wc-10-v2-ticker-expansion/ANALYSIS.md`](experiments/2026-05-08-002-wc-10-v2-ticker-expansion/ANALYSIS.md). Sister pilots: **WC-11 v1 PARTIAL ALT-A + ALT-B** (Constitution v1.5.2 Analyst-order scope) + **WC-11 v2 PARTIAL ticker-conditional** (Constitution v1.5.3 Ticker-conditional clarification — analyst-order effect is TICKER-CONDITIONAL not framework-general; NVDA news-first / AAPL news-last / MSFT fundamentals-early); **BR-3 v1 market-analyst PARTIAL ALT-B** + **BR-3 v2 DIFFERENTIAL** (sub-A news_analyst NULL / sub-B fundamentals_analyst PARTIAL ALT-B at +40pp commit shift — 2 of 3 analyst stages carry the structured-output bottleneck; tools-rich analysts carry it, narrative analyst doesn't; Phase E STILL not unblocked).
+Mode collapse to Hold is **MULTI-MECHANISM** — 4 distinct structural sources documented per Constitution VII v1.5.0 → v1.5.1 → v1.5.2 → v1.5.3. Three research arcs landed in 2026-05 quantify the mechanisms:
+
+- **WC-10 research arc CLOSED** ($54.40 LLM): output-schema bottleneck. v1 SC-007 ALT-A confirmed at 3.6× commit ratio; v2 (n=100, 8 tickers) SC-005(b) **NULL** (Pearson r +0.0918 < ±0.197 critical); SC-007 ALT-A PARTIAL (5/8 tickers); bullish-amplification REPLICATES (Buy n=20 α +2.93% / 80% hit); v3 (Q4 2025 NVDA) PARTIAL ALT-A within ±100bps NULL. **Spec 009 Branch C activated** (bin-then-output ergonomic-only; 5-tier external preserved). Branch A NOT activated per v2 NULL. See [`## WC-10 mode`](#wc-10-mode-research-arc-closed-spec-009-branch-c-active) section below.
+
+- **WC-11 research arc OPEN at PARTIAL** ($32 LLM = v1 $8 + v2 $24): analyst-order bottleneck. v1 (n=20) PARTIAL ALT-A + ALT-B at per-permutation commit rate 0% → 40%; cannot disambiguate first-vs-last-speaker bias at this n. v2 (n=60, 3 tickers) PARTIAL **ticker-conditional**: NVDA reproduces v1 news-first elevation EXACTLY (40%); AAPL elevates news-LAST (60%); MSFT elevates fundamentals-EARLY. **No single analyst-position rule explains all 3 tickers.** Constitution v1.5.2 Analyst-order scope + v1.5.3 Ticker-conditional clarification both per WC-11. See [`## WC-11 analyst-order randomization`](#wc-11-analyst-order-randomization-research-arc-open-partial-ticker-conditional) section below.
+
+- **BR-3 research arc OPEN at DIFFERENTIAL** ($24 LLM = v1 $8 + v2 $16): analyst-stage structured-output bottleneck. v1 (market analyst, n=20) PARTIAL ALT-B at +20pp commit shift / α delta below ±1pp threshold. v2 (n=40) **DIFFERENTIAL**: sub-A `news_analyst` NULL-leaning (0pp); sub-B `fundamentals_analyst` PARTIAL ALT-B at **+40pp** (2× v1 magnitude). **2 of 3 analyst stages carry the bottleneck** (market + fundamentals); narrative analyst doesn't. Tools-rich analysts carry it. **Phase E (structured-output throughout) STILL NOT unblocked** at this evidence level. No Constitution amendment. See [`## BR-3 analyst-stage structured-output`](#br-3-analyst-stage-structured-output-research-arc-open-differential--phase-e-not-unblocked) section below.
+
+- **Spec 012 Class 4 macro-environment filter DEPLOYED** (2026-05-09): FIRST cross-asset/macro bear-side filter. Default-shadow @ VIX < 18; n=8 retrospective fires; net Δα +24.07pp; cohort hit 75%. Mechanism-disjoint vs A3 (catches 6 of 22 ticker_strong bear cohort A3 misses entirely). Bear-side mechanism class survey now at **7-evaluated / 2-PASS** (C-4 institutional rotation = Spec X-1 + Class 4 macro = Spec 012); survey re-opened to OPEN-ENDED. See [`## Spec 012 Class 4 macro filter`](#spec-012-class-4-macro-environment-filter-first-cross-assetmacro) section below.
 
 Bearish commits are regime-asymmetric (UW on bear-correct tickers ARE directionally appropriate; UW on bull-regime tickers drive the aggregate anti-calibration).
 
@@ -77,6 +85,79 @@ python scripts/wc_10_underperformance_monitor.py --csv <paired-mode-csv>
 1. Bullish-side amplification well-calibrated on bull-regime tickers; bearish-side anti-calibrated on rising tickers (v1 AAPL UW pattern + v3 NVDA Buy-on-falling pattern)
 2. Magnitude bound: `|α delta vs 5-tier| < 1.0pp` per v3 cohort empirical evidence
 3. Runtime monitoring (`wc_10_underperformance_monitor.py`) is the production enforcement of the caveat — wire it into nightly cron when Branch A activates
+
+## WC-11 analyst-order randomization (research arc OPEN, PARTIAL ticker-conditional)
+
+WC-11 tests whether the framework's commit-rate metrics are stable under randomization of the analyst-execution order (`market`, `news`, `fundamentals` in different sequences). The DEFAULT order is `[market, news, fundamentals]`; v1 found the DEFAULT is empirically Hold-biased.
+
+**v1** (NVDA × 5 dates × 4 permutations, n=20, $8 LLM, [`experiments/2026-05-08-004-wc11-order-randomization/`](experiments/2026-05-08-004-wc11-order-randomization/)): per-permutation commit rate ranged **0% → 40%** (±20pp from pooled mean). Both ALT-A (news-first elevates) and ALT-B (market-last drops) triggers fired on the SAME `news_fundamentals_market` permutation — **cannot disambiguate first-speaker vs last-speaker bias at this n**. Constitution VII v1.5.1 → **v1.5.2** PATCH: new "Analyst-order scope" paragraph mandating future commit-rate ablations randomize order or document as confounder.
+
+**v2** (NVDA + AAPL + MSFT × 5 dates × 4 permutations, n=60, $24 LLM, [`experiments/2026-05-09-002-wc11-v2-disambiguation/`](experiments/2026-05-09-002-wc11-v2-disambiguation/)): cross-ticker generalization test. Per-permutation × per-ticker commit-rate matrix:
+
+| Permutation | NVDA | AAPL | MSFT |
+|---|---:|---:|---:|
+| `market_news_fundamentals` (DEFAULT) | 0% | 20% | 20% |
+| `news_fundamentals_market` | **40%** | 20% | **40%** |
+| `fundamentals_market_news` | 0% | **60%** | **40%** |
+| `market_fundamentals_news` | 0% | **60%** | 0% |
+
+NVDA reproduces v1 news-first elevation EXACTLY (40% in both v1 + v2). AAPL elevates with NEWS-LAST orderings (60% on the 2 perms where news appears last). MSFT elevates when fundamentals appears EARLY. **No single analyst-position rule explains all 3 tickers simultaneously.** The v1 ALT-A vs ALT-B ambiguity is now joined by a TICKER-ASYMMETRY finding. Constitution VII v1.5.2 → **v1.5.3** PATCH: new "Ticker-conditional clarification" paragraph documenting that the analyst-order effect is ticker-conditional, not framework-general.
+
+**Operational implications**:
+1. Continue to randomize analyst order OR document as confounder per v1.5.2
+2. Do NOT assume news-first is uniformly preferable — only NVDA-like tickers benefit; AAPL-like tickers benefit from news-LAST
+3. Per-ticker analysis is necessary; pooled analyses across heterogeneous ticker sets average out the order-effect
+
+**Open question**: WC-11 v3-class extension (broader ticker basket, ≥5 tickers × 5 dates × 4 perms; ~$40 T3) would test whether the ticker-conditional pattern generalizes beyond the v2 NVDA/AAPL/MSFT mix. Tracked in [`ROADMAP.md`](ROADMAP.md) Open Questions.
+
+## BR-3 analyst-stage structured-output (research arc OPEN, DIFFERENTIAL — Phase E NOT unblocked)
+
+BR-3 (codename **Squeak**, ported from `battlecode2026 ratbot6`) replaces an analyst's prose output with a Pydantic-structured `{bullish, bearish, key_risks}` emission. Tests whether the prose-to-structured representation change at the analyst stage shifts downstream PM commit-rate or α calibration.
+
+**v1** (market analyst only, NVDA + AAPL × 5 dates × 2 modes, n=20, $8 LLM, [`experiments/2026-05-09-001-br3-squeak-market-analyst/`](experiments/2026-05-09-001-br3-squeak-market-analyst/)): commit shift +20pp triggered (ALT-B trigger MET) but α delta +0.24pp BELOW the ±1pp ALT-B magnitude threshold. **PARTIAL ALT-B**. NVDA unanimous-Hold across all 10 propagates; AAPL is the only divergence ticker.
+
+**v2** (news + fundamentals analysts, NVDA + AAPL × 5 dates × 4 modes, n=40, $16 LLM, [`experiments/2026-05-09-003-br3-v2-news-fundamentals/`](experiments/2026-05-09-003-br3-v2-news-fundamentals/)): cross-stage generalization test. **DIFFERENTIAL VERDICT**:
+
+| Sub-experiment | Verdict | Commit shift | α delta |
+|---|---|---:|---:|
+| sub-A `news_analyst` | **NULL-leaning** | 0pp | +1.60pp* |
+| sub-B `fundamentals_analyst` | **PARTIAL ALT-B** | **+40pp** | +0.11pp |
+
+*α delta on sub-A is single-row noise (1 NVDA structured Buy at +20% realized α dominates n=10).
+
+**Joint synthesis across all 3 analyst stages** (BR-3 v1 + v2):
+
+| Stage | Verdict | Commit shift |
+|---|---|---:|
+| Market analyst (v1) | PARTIAL ALT-B | +20pp |
+| News analyst (v2 sub-A) | **NULL** | 0pp |
+| Fundamentals analyst (v2 sub-B) | PARTIAL ALT-B | **+40pp** |
+
+**2 of 3 analyst stages carry the structured-output commit-shift bottleneck** (market + fundamentals); 1 of 3 does NOT (news). **Asymmetric mechanism interpretation**: tools-rich analysts (market = technical indicators / fundamentals = financial metrics) carry the bottleneck; prose-heavy analyst (news = narrative) does NOT. When analyst output is fundamentally NUMERIC, prose serialization loses information that structured emission preserves.
+
+**Phase E architectural variant ("structured-output throughout") still NOT unblocked** at this evidence level: PARTIAL ALT-B α magnitudes BELOW ±1pp threshold can't validate calibration. Phase E remains conditional on a v3 cohort with n=30+ commits per analyst stage. Cross-pollination L4 status NARROWED from "pilot-eligible" to **"pilot-eligible (focus on fundamentals analyst stage)"**.
+
+**Open question**: BR-3 v3-class extension (combined market + fundamentals structured modes, ~$8-16 T2) would test whether stacking the 2 confirmed-bottleneck stages pushes α delta above ±1pp ALT-B calibration threshold. Tracked in [`ROADMAP.md`](ROADMAP.md) Open Questions.
+
+## Spec 012 Class 4 macro-environment filter (FIRST cross-asset/macro)
+
+Spec 012 ships the framework's FIRST cross-asset/macro filter: bear-side suppression of UW/Sell commits to Hold when VIX is below threshold. Mechanism-disjoint from all 9 prior filters (A3 / Spec 003 / Spec 003.5 / Spec 004 / Spec 006 / Spec 007 / Spec 008 / Spec X-1 — none consume cross-asset macro state).
+
+**Deployed default**: bear-side `class_4_macro_bear_mode = "shadow"` @ `class_4_macro_vix_threshold = 18.0`; bull-side OFF (asymmetric — bull retrospective SKIP'd at every threshold). 5-PR bundle deployment (#194 spec → #197 plan → #198 module → #199 tests → #200 polish + retrospective).
+
+**Empirical evidence** ([`claudedocs/class4-macro-filter-retrospective-2026-05-09.md`](claudedocs/class4-macro-filter-retrospective-2026-05-09.md)):
+
+| Gate | Result |
+|---|---|
+| Standalone (Constitution VIII v1.4.0) | **PASS** at n=8 fires; net Δα +24.07pp; cohort hit 75% (6 of 22 ticker_strong cohort caught) |
+| Additive (Constitution VIII v1.4.3) vs A3 | **PASS** mechanism-disjoint — A3 catches 0 of 22 ticker_strong cohort by definition; Class 4 catches 6 |
+| Discriminator | VIX 30d Δ% (ticker_strong cohort committed bear when VIX rising +10.50%/30d vs other-bear-cells +22.96%; -12.46pp Δ) |
+
+**Filter ordering** (FR-012): A3 → Spec 003/003.5 → Spec 004 → Spec 006 → Spec 007 → Spec X-1 → **Class 4 (LAST per smallest-sample-last rule)**. Zero LLM cost (Constitution III T0); ~250ms p99 latency cache-cold.
+
+**Bear-side mechanism class survey re-opened to 7-evaluated / 2-PASS** post-Class 4 (joins C-4 institutional rotation = Spec X-1). Survey is now **OPEN-ENDED** — Class 4 itself was NEW post-2026-05-07 conclusion, demonstrating new mechanism class hypotheses can surface beyond the original PR #22 6-class taxonomy.
+
+**Audit script**: `scripts/class4_macro_shadow_audit.py` for SC-010 default-on flip readiness (deferred until 30+ live shadow-mode fires accumulate).
 
 ## Backtest
 
