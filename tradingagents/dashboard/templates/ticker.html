@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% macro rating_class(r) %}
+{%- if r == 'Buy' %}rating-buy{% elif r == 'Overweight' %}rating-ow{% elif r == 'Underweight' %}rating-uw{% elif r == 'Sell' %}rating-sell{% else %}rating-hold{% endif -%}
+{% endmacro %}
+
+{% macro section(title, body, open=false) %}
+<details class="bg-white rounded-lg shadow mb-3" {% if open %}open{% endif %}>
+  <summary class="cursor-pointer p-3 font-semibold text-sm uppercase tracking-wide text-gray-700 hover:bg-gray-50">
+    {{ title }} <span class="text-xs text-gray-400 normal-case font-normal">({{ body|length }} chars)</span>
+  </summary>
+  <div class="p-3 prose prose-sm max-w-none whitespace-pre-wrap font-mono text-xs leading-relaxed border-t border-gray-100">{{ body }}</div>
+</details>
+{% endmacro %}
+
+{% block content %}
+<div class="flex items-baseline justify-between flex-wrap gap-2 mb-4">
+  <h1 class="text-2xl font-bold">{{ ticker }}</h1>
+  <div class="text-sm">
+    <span class="inline-block px-3 py-1 rounded text-sm font-bold {{ rating_class(rating) }}">{{ rating }}</span>
+  </div>
+</div>
+<div class="text-sm text-gray-500 mb-4">{{ trade_date }} · <a href="/tickers/{{ trade_date }}" class="text-blue-700 hover:underline">all tickers this date →</a></div>
+
+{# Final decision first — most important #}
+{{ section("Portfolio Manager — Final Trade Decision", log.final_trade_decision or '', open=true) }}
+
+{# Investment plan = research manager synthesis #}
+{{ section("Research Manager — Investment Plan", log.investment_plan or '') }}
+
+{# Bull/bear debate — the marquee feature #}
+{% set debate = log.investment_debate_state or {} %}
+{{ section("Bull vs Bear Debate", debate.history or '') }}
+
+{# Risk debate #}
+{% set risk = log.risk_debate_state or {} %}
+{{ section("Risk Debate (Aggressive/Conservative/Neutral)", risk.history or '') }}
+
+{# Trader #}
+{{ section("Trader — Trade Decision", log.trader_investment_decision or '') }}
+
+{# Analyst reports #}
+{{ section("Market Analyst Report", log.market_report or '') }}
+{{ section("News Analyst Report", log.news_report or '') }}
+{{ section("Fundamentals Analyst Report", log.fundamentals_report or '') }}
+{% if log.sentiment_report %}
+{{ section("Social Analyst Report", log.sentiment_report) }}
+{% endif %}
+
+{# Filter audit annotations #}
+{% if log.contrarian_gate %}
+<div class="bg-white rounded-lg shadow p-3 mb-3 text-xs">
+  <strong>Spec 003 contrarian gate:</strong>
+  <pre class="mt-1 font-mono whitespace-pre-wrap">{{ log.contrarian_gate | tojson(indent=2) }}</pre>
+</div>
+{% endif %}
+{% if log.forward_catalyst %}
+<div class="bg-white rounded-lg shadow p-3 mb-3 text-xs">
+  <strong>Spec 007 forward-catalyst:</strong>
+  <pre class="mt-1 font-mono whitespace-pre-wrap">{{ log.forward_catalyst | tojson(indent=2) }}</pre>
+</div>
+{% endif %}
+{% if log.class_4_macro %}
+<div class="bg-white rounded-lg shadow p-3 mb-3 text-xs">
+  <strong>Spec 012 Class 4 macro:</strong>
+  <pre class="mt-1 font-mono whitespace-pre-wrap">{{ log.class_4_macro | tojson(indent=2) }}</pre>
+</div>
+{% endif %}
+{% endblock %}

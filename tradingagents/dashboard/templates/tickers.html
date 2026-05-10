@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% macro rating_class(r) %}
+{%- if r == 'Buy' %}rating-buy{% elif r == 'Overweight' %}rating-ow{% elif r == 'Underweight' %}rating-uw{% elif r == 'Sell' %}rating-sell{% else %}rating-hold{% endif -%}
+{% endmacro %}
+
+{% block content %}
+<h1 class="text-xl font-bold mb-4">Tickers — {{ trade_date }}</h1>
+{% if not rows %}
+  <div class="bg-white rounded-lg shadow p-6 text-center text-gray-600">
+    No state logs found for {{ trade_date }}.
+  </div>
+{% else %}
+<div class="bg-white rounded-lg shadow overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="text-left px-3 py-2">Ticker</th>
+        <th class="text-left px-3 py-2">Rating</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {%- for r in rows %}
+      <tr>
+        <td class="px-3 py-2 font-mono">
+          <a href="/ticker/{{ r.ticker }}/{{ trade_date }}" class="hover:underline text-blue-700">{{ r.ticker }}</a>
+        </td>
+        <td class="px-3 py-2">
+          <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold {{ rating_class(r.rating) }}">{{ r.rating }}</span>
+        </td>
+      </tr>
+      {%- endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

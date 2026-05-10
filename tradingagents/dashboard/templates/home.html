@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% macro rating_class(r) %}
+{%- if r == 'Buy' %}rating-buy{% elif r == 'Overweight' %}rating-ow{% elif r == 'Underweight' %}rating-uw{% elif r == 'Sell' %}rating-sell{% else %}rating-hold{% endif -%}
+{% endmacro %}
+
+{% block content %}
+{% if not summary.exists %}
+  <!-- FR-004 SC-004: empty state for day 0 -->
+  <div class="bg-white rounded-lg shadow p-6 mt-4">
+    <h1 class="text-xl font-bold mb-2">No runs yet</h1>
+    <p class="text-gray-600 mb-4">The engine hasn't been invoked yet. The daily timer fires Mon-Fri at 17:00 ET.</p>
+    <p class="text-sm text-gray-500">Manual fire on the VPS:</p>
+    <pre class="bg-gray-100 p-3 rounded text-xs overflow-x-auto mt-2"><code>sudo systemctl start tradingagents-engine-daily.service
+# or single ticker:
+sudo systemctl start 'tradingagents-engine-adhoc@NVDA.service'</code></pre>
+  </div>
+{% else %}
+  {% if summary.stale %}
+    <div class="bg-red-100 border border-red-300 text-red-900 p-3 rounded mb-4">
+      ⚠ <strong>STALE</strong> — heartbeat &gt; 90s; engine may have crashed.
+    </div>
+  {% endif %}
+
+  <div class="bg-white rounded-lg shadow p-4 mb-4">
+    <div class="flex items-baseline justify-between flex-wrap gap-2">
+      <h1 class="text-xl font-bold">Trade date {{ summary.trade_date }}</h1>
+      <div class="text-sm text-gray-600">
+        {{ summary.completed_count }}/{{ summary.watchlist_size }} done
+        {% if summary.failed_count %}· <span class="text-red-700">{{ summary.failed_count }} failed</span>{% endif %}
+        · <span class="font-mono">${{ '%.2f' | format(summary.cost_so_far_usd) }}</span> LLM
+      </div>
+    </div>
+    <div class="text-xs text-gray-500 font-mono mt-1">{{ summary.run_id }}</div>
+  </div>
+
+  {% if summary.current_ticker %}
+    <div class="bg-blue-50 border border-blue-200 text-blue-900 p-3 rounded mb-4">
+      ▶ in flight: <strong>{{ summary.current_ticker }}</strong> · {{ summary.current_agent_stage or 'starting…' }}
+      <a href="/live" class="text-blue-700 hover:underline ml-2">→ live view</a>
+    </div>
+  {% endif %}
+
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="text-left px-3 py-2">Ticker</th>
+          <th class="text-left px-3 py-2">Rating</th>
+          <th class="text-left px-3 py-2 hidden sm:table-cell">Completed</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {%- set bullish = summary.completed | selectattr('rating', 'in', ['Buy','Overweight']) | list %}
+        {%- set hold    = summary.completed | selectattr('rating', 'equalto', 'Hold') | list %}
+        {%- set bearish = summary.completed | selectattr('rating', 'in', ['Underweight','Sell']) | list %}
+        {%- for r in bullish + hold + bearish %}
+          <tr>
+            <td class="px-3 py-2 font-mono">
+              <a href="/ticker/{{ r.ticker }}/{{ summary.trade_date }}" class="hover:underline">{{ r.ticker }}</a>
+            </td>
+            <td class="px-3 py-2">
+              <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold {{ rating_class(r.rating) }}">{{ r.rating }}</span>
+            </td>
+            <td class="px-3 py-2 text-xs text-gray-500 font-mono hidden sm:table-cell">{{ r.completed_at }}</td>
+          </tr>
+        {%- endfor %}
+        {%- for f in summary.failed %}
+          <tr class="bg-yellow-50">
+            <td class="px-3 py-2 font-mono">{{ f.ticker }}</td>
+            <td class="px-3 py-2"><span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-yellow-200 text-yellow-900">FAILED</span></td>
+            <td class="px-3 py-2 text-xs text-red-700 hidden sm:table-cell">{{ (f.error or '')[:80] }}</td>
+          </tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+{% endblock %}

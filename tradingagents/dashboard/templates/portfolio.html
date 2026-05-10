@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-baseline justify-between flex-wrap gap-2 mb-4">
+  <h1 class="text-xl font-bold">Paper portfolio: {{ portfolio_id }}</h1>
+  {% if all_ids %}
+    <select onchange="window.location='/portfolio?portfolio_id='+this.value" class="text-sm border border-gray-300 rounded px-2 py-1">
+      {% for pid in all_ids %}<option value="{{ pid }}" {% if pid == portfolio_id %}selected{% endif %}>{{ pid }}</option>{% endfor %}
+    </select>
+  {% endif %}
+</div>
+
+{% if not portfolio %}
+  <div class="bg-white rounded-lg shadow p-6 text-center text-gray-600">
+    No portfolio at <code class="font-mono">~/.tradingagents/paper/{{ portfolio_id }}.json</code>.
+  </div>
+{% else %}
+  {% set cash = portfolio.cash_usd | default(0) | float %}
+  {% set positions = portfolio.open_positions or [] %}
+  {% set events = portfolio.events or [] %}
+
+  <div class="grid grid-cols-2 gap-3 mb-4">
+    <div class="bg-white rounded-lg shadow p-3">
+      <div class="text-xs uppercase text-gray-500">Cash</div>
+      <div class="text-lg font-bold font-mono">${{ '%.2f' | format(cash) }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-3">
+      <div class="text-xs uppercase text-gray-500">Open positions</div>
+      <div class="text-lg font-bold">{{ positions|length }}</div>
+    </div>
+  </div>
+
+  {% if positions %}
+  <h2 class="font-bold text-sm uppercase tracking-wide text-gray-500 mb-2">Open positions</h2>
+  <div class="bg-white rounded-lg shadow overflow-hidden mb-4">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-100"><tr>
+        <th class="text-left px-3 py-2">Ticker</th>
+        <th class="text-left px-3 py-2">Entry</th>
+        <th class="text-right px-3 py-2">Shares</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        {%- for pos in positions %}
+        <tr>
+          <td class="px-3 py-2 font-mono">{{ pos.ticker }}</td>
+          <td class="px-3 py-2 text-xs text-gray-500 font-mono">{{ pos.entry_date or '' }}</td>
+          <td class="px-3 py-2 text-right font-mono">{{ pos.shares or 0 }}</td>
+        </tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if events %}
+  <h2 class="font-bold text-sm uppercase tracking-wide text-gray-500 mb-2">Recent events</h2>
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="w-full text-xs font-mono">
+      <thead class="bg-gray-100"><tr>
+        <th class="text-left px-3 py-2">date</th>
+        <th class="text-left px-3 py-2">event</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        {%- for e in events[-15:]|reverse %}
+        <tr>
+          <td class="px-3 py-1 text-gray-500">{{ e.date or e.ts or '' }}</td>
+          <td class="px-3 py-1">{{ e.type or '' }} {{ e.ticker or '' }}</td>
+        </tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+{% endif %}
+{% endblock %}
