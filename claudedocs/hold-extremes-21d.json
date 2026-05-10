@@ -1,9 +1,27 @@
 [
   {
     "ticker": "INTC",
+    "date": "2026-04-03",
+    "alpha": 103.1373586878755,
+    "experiments": "2026-05-05-003-signal-at-scale"
+  },
+  {
+    "ticker": "INTC",
     "date": "2026-03-27",
     "alpha": 83.72766649305974,
     "experiments": "2026-05-03-007-opus47-30pair-mixed"
+  },
+  {
+    "ticker": "INTC",
+    "date": "2025-12-19",
+    "alpha": 46.2957704344167,
+    "experiments": "2026-05-03-008-opus47-cross-period"
+  },
+  {
+    "ticker": "QCOM",
+    "date": "2026-04-03",
+    "alpha": 38.5332975795204,
+    "experiments": "2026-05-05-003-signal-at-scale"
   },
   {
     "ticker": "INTC",
@@ -12,39 +30,33 @@
     "experiments": "2026-05-03-007-opus47-30pair-mixed"
   },
   {
+    "ticker": "LMT",
+    "date": "2026-04-03",
+    "alpha": -30.05810634760059,
+    "experiments": "2026-05-05-003-signal-at-scale"
+  },
+  {
+    "ticker": "INTC",
+    "date": "2025-12-12",
+    "alpha": 27.59336148858798,
+    "experiments": "2026-05-03-008-opus47-cross-period"
+  },
+  {
+    "ticker": "ABT",
+    "date": "2026-04-03",
+    "alpha": -24.630037807327994,
+    "experiments": "2026-05-05-003-signal-at-scale"
+  },
+  {
     "ticker": "INTC",
     "date": "2026-03-06",
     "alpha": 23.8135238499846,
     "experiments": "2026-05-03-007-opus47-30pair-mixed"
   },
   {
-    "ticker": "AAPL",
-    "date": "2025-12-19",
-    "alpha": -10.484768146947452,
-    "experiments": "2026-05-03-008-opus47-cross-period"
-  },
-  {
-    "ticker": "MSFT",
-    "date": "2026-03-06",
-    "alpha": -7.009411475863536,
-    "experiments": "2026-05-02-006-wc12-cross-msft"
-  },
-  {
-    "ticker": "AAPL",
-    "date": "2025-12-26",
-    "alpha": -6.943607061931475,
-    "experiments": "2026-05-03-008-opus47-cross-period"
-  },
-  {
-    "ticker": "AAPL",
-    "date": "2026-01-09",
-    "alpha": 5.798167197103642,
-    "experiments": "2026-05-03-008-opus47-cross-period"
-  },
-  {
-    "ticker": "INTC",
-    "date": "2026-01-30",
-    "alpha": -5.569849033220798,
-    "experiments": "2026-05-03-007-opus47-30pair-mixed"
+    "ticker": "NFLX",
+    "date": "2026-04-03",
+    "alpha": -20.999606184762808,
+    "experiments": "2026-05-05-003-signal-at-scale"
   }
 ]

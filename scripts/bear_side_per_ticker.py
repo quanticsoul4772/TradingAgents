@@ -44,6 +44,8 @@ def main(
     dates = []
     for p in csv_paths:
         df = pd.read_csv(p)
+        if "analysis_date" not in df.columns and "date" in df.columns:
+            df = df.rename(columns={"date": "analysis_date"})
         df = df[(df["error"].isna() | (df["error"] == "")) & (df["rating"].isin(BEAR_RATINGS))]
         for _, r in df.iterrows():
             rows.append(
