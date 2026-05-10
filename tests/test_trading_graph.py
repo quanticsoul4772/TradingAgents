@@ -231,6 +231,53 @@ def test_log_state_writes_json_with_expected_shape(mocked_graph, tmp_path):
     assert saved["final_trade_decision"] == "**Rating**: Hold\n"
 
 
+@pytest.mark.unit
+def test_log_state_atomic_write_leaves_no_tmp_file(mocked_graph, tmp_path):
+    """Atomic-write contract: dashboard tailers reading the state-log dir must
+    never observe a `.tmp` file or a partially-written JSON. The implementation
+    writes to `<name>.json.tmp` then `os.replace` to `<name>.json`. Verify the
+    temp file is gone after the call and only the final file remains.
+    """
+    mocked_graph.ticker = "NVDA"
+    mocked_graph.config["results_dir"] = str(tmp_path)
+    final_state = {
+        "company_of_interest": "NVDA",
+        "trade_date": "2026-02-06",
+        "market_report": "m",
+        "sentiment_report": "s",
+        "news_report": "n",
+        "fundamentals_report": "f",
+        "investment_debate_state": {
+            "bull_history": "b",
+            "bear_history": "b",
+            "history": "h",
+            "current_response": "c",
+            "judge_decision": "Hold",
+        },
+        "trader_investment_plan": "t",
+        "risk_debate_state": {
+            "aggressive_history": "a",
+            "conservative_history": "c",
+            "neutral_history": "n",
+            "history": "h",
+            "judge_decision": "j",
+        },
+        "investment_plan": "ip",
+        "final_trade_decision": "**Rating**: Hold\n",
+    }
+
+    mocked_graph._log_state("2026-02-06", final_state)
+
+    log_dir = tmp_path / "NVDA" / "TradingAgentsStrategy_logs"
+    files = sorted(log_dir.iterdir())
+    # Exactly one file: the final .json. No .tmp leftover.
+    assert len(files) == 1
+    assert files[0].name == "full_states_log_2026-02-06.json"
+    # File is complete + parseable (no truncation).
+    saved = json.loads(files[0].read_text(encoding="utf-8"))
+    assert saved["company_of_interest"] == "NVDA"
+
+
 # -- _resolve_pending_entries ------------------------------------------------
 
 
