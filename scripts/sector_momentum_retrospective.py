@@ -66,6 +66,8 @@ def _load_bullish_commits() -> pd.DataFrame:
         except Exception as exc:  # noqa: BLE001
             print(f"  [warn] failed to read {p}: {exc}")
             continue
+        if "analysis_date" not in df.columns and "date" in df.columns:
+            df = df.rename(columns={"date": "analysis_date"})
         if "rating" not in df.columns or "ticker" not in df.columns:
             continue
         df = df[df["rating"].isin(BULLISH_RATINGS)]
