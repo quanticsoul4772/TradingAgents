@@ -1,6 +1,6 @@
 # UW commit-suppression filter retrospective (A3)
 
-_Generated 2026-05-05T21:23:50.572816_
+_Generated 2026-05-10T07:18:36.286079_
 
 Filter rule: suppress UW (treat as Hold) if ticker is in mean-reversion zone (tic_mom < downside_thr).
 Hypothesis discovered in this analysis: wrong UW commits cluster on tickers already deeply down → forward 21d mean-reverts bullishly.
@@ -9,20 +9,20 @@ Horizon 21d. Convention: UW correct ⇔ α<0.
 
 ## Baseline (no filter)
 
-- n = 43
-- mean α = +11.57%
-- correct rate (α<0) = 33%
+- n = 48
+- mean α = +9.69%
+- correct rate (α<0) = 38%
 
 
 ## Threshold sweep (downside mean-reversion filter)
 
 | downside_thr | n_kept | n_suppressed | kept α | suppressed α | kept correct% | improvement |
 |---|---|---|---|---|---|---|
-| -5.0% | 31 | 12 | +10.88% | +13.37% | 39% | +0.70pp |
-| -7.5% | 33 | 10 | +10.34% | +15.63% | 36% | +1.23pp |
-| -10.0% | 38 | 5 | +11.12% | +14.98% | 34% | +0.45pp |
-| -12.5% | 40 | 3 | +12.46% | -0.34% | 32% | -0.89pp |
-| -15.0% | 40 | 3 | +12.46% | -0.34% | 32% | -0.89pp |
+| -5.0% | 36 | 12 | +8.47% | +13.37% | 44% | +1.23pp |
+| -7.5% | 38 | 10 | +8.13% | +15.63% | 42% | +1.56pp |
+| -10.0% | 43 | 5 | +9.08% | +14.98% | 40% | +0.62pp |
+| -12.5% | 45 | 3 | +10.36% | -0.34% | 38% | -0.67pp |
+| -15.0% | 45 | 3 | +10.36% | -0.34% | 38% | -0.67pp |
 
 ## Per-(ticker, date) UW commit features
 
@@ -37,8 +37,12 @@ Horizon 21d. Convention: UW correct ⇔ α<0.
 | AAPL | 2026-03-06 | +0.42% | ✗ | -0.60% | +5.10% |
 | AAPL | 2026-03-13 | -1.38% | ✓ | -4.22% | -0.27% |
 | AAPL | 2026-03-20 | -1.23% | ✓ | -3.85% | -9.96% |
+| AAPL | 2026-04-01 | -0.39% | ✓ | -4.76% | -3.82% |
 | AAPL | 2026-04-03 | -0.06% | ✓ | -4.19% | -1.79% |
+| AAPL | 2026-04-08 | +2.80% | ✗ | -3.40% | -4.76% |
+| CVX | 2026-04-03 | -12.97% | ✓ | -4.19% | +7.68% |
 | GOOGL | 2026-03-25 | +9.68% | ✗ | -5.88% | -10.45% |
+| HON | 2026-04-03 | -18.23% | ✓ | -4.19% | -4.70% |
 | INTC | 2025-12-26 | +34.01% | ✗ | +1.08% | -4.54% |
 | INTC | 2026-01-02 | +24.13% | ✗ | +2.44% | +6.31% |
 | INTC | 2026-01-09 | +3.75% | ✗ | +3.11% | +14.86% |
@@ -57,6 +61,7 @@ Horizon 21d. Convention: UW correct ⇔ α<0.
 | MSFT | 2026-02-20 | +1.36% | ✗ | -1.06% | -16.73% |
 | MSFT | 2026-03-13 | -5.47% | ✓ | -4.22% | -16.56% |
 | MSFT | 2026-03-27 | +8.08% | ✗ | -6.77% | -9.50% |
+| NVDA | 2025-11-07 | -3.49% | ✓ | +1.86% | +5.85% |
 | NVDA | 2026-02-27 | +1.09% | ✗ | -0.64% | -0.50% |
 | NVDA | 2026-03-06 | +2.11% | ✗ | -0.60% | +0.01% |
 | NVDA | 2026-03-20 | +7.18% | ✗ | -3.85% | +2.51% |
@@ -77,8 +82,8 @@ Horizon 21d. Convention: UW correct ⇔ α<0.
 
 **Suppress UW when ticker 30d momentum < -7.5%** (mean-reversion zone)
 
-- Kept UW commits: n=33, mean α = **+10.34%** (baseline +11.57%)
+- Kept UW commits: n=38, mean α = **+8.13%** (baseline +9.69%)
 - Suppressed commits: n=10
-- α improvement: **+1.23pp**
+- α improvement: **+1.56pp**
 
 _Caveat: in-sample validation on the same 16 commits that informed the hypothesis. Out-of-sample test requires fresh data._
