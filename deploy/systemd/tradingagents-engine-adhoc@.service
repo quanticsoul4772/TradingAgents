@@ -22,19 +22,19 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-User=rawcell
-Group=rawcell
-WorkingDirectory=/srv/tradingagents
+User=agent
+Group=agent
+WorkingDirectory=/home/agent/tradingagents
 
-LoadCredentialEncrypted=anthropic-api-key:/etc/credstore.encrypted/anthropic-api-key
-LoadCredentialEncrypted=exa-api-key:/etc/credstore.encrypted/exa-api-key
+LoadCredentialEncrypted=anthropic-key:/etc/credstore/anthropic-key.encrypted
+LoadCredentialEncrypted=exa-key:/etc/credstore/exa-key.encrypted
 
-Environment=PATH=/srv/tradingagents/.venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PATH=/home/agent/tradingagents/.venv/bin:/usr/local/bin:/usr/bin:/bin
 
 ExecStart=/bin/sh -c '\
-    export ANTHROPIC_API_KEY="$(cat ${CREDENTIALS_DIRECTORY}/anthropic-api-key)" && \
-    export EXA_API_KEY="$(cat ${CREDENTIALS_DIRECTORY}/exa-api-key)" && \
-    /srv/tradingagents/.venv/bin/python -m tradingagents.engine run --ticker %i'
+    export ANTHROPIC_API_KEY="$(cat ${CREDENTIALS_DIRECTORY}/anthropic-key)" && \
+    export EXA_API_KEY="$(cat ${CREDENTIALS_DIRECTORY}/exa-key)" && \
+    /home/agent/tradingagents/.venv/bin/python -m tradingagents.engine run --ticker %i'
 
 Restart=no
 
