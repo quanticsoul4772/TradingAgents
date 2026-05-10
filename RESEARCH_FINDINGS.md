@@ -405,6 +405,39 @@ Bullish-side amplification GENERALIZES at expanded n (Buy +2.93% / 80% hit is th
 
 **Cross-pollination L4 status update**: Squeak structured signaling pattern preserved at "pilot-eligible (focus on fundamentals analyst stage)" — narrowed scope per BR-3 v2 strongest evidence on fundamentals.
 
+## WC-11 v2 disambiguation — PARTIAL verdict + ticker-asymmetry (added 2026-05-09 evening)
+
+**Source**: `experiments/2026-05-09-002-wc11-v2-disambiguation/ANALYSIS.md` (Landing PR #228). Cost: $24 (Constitution III T2; user-authorized via PR #214). 60/60 propagates resolved.
+
+**Design**: 3 tickers (NVDA repeat from v1 + AAPL + MSFT NEW) × 5 dates × 4 analyst-order permutations.
+
+**Verdict: PARTIAL** — NVDA reproduces v1 news_fundamentals_market elevation EXACTLY (40% in both v1 and v2); AAPL + MSFT show DIFFERENT per-permutation patterns:
+
+| Permutation | NVDA | AAPL | MSFT | Pooled |
+|---|---:|---:|---:|---:|
+| market_news_fundamentals (DEFAULT) | 0% | 20% | 20% | 13% |
+| news_fundamentals_market | **40%** | 20% | **40%** | **33%** |
+| fundamentals_market_news | 0% | **60%** | **40%** | 33% |
+| market_fundamentals_news | 0% | **60%** | 0% | 20% |
+
+**Per-ticker pattern asymmetry**:
+- NVDA: news_fundamentals_market is the elevated permutation (40%); reproduces v1 first-speaker effect
+- AAPL: news-LAST orderings elevated (60% each); OPPOSITE of NVDA pattern
+- MSFT: fundamentals-early pattern; doesn't fit pure first or last speaker hypothesis
+
+**No single analyst-position rule explains all 3 tickers**. Whatever first-/last-speaker effect exists is conditional on (model × ticker × regime × prompt) per CLAUDE.md headline. The v1 ALT-A vs ALT-B ambiguity is now joined by a TICKER-ASYMMETRY finding.
+
+**Cross-rerun-variance check (NVDA v1 vs v2)**: 2 of 4 NVDA permutations REPLICATE exactly between v1 and v2 (news_fundamentals_market 40% in both; market_fundamentals_news 0% in both); 2 vary by ±20pp (DEFAULT 20% → 0%; fundamentals_market_news 20% → 0%). Stochastic NVDA variance is approximately ±20pp at n=5 dates per permutation. The news_fundamentals_market elevation IS REAL on NVDA (replicated 40% exactly).
+
+**Constitution implication**: Apply **Patch D from PR #215 conditional drafts** (CLARIFY; v1.5.2 → v1.5.3 PATCH; ticker-conditional clarification paragraph added to Analyst-order scope sub-section). Pre-scaffolded patch shipped via PR #215; deterministic application per the conditional-branch pattern.
+
+**Operational implication**:
+1. Continue to randomize analyst order OR document as confounder per v1.5.2
+2. NOT assume news-first is uniformly preferable — empirically only NVDA-like tickers benefit
+3. Per-ticker analysis is necessary; pooled analyses across heterogeneous ticker sets average out the order-effect
+
+**v1 + v2 cumulative cost**: $32 LLM ($8 v1 + $24 v2). Disambiguation didn't yield clean ALT-A vs ALT-B answer; yielded ticker-asymmetry observation that EXTENDS the original v1 finding rather than disambiguating it.
+
 ## Key claims (load-bearing, n large enough)
 
 1. **5-day strong calls are noise.** Buy α=-1.27% (25% hit), OW α=-0.59% (44%) — bull commits underperform on the realized 5-day window. UW α=+1.04% (60% positive) — bear commits also underperform their direction. **007 single-experiment OW hit rate climb 56→67→75% across 5d→10d→21d** is the cleanest single-experiment evidence yet for horizon-dependent signal emergence.
