@@ -31,9 +31,11 @@ ContainerName=tradingagents-dashboard
 
 # Read-only mounts to engine output + state logs + paper portfolio.
 # Per FR-003 the dashboard is a read-only consumer; never writes to engine state.
-Volume=%h/.tradingagents/engine:/var/lib/tradingagents/engine:ro,Z
-Volume=%h/.tradingagents/logs:/var/lib/tradingagents/logs:ro,Z
-Volume=%h/.tradingagents/paper:/var/lib/tradingagents/paper:ro,Z
+# Source paths are absolute (matches v2 sidecar pattern; %h doesn't resolve in
+# rootful Quadlet context — verified against /home/agent layout on the VPS).
+Volume=/home/agent/.tradingagents/engine:/var/lib/tradingagents/engine:ro,Z
+Volume=/home/agent/.tradingagents/logs:/var/lib/tradingagents/logs:ro,Z
+Volume=/home/agent/.tradingagents/paper:/var/lib/tradingagents/paper:ro,Z
 
 # Bind to 127.0.0.1 only — Caddy reverse-proxies the public surface.
 # Per FR-010: trigger endpoint MUST NOT be reachable through the proxy;
@@ -46,11 +48,12 @@ Environment=TA_LOGS_DIR=/var/lib/tradingagents/logs
 Environment=TA_PAPER_DIR=/var/lib/tradingagents/paper
 Environment=TA_DASHBOARD_PORT=8000
 
-# Run as the same UID as the engine writes (1000 = operator user `rawcell`
-# on the VPS) so reads work cleanly under SELinux Z labels.
+# Run as the same UID as the engine writes (1000 = operator user `agent` on
+# the VPS, SSH-verified) so reads work cleanly under SELinux Z labels.
 User=1000:1000
 
-Exec=/srv/tradingagents/.venv/bin/uvicorn tradingagents.dashboard.app:app --host 127.0.0.1 --port 8000
+# Exec is provided by the container image's CMD (deploy/Containerfile, Phase 2).
+# Quadlet doesn't need an Exec= line when the image has a default CMD.
 
 [Service]
 Restart=on-failure

@@ -26,29 +26,31 @@
 ### 1. Place the source on the VPS
 
 ```bash
-ssh rawcell@vps "sudo mkdir -p /srv/tradingagents && sudo chown rawcell:rawcell /srv/tradingagents"
+ssh rawcell "sudo mkdir -p /home/agent/tradingagents && sudo chown rawcell:rawcell /home/agent/tradingagents"
 ./deploy/deploy.sh
 ```
 
 ### 2. Create the Python venv
 
 ```bash
-ssh rawcell@vps
-cd /srv/tradingagents
+ssh rawcell
+cd /home/agent/tradingagents
 python3.12 -m venv .venv
 .venv/bin/pip install -e .
 ```
 
 ### 3. Provision API keys via systemd-creds
 
-Per the agent-harness-v2 secrets pattern:
+The credstore + cred names match the existing agent-harness-v2 install:
 
 ```bash
-sudo systemd-creds encrypt - /etc/credstore.encrypted/anthropic-api-key
+# Skip if already present (agent-harness-v2 already provisioned anthropic-key
+# and exa-key — verify with: sudo ls /etc/credstore/)
+sudo systemd-creds encrypt - /etc/credstore/anthropic-key.encrypted
 # paste sk-ant-...
 # Ctrl-D
 
-sudo systemd-creds encrypt - /etc/credstore.encrypted/exa-api-key
+sudo systemd-creds encrypt - /etc/credstore/exa-key.encrypted
 # paste exa key
 # Ctrl-D
 ```
@@ -74,10 +76,10 @@ systemctl list-timers tradingagents-engine-daily.timer
 
 Open the existing operator Caddyfile (typically `/srv/agent-harness/caddy/Caddyfile`) and add the `handle_path /trading/*` block from `deploy/Caddyfile.snippet` inside the `rawcell.duckdns.org { ... }` site block. Replace `{{ EXISTING_BCRYPT_HASH }}` with the real bcrypt hash from the existing `rawcell` user definition (use the same hash as `/v2/` and `/dashboard/`).
 
-Reload Caddy:
+Reload Caddy (host-installed, not containerized — verified on this VPS):
 
 ```bash
-sudo podman exec agent-caddy caddy reload --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
 ```
 
 Verify the path 404s for now (dashboard not built yet):
@@ -93,7 +95,7 @@ curl -u rawcell:$PASS https://rawcell.duckdns.org/trading/
 After Phase 2 (FastAPI backend) and Phase 3 (HTMX templates) land, the dashboard image becomes buildable:
 
 ```bash
-cd /srv/tradingagents
+cd /home/agent/tradingagents
 podman build -t localhost/tradingagents/dashboard:latest -f deploy/Containerfile .
 sudo cp deploy/quadlet/tradingagents-dashboard.container /etc/containers/systemd/
 sudo systemctl daemon-reload
@@ -111,7 +113,7 @@ Now `https://rawcell.duckdns.org/trading/` serves the dashboard.
 ## Manual ad-hoc fire (testing or off-schedule)
 
 ```bash
-ssh rawcell@vps
+ssh rawcell
 sudo systemctl start tradingagents-engine-daily.service
 # OR for one ticker:
 sudo systemctl start tradingagents-engine-adhoc@NVDA.service

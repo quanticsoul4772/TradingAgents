@@ -14,11 +14,13 @@
 
 set -eu
 
-VPS_HOST="${VPS_HOST:-vps}"
-VPS_PATH="${VPS_PATH:-/srv/tradingagents}"
-VPS_USER="${VPS_USER:-rawcell}"
+# SSH alias `rawcell` configured locally points at agent@<vps-ip> per the
+# operator's ~/.ssh/config. SSH-verified 2026-05-10.
+VPS_HOST="${VPS_HOST:-rawcell}"
+VPS_PATH="${VPS_PATH:-/home/agent/tradingagents}"
+VPS_USER="${VPS_USER:-agent}"
 
-echo "==> Syncing source to ${VPS_USER}@${VPS_HOST}:${VPS_PATH}"
+echo "==> Syncing source to ${VPS_HOST}:${VPS_PATH}"
 rsync -az --delete \
     --exclude='.git' \
     --exclude='.venv' \
@@ -30,18 +32,18 @@ rsync -az --delete \
     --exclude='experiments/' \
     --exclude='claudedocs/' \
     --exclude='specs/' \
-    ./ "${VPS_USER}@${VPS_HOST}:${VPS_PATH}/"
+    ./ "${VPS_HOST}:${VPS_PATH}/"
 
 echo "==> Reloading systemd"
-ssh "${VPS_USER}@${VPS_HOST}" "sudo systemctl daemon-reload"
+ssh "${VPS_HOST}" "sudo systemctl daemon-reload"
 
 echo "==> Restarting dashboard container (if installed)"
-ssh "${VPS_USER}@${VPS_HOST}" "sudo systemctl restart tradingagents-dashboard.service || echo '  (dashboard not yet installed; skipping)'"
+ssh "${VPS_HOST}" "sudo systemctl restart tradingagents-dashboard.service || echo '  (dashboard not yet installed; skipping)'"
 
 echo "==> Reloading Caddy (picks up any Caddyfile changes)"
-ssh "${VPS_USER}@${VPS_HOST}" "sudo podman exec agent-caddy caddy reload --config /etc/caddy/Caddyfile || echo '  (caddy reload failed; check container)'"
+ssh "${VPS_HOST}" "sudo systemctl reload caddy || echo '  (caddy reload failed; check container)'"
 
 echo "==> Done. Verify with:"
-echo "    ssh ${VPS_USER}@${VPS_HOST} systemctl status tradingagents-dashboard.service"
-echo "    ssh ${VPS_USER}@${VPS_HOST} journalctl -u tradingagents-dashboard.service -n 30"
+echo "    ssh ${VPS_HOST} systemctl status tradingagents-dashboard.service"
+echo "    ssh ${VPS_HOST} journalctl -u tradingagents-dashboard.service -n 30"
 echo "    curl -u rawcell:\$PASS https://rawcell.duckdns.org/trading/"

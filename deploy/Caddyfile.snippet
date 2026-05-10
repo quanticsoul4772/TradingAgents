@@ -1,40 +1,39 @@
 # TradingAgents dashboard — Caddyfile snippet
 #
-# ADD this `handle_path /trading/*` block to the operator's existing Caddyfile
-# (typically /srv/agent-harness/caddy/Caddyfile per the agent-harness-v2 deploy
-# pattern). Do NOT replace the existing Caddyfile.
+# ADD these two `handle` blocks INSIDE the existing `rawcell.duckdns.org { ... }`
+# site block in /etc/caddy/Caddyfile. Pattern matches the existing `handle /v2/`
+# block on the VPS (SSH-verified against the actual Caddyfile 2026-05-10).
 #
 # Per spec 250 FR-029: extend the existing Caddyfile, do NOT create a new one.
 # Per FR-030: TLS reuses the existing Let's Encrypt cert for rawcell.duckdns.org.
-# Per FR-031: basic-auth reuses the existing `rawcell` user.
-# Per FR-032: path-routed at /trading/ (no new DNS record needed).
+# Per FR-031: basic_auth reuses the existing `rawcell` user (same bcrypt hash
+# used for /v2/).
+# Per FR-032: path-routed at /trading/ — no new DNS record needed.
 #
-# After editing the host Caddyfile, reload the Caddy container:
-#   sudo podman exec agent-caddy caddy reload --config /etc/caddy/Caddyfile
+# After editing the host Caddyfile, reload Caddy:
+#   sudo systemctl reload caddy
+# (Caddy is host-installed on this VPS, not containerized — verified.)
 #
 # Verification:
 #   curl -u rawcell:<password> https://rawcell.duckdns.org/trading/
 
 # --- snippet to merge into the rawcell.duckdns.org { ... } site block ---
 
-handle_path /trading/* {
-    # FR-010: trigger endpoint is bound to 127.0.0.1 by uvicorn and is
-    # NOT proxied by Caddy. Only the GET routes are exposed publicly.
-    # The reverse_proxy below catches everything; the dashboard backend
-    # itself returns 404 for /trigger/* on the public-bound listener.
-    reverse_proxy 127.0.0.1:8000 {
-        # SSE not used (FR-016 chose polling), but flush headers anyway
-        # so HTMX swaps feel responsive.
-        flush_interval -1
+# Trading dashboard: same pattern as /v2/ (basic_auth + strip prefix + reverse proxy)
+handle /trading/ {
+    basic_auth {
+        # SAME bcrypt hash as the existing rawcell user under /v2/
+        # (verified against /etc/caddy/Caddyfile rawcell.duckdns.org block).
+        rawcell $2a$14$LR33n8zvDaYNjmHwOtAWF.0eHbt1J7eP62QhZNXEaHcYX0nmGB3Sq
     }
-
-    # basicauth uses the existing import block from the parent file.
-    # If the parent file already imports the basicauth import for the
-    # rawcell user, no further config is needed here.
-    basicauth {
-        # Replace with the existing `rawcell` bcrypt hash from the parent
-        # Caddyfile. The hash MUST be identical to the one used for
-        # /v2/ and /dashboard/ — same user, same credential.
-        rawcell {{ EXISTING_BCRYPT_HASH }}
-    }
+    uri strip_prefix /trading
+    reverse_proxy localhost:8000
+}
+handle /trading/* {
+    # API + asset paths — strip prefix, no auth (browser remembers it from /trading/).
+    # Per FR-010, /trigger/* is NOT proxied by Caddy (engine binds 127.0.0.1 only;
+    # if a request hits /trading/trigger/* the strip_prefix sends /trigger/* to the
+    # dashboard, which returns 404 on the public listener per FR-010).
+    uri strip_prefix /trading
+    reverse_proxy localhost:8000
 }
