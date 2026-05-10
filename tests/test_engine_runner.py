@@ -205,6 +205,119 @@ def test_events_jsonl_one_object_per_line(runner):
 
 
 @pytest.mark.unit
+def test_signals_csv_written_after_real_run(tmp_path, monkeypatch):
+    """Phase 1b FR-007: after a real run completes, a paper_trade-consumable
+    CSV is written at run_dir/signals.csv with completed_tickers."""
+    # Stub out subprocess.run so we don't actually invoke paper_trade.py.
+    paper_trade_calls: list[list[str]] = []
+
+    def stub_run(cmd, **kwargs):
+        paper_trade_calls.append(cmd)
+
+        class _R:
+            returncode = 0
+            stderr = ""
+            stdout = ""
+
+        return _R()
+
+    monkeypatch.setattr("tradingagents.engine.runner.subprocess.run", stub_run)
+
+    def stub_propagate(ticker: str, trade_date: str) -> str:
+        return {"NVDA": "Buy", "AAPL": "Hold"}.get(ticker, "Hold")
+
+    runner = EngineRunner(run_dir=tmp_path / "run", propagate_fn=stub_propagate)
+    runner.run(["NVDA", "AAPL"], dry_run=False)
+
+    csv_path = runner.run_dir / "signals.csv"
+    assert csv_path.exists()
+    content = csv_path.read_text(encoding="utf-8")
+    # Header per spec 002 contract.
+    assert "ticker,analysis_date,rating,error" in content
+    assert "NVDA," in content
+    assert ",Buy," in content
+    assert "AAPL," in content
+    assert ",Hold," in content
+
+    # paper_trade.py step was invoked exactly once.
+    assert len(paper_trade_calls) == 1
+    cmd = paper_trade_calls[0]
+    assert "paper_trade.py" in " ".join(cmd)
+    assert "step" in cmd
+    assert "--signals-csv" in cmd
+    assert "--portfolio-id" in cmd
+    assert "live" in cmd
+
+
+@pytest.mark.unit
+def test_paper_trade_skipped_on_dry_run(tmp_path, monkeypatch):
+    """FR-008 + FR-007 interaction: dry-run must NOT invoke paper_trade
+    (signals are fake; would corrupt the paper portfolio)."""
+    called: list = []
+    monkeypatch.setattr(
+        "tradingagents.engine.runner.subprocess.run",
+        lambda cmd, **kw: (
+            called.append(cmd) or type("R", (), {"returncode": 0, "stderr": "", "stdout": ""})()
+        ),
+    )
+
+    runner = EngineRunner(run_dir=tmp_path / "run")
+    runner.run(["NVDA"], dry_run=True)
+
+    assert called == []
+    assert not (runner.run_dir / "signals.csv").exists()
+
+
+@pytest.mark.unit
+def test_paper_trade_failure_does_not_break_run(tmp_path, monkeypatch):
+    """If paper_trade.py step fails, the engine logs an ERROR event but the
+    propagate run is still considered successful (FR-007 is best-effort)."""
+    monkeypatch.setattr(
+        "tradingagents.engine.runner.subprocess.run",
+        lambda cmd, **kw: type(
+            "R", (), {"returncode": 1, "stderr": "BOOM in paper_trade", "stdout": ""}
+        )(),
+    )
+
+    def stub_propagate(ticker: str, trade_date: str) -> str:
+        return "Buy"
+
+    runner = EngineRunner(run_dir=tmp_path / "run", propagate_fn=stub_propagate)
+    final = runner.run(["NVDA"], dry_run=False)
+
+    # Run completed, ticker recorded.
+    assert len(final.completed_tickers) == 1
+    # ERROR event emitted with the paper_trade phase tag.
+    events = _read_events(runner.events_path)
+    error_events = [e for e in events if e.event_type == EventType.ERROR]
+    assert len(error_events) == 1
+    assert error_events[0].payload.get("phase") == "paper_trade_step"
+
+
+@pytest.mark.unit
+def test_signals_csv_includes_failed_tickers_with_error(tmp_path, monkeypatch):
+    """Failed tickers should still appear in the CSV (with error column populated)
+    so paper_trade has the full picture."""
+    monkeypatch.setattr(
+        "tradingagents.engine.runner.subprocess.run",
+        lambda cmd, **kw: type("R", (), {"returncode": 0, "stderr": "", "stdout": ""})(),
+    )
+
+    def stub_propagate(ticker: str, trade_date: str) -> str:
+        if ticker == "BAD":
+            raise ValueError("bad ticker")
+        return "Hold"
+
+    runner = EngineRunner(run_dir=tmp_path / "run", propagate_fn=stub_propagate)
+    runner.run(["NVDA", "BAD"], dry_run=False)
+
+    csv_content = (runner.run_dir / "signals.csv").read_text(encoding="utf-8")
+    assert "NVDA," in csv_content
+    assert "BAD," in csv_content
+    assert "bad ticker" in csv_content
+
+
+@pytest.mark.unit
 def test_events_jsonl_resets_per_run(tmp_path):
     """Each run replaces events.jsonl (one file per run; FR-021 + dashboard
     tails the current/ dir)."""
