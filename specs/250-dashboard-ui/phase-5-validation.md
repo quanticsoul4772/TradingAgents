@@ -11,9 +11,15 @@
 
 ## Step 1 — Automated smoke (`scripts/dashboard_smoke.sh`)
 
-Runs the engine in `--dry-run` mode (zero LLM cost) then probes every dashboard route. Exit 0 = pass. Run on the VPS:
+Spawns an ephemeral uvicorn dashboard pointed at a temp state dir, runs the engine in `--dry-run` mode against the same temp dir (zero LLM cost), then probes every dashboard route. Exit 0 = pass.
+
+The smoke is fully isolated: it does NOT touch the production state dir (`~/.tradingagents/engine/current/`) and the ephemeral dashboard binds a separate port (default 18765). Safe to run locally or on the VPS even while a real engine run is in flight (the shared file lock prevents racing).
 
 ```bash
+# locally (any machine with the repo + venv)
+./scripts/dashboard_smoke.sh
+
+# on the VPS using the engine venv
 ssh agent@rawcell.duckdns.org
 cd /home/agent/tradingagents
 ENGINE_PYTHON=/home/agent/tradingagents/.venv/bin/python ./scripts/dashboard_smoke.sh
@@ -22,15 +28,17 @@ ENGINE_PYTHON=/home/agent/tradingagents/.venv/bin/python ./scripts/dashboard_smo
 Expected output:
 
 ```
-==> Phase 5 smoke validation (spec 250-dashboard-ui SC-007)
-✓ /health: ... → 200
-✓ engine dry-run completed for NVDA
-✓ /api/poll: ... → 200
-✓ /api/poll has progress
+==> Phase 5 smoke validation (spec 250-dashboard-ui SC-007 — isolated)
+    STATE_DIR=/tmp/ta-smoke-state-XXXXXX
+    DASHBOARD_URL=http://127.0.0.1:18765
+✓ /health → 200
+✓ engine dry-run completed for NVDA (state in /tmp/ta-smoke-state-XXXXXX)
+✓ /api/poll → 200, has progress, has events
 ✓ / shows ticker
-✓ /live has HTMX hx-get
-✓ /live has 3-sec trigger
+✓ /live has HTMX hx-get + 'every 3s'
 ✓ trigger /badticker → 400 (regex/watchlist rejection)
+✓ /ticker/NVDA/1900-01-01 → 404 (empty-state path)
+✓ isolation: prod state untouched
 ✓ ALL CHECKS PASSED
 ```
 
@@ -40,25 +48,25 @@ Validates:
 - SC-004: empty-state path (404 on missing ticker debate)
 - FR-008: dry-run mode emits events without LLM cost
 - FR-016: HTMX polling wired on /live
+- Isolation invariant: dry-run never writes to prod state dir (PR #266)
 
-## Step 2 — SC-006 mobile responsive on real iOS Safari
+## Step 2 — SC-006 mobile responsive
 
-**Required**: real iOS device, not Chrome devtools mobile preset. iOS Safari handles `<details>` elements + HTMX differently than Chromium emulation.
+Open `https://rawcell.duckdns.org/trading/` on whatever phone you actually use (Android Chrome, iOS Safari, Firefox Mobile, etc.) and verify the dashboard is usable. The interaction items below are what matter; the specific browser/OS doesn't.
 
-1. Open `https://rawcell.duckdns.org/trading/` on iPhone Safari
-2. Authenticate with `rawcell` basic_auth credential
-3. Verify each:
+1. Authenticate with `rawcell` basic_auth credential
+2. Verify each:
    - [ ] Homepage renders the rating table; ticker links are tappable
    - [ ] Tap a ticker → ticker page renders
    - [ ] On the ticker page, tap "▶ BULL VS BEAR DEBATE" → details element expands; full prose visible
    - [ ] Tap the back/Today button → returns to homepage
    - [ ] Navigate to /live → page renders; check after ~5 sec the "last poll HH:MM:SS UTC" footer increments (HTMX is polling)
    - [ ] Pull-to-refresh works
-4. Verify on cellular (turn off WiFi):
+3. (Optional) Verify on cellular (turn off WiFi):
    - [ ] /live polling continues
    - [ ] HTMX recovers from brief connectivity drops
 
-If any item fails: file specific bug + investigate.
+If any item fails: file specific bug + investigate. Browser-specific quirks (e.g., iOS Safari's `<details>` handling) are real but only relevant if you actually use that browser.
 
 ## Step 3 — Live $10 run validation (SC-007)
 

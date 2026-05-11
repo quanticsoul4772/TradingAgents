@@ -49,6 +49,14 @@ def run(
         "--dry-run",
         help="Emit fake per-agent-stage events without LLM calls (FR-008).",
     ),
+    state_dir: Path | None = typer.Option(
+        None,
+        "--state-dir",
+        help=(
+            "Override the engine state dir (default: ~/.tradingagents/engine). "
+            "Used by dashboard_smoke.sh to isolate dry-run writes from production state."
+        ),
+    ),
 ):
     """Run the engine over a watchlist or a single ticker."""
     if watchlist and ticker:
@@ -61,7 +69,10 @@ def run(
     tickers = [ticker] if ticker else _parse_watchlist(watchlist)
     typer.echo(f"Running engine over {len(tickers)} ticker(s); dry_run={dry_run}")
 
-    runner = EngineRunner()
+    if state_dir is not None:
+        runner = EngineRunner(run_dir=state_dir / "current")
+    else:
+        runner = EngineRunner()
     final = runner.run(tickers, dry_run=dry_run)
 
     typer.echo(
