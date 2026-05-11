@@ -88,7 +88,7 @@ def test_home_empty_state_when_no_runs(client):
     r = client.get("/")
     assert r.status_code == 200
     assert "No runs yet" in r.text
-    assert "Simulation only" in r.text  # FR-018 paper banner
+    # FR-018 paper banner removed per user request (PR #257); spec amendment pending.
 
 
 @pytest.mark.unit

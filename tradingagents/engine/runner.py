@@ -333,10 +333,19 @@ def _default_propagate(ticker: str, trade_date: str, callbacks: list | None = No
 
     Spec 250 Phase 1b: propagates ``callbacks`` through to the LangGraph for
     per-agent-stage event emission (FR-005).
+
+    Mirrors scripts/daily_signals.py provider overrides — DEFAULT_CONFIG ships
+    with llm_provider="openai" but the production framework runs on Anthropic.
     """
+    from copy import deepcopy
+
     from tradingagents.default_config import DEFAULT_CONFIG
     from tradingagents.graph.trading_graph import TradingAgentsGraph
 
-    ta = TradingAgentsGraph(config=DEFAULT_CONFIG.copy())
+    config = deepcopy(DEFAULT_CONFIG)
+    config["llm_provider"] = "anthropic"
+    config["deep_think_llm"] = "claude-opus-4-7"
+    config["quick_think_llm"] = "claude-haiku-4-5"
+    ta = TradingAgentsGraph(config=config)
     _, rating = ta.propagate(ticker, trade_date, callbacks=callbacks)
     return rating
