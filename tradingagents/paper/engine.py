@@ -141,7 +141,27 @@ class PaperTradingEngine:
         # Track inception benchmark price for compounding
         bench_equity = self._compute_benchmark_equity(today)
         ep = EquityPoint(date=today, equity=equity, benchmark_equity=bench_equity)
-        self.portfolio.equity_curve.append(ep)
+        # Strict-ascending equity_curve invariant (portfolio.py:180-188): never
+        # append an out-of-order date. Three cases:
+        #   1. Same date as latest entry → replace (idempotent re-run of today)
+        #   2. Older than latest entry → skip with warning (historical re-run)
+        #   3. Newer → append normally
+        latest = self.portfolio.equity_curve[-1] if self.portfolio.equity_curve else None
+        if latest is not None and today == latest.date:
+            self.portfolio.equity_curve[-1] = ep
+        elif latest is not None and today < latest.date:
+            self._emit(
+                result,
+                EventType.MARK,
+                {
+                    "date": today.isoformat(),
+                    "skipped": "equity_curve_out_of_order",
+                    "latest_date": latest.date.isoformat(),
+                },
+            )
+            return result
+        else:
+            self.portfolio.equity_curve.append(ep)
         self._emit(
             result,
             EventType.MARK,
