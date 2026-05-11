@@ -240,3 +240,4 @@ experiments/**/*_memory.md
 experiments/**/wc10_pilot_memory.md
 .playwright-mcp/
 nvda-debate-page.png
+claudedocs/paper-*.md
