@@ -238,3 +238,4 @@ experiments/*/debates.jsonl
 # These are operator-private decision logs; never commit.
 experiments/**/*_memory.md
 experiments/**/wc10_pilot_memory.md
+.playwright-mcp/
