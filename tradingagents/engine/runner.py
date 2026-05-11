@@ -246,7 +246,7 @@ class EngineRunner:
             return self._propagate_fn(ticker, self.trade_date)
 
         # Lazy import to avoid pulling LangChain into test process startup.
-        from tradingagents.engine.callbacks import EngineEventCallback
+        from tradingagents.engine.callbacks import EngineEventCallback, TokenCostCallback
 
         assert self._progress is not None
 
@@ -259,8 +259,25 @@ class EngineRunner:
         def _on_finished(stage: AgentStage) -> None:
             self._emit_event(EventType.AGENT_FINISHED, ticker=ticker, agent_stage=stage)
 
-        callback = EngineEventCallback(on_stage_started=_on_started, on_stage_finished=_on_finished)
-        return _default_propagate(ticker, self.trade_date, callbacks=[callback])
+        def _on_cost_delta(delta_usd: float, model: str, in_tok: int, out_tok: int) -> None:
+            assert self._progress is not None
+            self._progress.cost_so_far_usd = round(self._progress.cost_so_far_usd + delta_usd, 6)
+            self._write_progress_atomic()
+            self._emit_event(
+                EventType.COST_DELTA,
+                ticker=ticker,
+                payload={
+                    "delta_usd": round(delta_usd, 6),
+                    "model": model,
+                    "input_tokens": in_tok,
+                    "output_tokens": out_tok,
+                    "cost_so_far_usd": self._progress.cost_so_far_usd,
+                },
+            )
+
+        event_cb = EngineEventCallback(on_stage_started=_on_started, on_stage_finished=_on_finished)
+        cost_cb = TokenCostCallback(on_cost_delta=_on_cost_delta)
+        return _default_propagate(ticker, self.trade_date, callbacks=[event_cb, cost_cb])
 
     # ---------------------------------------------------------- paper trade
 

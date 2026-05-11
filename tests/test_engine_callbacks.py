@@ -75,3 +75,159 @@ def test_callback_with_no_handlers_does_not_error():
     cb = EngineEventCallback()
     cb.on_chain_start({"name": "Bull Researcher"}, inputs={})
     cb.on_chain_end(outputs={}, name="Bull Researcher")
+
+
+# ---------------------------------------------------------------------------
+# TokenCostCallback (Phase 1c — FR-019, SC-007)
+# ---------------------------------------------------------------------------
+
+from tradingagents.engine.callbacks import (  # noqa: E402
+    ANTHROPIC_PRICING_USD_PER_M,
+    TokenCostCallback,
+    _cost_for_call,
+    _model_pricing,
+)
+
+
+@pytest.mark.unit
+def test_pricing_table_has_required_models():
+    """Cost meter MUST recognize the production-default models per spec FR-019."""
+    assert "claude-opus-4-7" in ANTHROPIC_PRICING_USD_PER_M
+    assert "claude-haiku-4-5" in ANTHROPIC_PRICING_USD_PER_M
+
+
+@pytest.mark.unit
+def test_pricing_match_by_longest_prefix():
+    """Versioned variants (e.g. claude-haiku-4-5-20251001) must match base model."""
+    p = _model_pricing("claude-haiku-4-5-20251001")
+    assert p == ANTHROPIC_PRICING_USD_PER_M["claude-haiku-4-5-20251001"]
+
+
+@pytest.mark.unit
+def test_pricing_falls_back_to_default_for_unknown_model():
+    """Unknown models get conservative default — never zero-cost."""
+    p = _model_pricing("claude-future-7-9-20270101")
+    assert p["input"] > 0
+    assert p["output"] > 0
+
+
+@pytest.mark.unit
+def test_pricing_handles_empty_model_string():
+    p = _model_pricing("")
+    assert p["input"] > 0
+
+
+@pytest.mark.unit
+def test_cost_for_call_opus_math():
+    """Opus 4.7: $15/M input + $75/M output. 10K in + 2K out → 0.15 + 0.15 = $0.30."""
+    cost = _cost_for_call("claude-opus-4-7", 10_000, 2_000)
+    assert abs(cost - 0.30) < 1e-9
+
+
+@pytest.mark.unit
+def test_cost_for_call_haiku_math():
+    """Haiku 4.5: $1/M input + $5/M output. 10K in + 2K out → 0.01 + 0.01 = $0.02."""
+    cost = _cost_for_call("claude-haiku-4-5", 10_000, 2_000)
+    assert abs(cost - 0.02) < 1e-9
+
+
+@pytest.mark.unit
+def test_cost_for_call_zero_tokens_is_zero():
+    assert _cost_for_call("claude-opus-4-7", 0, 0) == 0.0
+
+
+@pytest.mark.unit
+def test_cost_callback_no_handler_does_not_error():
+    cb = TokenCostCallback()
+    cb.on_llm_end(response=object())  # response with no llm_output is fine
+
+
+@pytest.mark.unit
+def test_cost_callback_extracts_from_llm_output_token_usage():
+    """LLMResult.llm_output={"token_usage": ..., "model_name": ...} (OpenAI-style)."""
+    deltas: list[tuple[float, str, int, int]] = []
+    cb = TokenCostCallback(on_cost_delta=lambda d, m, i, o: deltas.append((d, m, i, o)))
+
+    class FakeResp:
+        llm_output = {
+            "token_usage": {"prompt_tokens": 1000, "completion_tokens": 500},
+            "model_name": "claude-opus-4-7",
+        }
+        generations = []
+
+    cb.on_llm_end(response=FakeResp())
+    assert len(deltas) == 1
+    delta, model, in_tok, out_tok = deltas[0]
+    assert model == "claude-opus-4-7"
+    assert in_tok == 1000
+    assert out_tok == 500
+    # 1000 input @ $15/M + 500 output @ $75/M = 0.015 + 0.0375 = 0.0525
+    assert abs(delta - 0.0525) < 1e-9
+
+
+@pytest.mark.unit
+def test_cost_callback_extracts_from_anthropic_input_output_tokens():
+    """langchain-anthropic uses input_tokens/output_tokens (not prompt_/completion_)."""
+    deltas: list = []
+    cb = TokenCostCallback(on_cost_delta=lambda d, m, i, o: deltas.append((d, m, i, o)))
+
+    class FakeResp:
+        llm_output = {
+            "token_usage": {"input_tokens": 2000, "output_tokens": 1000},
+            "model_name": "claude-haiku-4-5",
+        }
+        generations = []
+
+    cb.on_llm_end(response=FakeResp())
+    assert len(deltas) == 1
+    delta, _, in_tok, out_tok = deltas[0]
+    assert in_tok == 2000
+    assert out_tok == 1000
+
+
+@pytest.mark.unit
+def test_cost_callback_skips_when_no_usage_data():
+    """No usage_metadata anywhere → silently skip (don't crash, don't fake cost)."""
+    deltas: list = []
+    cb = TokenCostCallback(on_cost_delta=lambda d, m, i, o: deltas.append((d, m, i, o)))
+
+    class FakeResp:
+        llm_output = None
+        generations = []
+
+    cb.on_llm_end(response=FakeResp())
+    assert deltas == []
+
+
+@pytest.mark.unit
+def test_cost_callback_skips_when_zero_tokens():
+    """Zero tokens both sides → no delta (some streaming paths fire on_llm_end with 0)."""
+    deltas: list = []
+    cb = TokenCostCallback(on_cost_delta=lambda d, m, i, o: deltas.append((d, m, i, o)))
+
+    class FakeResp:
+        llm_output = {"token_usage": {"input_tokens": 0, "output_tokens": 0}, "model_name": "x"}
+        generations = []
+
+    cb.on_llm_end(response=FakeResp())
+    assert deltas == []
+
+
+@pytest.mark.unit
+def test_cost_callback_isolates_handler_exceptions():
+    """A throwing on_cost_delta must not propagate (cost-meter MUST NEVER block propagate)."""
+
+    def explode(d, m, i, o):
+        raise RuntimeError("boom")
+
+    cb = TokenCostCallback(on_cost_delta=explode)
+
+    class FakeResp:
+        llm_output = {
+            "token_usage": {"input_tokens": 100, "output_tokens": 50},
+            "model_name": "claude-haiku-4-5",
+        }
+        generations = []
+
+    # Must NOT raise.
+    cb.on_llm_end(response=FakeResp())
