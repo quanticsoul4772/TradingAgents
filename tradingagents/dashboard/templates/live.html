@@ -1,44 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
-{% if summary.exists and summary.current_ticker %}
-  <div class="bg-blue-50 border border-blue-200 text-blue-900 p-4 rounded mb-4">
-    <div class="text-sm">in flight</div>
-    <div class="text-2xl font-bold">{{ summary.current_ticker }}</div>
-    <div class="text-sm">{{ summary.current_agent_stage or 'starting…' }}</div>
-  </div>
-{% elif summary.stale %}
-  <div class="bg-red-100 border border-red-300 text-red-900 p-4 rounded mb-4">
-    ⚠ STALE — heartbeat &gt; 90s; engine may have crashed.
-  </div>
-{% else %}
-  <div class="bg-gray-100 text-gray-600 p-4 rounded mb-4 text-center">
-    Engine idle. {{ summary.completed_count }}/{{ summary.watchlist_size }} done · ${{ '%.2f' | format(summary.cost_so_far_usd) }}
-  </div>
-{% endif %}
 
-<h2 class="font-bold text-sm uppercase tracking-wide text-gray-500 mb-2">Recent events</h2>
-<div class="bg-white rounded-lg shadow overflow-hidden">
-  <table class="w-full text-xs font-mono">
-    <thead class="bg-gray-100">
-      <tr>
-        <th class="text-left px-3 py-2">ts</th>
-        <th class="text-left px-3 py-2">type</th>
-        <th class="text-left px-3 py-2">ticker</th>
-        <th class="text-left px-3 py-2 hidden sm:table-cell">stage</th>
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-gray-100">
-      {%- for e in events|reverse %}
-      <tr>
-        <td class="px-3 py-1 text-gray-500">{{ e.ts }}</td>
-        <td class="px-3 py-1">{{ e.event_type }}</td>
-        <td class="px-3 py-1">{{ e.ticker or '' }}</td>
-        <td class="px-3 py-1 text-gray-500 hidden sm:table-cell">{{ e.agent_stage or '' }}</td>
-      </tr>
-      {%- endfor %}
-    </tbody>
-  </table>
+{# Phase 3: HTMX polls /trading/live/partial every 3 sec and swaps inner content
+   so the page auto-updates during a run without manual refresh. The polling
+   interval is conservative — for an idle run cycle this is ~20 requests/min
+   per browser tab, all cheap reads of the JSON state files. #}
+
+<div id="live-content"
+     hx-get="/trading/live/partial"
+     hx-trigger="load, every 3s"
+     hx-swap="innerHTML">
+  {# Initial render is the same partial, no JS-flicker on page load. #}
+  {% include "live_partial.html" %}
 </div>
 
-<p class="text-xs text-gray-400 mt-3">Phase 2 MVP: server-rendered. Phase 3 will add HTMX polling for live updates without manual reload.</p>
 {% endblock %}

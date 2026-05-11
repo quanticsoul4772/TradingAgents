@@ -90,9 +90,34 @@ def live(request: Request) -> HTMLResponse:
         context={
             "summary": summary,
             "events": events,
+            "now": _now_hms(),
             "title": "Live run",
         },
     )
+
+
+@app.get("/live/partial", response_class=HTMLResponse)
+def live_partial(request: Request) -> HTMLResponse:
+    """Phase 3: HTMX-polled partial fragment. Same content as /live's inner
+    block, no base layout — for hx-swap=innerHTML."""
+    summary = sr.summarize_progress(sr.read_progress())
+    events = sr.tail_events(limit=50)
+    return templates.TemplateResponse(
+        request=request,
+        name="live_partial.html",
+        context={
+            "summary": summary,
+            "events": events,
+            "now": _now_hms(),
+        },
+    )
+
+
+def _now_hms() -> str:
+    """HH:MM:SS UTC — small marker so operators see the page is actually polling."""
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
 
 
 # -------------------------------------------------------- TICKERS (GET /tickers/{date})

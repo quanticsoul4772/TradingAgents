@@ -132,6 +132,58 @@ def test_live_renders_in_flight(client, isolated_dashboard):
     assert "bull_researcher" in r.text
 
 
+@pytest.mark.unit
+def test_live_page_includes_htmx_polling_attributes(client):
+    """Phase 3: /live page must declare HTMX hx-get + hx-trigger so the
+    browser auto-polls /live/partial without manual refresh."""
+    r = client.get("/live")
+    assert r.status_code == 200
+    # HTMX wiring on the live-content div
+    assert 'hx-get="/trading/live/partial"' in r.text
+    assert "every 3s" in r.text
+    assert 'hx-swap="innerHTML"' in r.text
+    # HTMX library loaded
+    assert "htmx.org" in r.text
+
+
+@pytest.mark.unit
+def test_live_partial_route_returns_inner_only(client, isolated_dashboard):
+    """/live/partial returns the inner content fragment WITHOUT the base layout
+    — for HTMX hx-swap=innerHTML on the parent /live page."""
+    _write_progress(
+        isolated_dashboard,
+        current_ticker="NVDA",
+        current_agent_stage="bull_researcher",
+    )
+    r = client.get("/live/partial")
+    assert r.status_code == 200
+    # Has the in-flight content
+    assert "NVDA" in r.text
+    assert "bull_researcher" in r.text
+    # Does NOT include base layout (no <html> or top nav)
+    assert "<html" not in r.text.lower()
+    assert "TradingAgents" not in r.text  # nav brand absent
+
+
+@pytest.mark.unit
+def test_live_partial_renders_idle_when_no_run(client):
+    r = client.get("/live/partial")
+    assert r.status_code == 200
+    assert "Engine idle" in r.text
+
+
+@pytest.mark.unit
+def test_live_partial_renders_stale_banner(client, isolated_dashboard):
+    """STALE banner shows when heartbeat > 90s + no terminal event (FR-027)."""
+    from datetime import datetime, timedelta, timezone
+
+    old_hb = (datetime.now(timezone.utc) - timedelta(seconds=300)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    _write_progress(isolated_dashboard, heartbeat_at=old_hb)
+    r = client.get("/live/partial")
+    assert r.status_code == 200
+    assert "STALE" in r.text
+
+
 # ---------------------------------------------------------------- GET /tickers/{date}
 
 
