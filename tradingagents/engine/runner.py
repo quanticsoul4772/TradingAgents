@@ -237,25 +237,16 @@ class EngineRunner:
     def _real_run_ticker(self, ticker: str) -> str:
         """Real run with per-agent-stage events (FR-001 + FR-005).
 
-        Per FR-005 (Spec 250 G-8 closure), per-node start/finish events are
-        emitted directly from ``graph.stream()`` iteration inside
-        ``TradingAgentsGraph._run_graph``, NOT via a LangChain
-        BaseCallbackHandler. The previous EngineEventCallback approach
-        (kept in callbacks.py for backward compatibility) is no longer
-        wired here.
-
-        TokenCostCallback IS still passed as a callback because it consumes
-        token-level ``on_llm_end`` events from individual LLM calls — those
-        are not surfaced by ``graph.stream()`` chunks.
-
-        Test injection: the propagate_fn override path skips all callback
-        wiring (tests pass a stub returning a string directly).
+        Per-node start/finish events are emitted directly from
+        ``graph.stream()`` iteration inside ``TradingAgentsGraph._run_graph``.
+        Test injection: the propagate_fn override path skips wiring
+        (tests pass a stub returning a string directly).
         """
         if self._propagate_fn is not None:
             return self._propagate_fn(ticker, self.trade_date)
 
         # Lazy import to avoid pulling LangChain into test process startup.
-        from tradingagents.engine.callbacks import LANGGRAPH_NODE_TO_STAGE, TokenCostCallback
+        from tradingagents.engine.callbacks import LANGGRAPH_NODE_TO_STAGE
 
         assert self._progress is not None
 
@@ -274,27 +265,9 @@ class EngineRunner:
                 return
             self._emit_event(EventType.AGENT_FINISHED, ticker=ticker, agent_stage=stage)
 
-        def _on_cost_delta(delta_usd: float, model: str, in_tok: int, out_tok: int) -> None:
-            assert self._progress is not None
-            self._progress.cost_so_far_usd = round(self._progress.cost_so_far_usd + delta_usd, 6)
-            self._write_progress_atomic()
-            self._emit_event(
-                EventType.COST_DELTA,
-                ticker=ticker,
-                payload={
-                    "delta_usd": round(delta_usd, 6),
-                    "model": model,
-                    "input_tokens": in_tok,
-                    "output_tokens": out_tok,
-                    "cost_so_far_usd": self._progress.cost_so_far_usd,
-                },
-            )
-
-        cost_cb = TokenCostCallback(on_cost_delta=_on_cost_delta)
         return _default_propagate(
             ticker,
             self.trade_date,
-            callbacks=[cost_cb],
             on_node_started=_on_node_started,
             on_node_finished=_on_node_finished,
         )
@@ -367,18 +340,14 @@ class EngineRunner:
 def _default_propagate(
     ticker: str,
     trade_date: str,
-    callbacks: list | None = None,
     on_node_started=None,
     on_node_finished=None,
 ) -> str:
     """Lazy-import the framework so test code can construct EngineRunner without
     pulling in TradingAgentsGraph (which loads LLM clients).
 
-    Spec 250 FR-005 (G-8 closure): per-node lifecycle events come from
-    ``on_node_started`` / ``on_node_finished`` callables fired by the
-    ``graph.stream()`` loop inside ``_run_graph``. ``callbacks`` carries
-    token-level handlers like TokenCostCallback whose ``on_llm_end`` hook
-    runs inside individual LLM calls.
+    Per-node lifecycle events come from on_node_started / on_node_finished
+    callables fired by the graph.stream() loop inside _run_graph.
 
     Mirrors scripts/daily_signals.py provider overrides — DEFAULT_CONFIG ships
     with llm_provider="openai" but the production framework runs on Anthropic.
@@ -396,7 +365,6 @@ def _default_propagate(
     _, rating = ta.propagate(
         ticker,
         trade_date,
-        callbacks=callbacks,
         on_node_started=on_node_started,
         on_node_finished=on_node_finished,
     )

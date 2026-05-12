@@ -13,7 +13,7 @@ the inner content swapped into <div id="live-content"> on the parent /live page.
   </div>
 {% else %}
   <div class="bg-gray-100 text-gray-600 p-4 rounded mb-4 text-center">
-    Engine idle. {{ summary.completed_count }}/{{ summary.watchlist_size }} done · ${{ '%.2f' | format(summary.cost_so_far_usd) }}
+    Engine idle. {{ summary.completed_count }}/{{ summary.watchlist_size }} done
   </div>
 {% endif %}
 

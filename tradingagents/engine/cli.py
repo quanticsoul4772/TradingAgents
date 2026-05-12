@@ -77,8 +77,7 @@ def run(
 
     typer.echo(
         f"\nrun_id={final.run_id}  trade_date={final.trade_date}  "
-        f"completed={len(final.completed_tickers)}  failed={len(final.failed_tickers)}  "
-        f"cost=${final.cost_so_far_usd:.2f}"
+        f"completed={len(final.completed_tickers)}  failed={len(final.failed_tickers)}"
     )
 
 
