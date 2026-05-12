@@ -9,11 +9,11 @@
 
 A polished web dashboard for the TradingAgents framework, accessible from a phone, hosted on the operator's existing Hetzner VPS. The dashboard surfaces today's run, the live agent debate, and the per-ticker debate archive. Replaces the deprecated CLI orchestrator (`scripts/run_daily.py`).
 
-## What was actually asked for
+## What is in scope
 
-The original request, in operator's own words: a live signal product with a polished web dashboard accessible from phone, deployed on the existing VPS infrastructure, surfacing the multi-agent debate that the framework already produces.
+A live signal product with a polished web dashboard accessible from phone, deployed on the existing VPS infrastructure, surfacing the multi-agent debate that the framework already produces.
 
-Everything below is a direct expansion of that request. Engineering details, validation gates, cost-meter scaffolding, banner mandates, browser-specific test requirements, and similar additions that earlier versions of this spec contained have been removed — they were not part of the ask.
+Everything below is a direct expansion of that scope. Engineering details, validation gates, cost-meter scaffolding, banner mandates, browser-specific test requirements, and similar additions that earlier versions of this spec contained have been removed.
 
 ## User Scenarios
 
