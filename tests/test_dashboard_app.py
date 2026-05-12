@@ -398,11 +398,15 @@ def test_home_includes_trigger_form(client):
 
 
 @pytest.mark.unit
-def test_trigger_rejects_non_localhost_origin(tmp_path, monkeypatch):
-    """T011 / G-9: app-level source-IP guard rejects non-localhost origins
-    (defense-in-depth on top of Quadlet PublishPort + Caddy not proxying).
-    Verifies both real-localhost AND TestClient default ("testclient") still
-    pass the guard so existing trigger tests + smoke gate keep working."""
+def test_trigger_no_app_level_ip_check(tmp_path, monkeypatch):
+    """The app-level source-IP guard was removed in the 2026-05-12 hotfix because
+    when running behind Caddy + Podman the source IP seen by the app is the
+    Podman bridge gateway (e.g. 10.88.0.1), not 127.0.0.1. The previous guard
+    rejected that legitimate-via-Caddy traffic. Security is provided by Caddy
+    basic-auth + the Quadlet PublishPort=127.0.0.1:8000 binding instead.
+
+    This test pins that ANY origin reaching the endpoint is processed (and
+    falls through to the FR-011 ticker validation), not 403'd outright."""
     wl = tmp_path / "wl.txt"
     wl.write_text("NVDA\n", encoding="utf-8")
     monkeypatch.setenv("TA_WATCHLIST", str(wl))
@@ -416,25 +420,13 @@ def test_trigger_rejects_non_localhost_origin(tmp_path, monkeypatch):
 
     monkeypatch.setattr("tradingagents.dashboard.app.subprocess.run", fake_run)
 
-    # Remote origin → 403, no spawn.
-    spawned = []
-    monkeypatch.setattr(
-        "tradingagents.dashboard.app.subprocess.run",
-        lambda *a, **kw: (
-            spawned.append(a) or type("R", (), {"returncode": 0, "stderr": "", "stdout": ""})()
-        ),
-    )
-    remote_client = TestClient(app_module.app, client=("203.0.113.1", 12345))
-    r = remote_client.post("/trigger/NVDA")
-    assert r.status_code == 403, f"expected 403 from remote IP, got {r.status_code}"
-    assert spawned == [], "spawn must NOT happen when source IP rejected"
+    # Podman bridge gateway origin (the actual production source IP) should
+    # NOT be 403'd — it should fall through to the spawn path.
+    bridge_client = TestClient(app_module.app, client=("10.88.0.1", 51234))
+    r = bridge_client.post("/trigger/NVDA")
+    assert r.status_code == 200, f"bridge IP must NOT be rejected, got {r.status_code}"
 
-    # Real-localhost origin → passes guard (and reaches the spawn path).
-    local_client = TestClient(app_module.app, client=("127.0.0.1", 51234))
-    r = local_client.post("/trigger/NVDA")
-    assert r.status_code == 200, f"127.0.0.1 must pass guard, got {r.status_code}"
-
-    # Default TestClient (host="testclient") → also passes guard.
+    # Default TestClient origin still works.
     default_client = TestClient(app_module.app)
     r = default_client.post("/trigger/NVDA")
-    assert r.status_code == 200, f"testclient must pass guard, got {r.status_code}"
+    assert r.status_code == 200, f"testclient must work, got {r.status_code}"
