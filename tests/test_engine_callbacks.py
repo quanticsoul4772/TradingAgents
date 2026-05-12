@@ -74,7 +74,92 @@ def test_callback_with_no_handlers_does_not_error():
     """Constructing without handlers + receiving events must be a no-op, not crash."""
     cb = EngineEventCallback()
     cb.on_chain_start({"name": "Bull Researcher"}, inputs={})
-    cb.on_chain_end(outputs={}, name="Bull Researcher")
+    cb.on_chain_end(outputs={}, name="Bull Receiver")
+
+
+# ---------------------------------------------------------------------------
+# FR-005 stream-iteration path (Spec 250 G-8 closure)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_propagate_signature_accepts_node_hooks():
+    """G-8 / FR-005 contract: TradingAgentsGraph.propagate must accept
+    on_node_started + on_node_finished kwargs so the engine can supply them.
+    Pinned via signature inspection — no graph instantiation needed."""
+    import inspect
+
+    from tradingagents.graph.trading_graph import TradingAgentsGraph
+
+    sig = inspect.signature(TradingAgentsGraph.propagate)
+    params = sig.parameters
+    assert "on_node_started" in params, "propagate() must accept on_node_started kwarg"
+    assert "on_node_finished" in params, "propagate() must accept on_node_finished kwarg"
+    assert params["on_node_started"].kind == inspect.Parameter.KEYWORD_ONLY
+    assert params["on_node_finished"].kind == inspect.Parameter.KEYWORD_ONLY
+
+
+@pytest.mark.unit
+def test_run_graph_signature_accepts_node_hooks():
+    """G-8 / FR-005 contract: _run_graph must accept on_node_started +
+    on_node_finished kwargs so propagate can forward them. The actual
+    stream-vs-invoke routing is exercised by the engine integration suite."""
+    import inspect
+
+    from tradingagents.graph.trading_graph import TradingAgentsGraph
+
+    sig = inspect.signature(TradingAgentsGraph._run_graph)
+    params = sig.parameters
+    assert "on_node_started" in params
+    assert "on_node_finished" in params
+
+
+@pytest.mark.unit
+def test_engine_runner_forwards_node_hooks_not_event_callback(monkeypatch):
+    """G-8 / FR-005: _real_run_ticker must forward on_node_started + on_node_finished
+    to _default_propagate, NOT pass an EngineEventCallback in the callbacks list.
+    TokenCostCallback is the only callback expected in production runs."""
+    from tradingagents.engine import runner as runner_module
+
+    captured: dict = {}
+
+    def fake_default_propagate(
+        ticker,
+        trade_date,
+        callbacks=None,
+        on_node_started=None,
+        on_node_finished=None,
+    ):
+        captured["ticker"] = ticker
+        captured["trade_date"] = trade_date
+        captured["callbacks"] = list(callbacks or [])
+        captured["on_node_started"] = on_node_started
+        captured["on_node_finished"] = on_node_finished
+        return "Hold"
+
+    monkeypatch.setattr(runner_module, "_default_propagate", fake_default_propagate)
+
+    r = runner_module.EngineRunner(run_dir=__import__("pathlib").Path("/tmp/ta-test-engine-hooks"))
+    r._progress = runner_module.ProgressFile(
+        run_id="test",
+        started_at="2026-05-11T00:00:00Z",
+        trade_date="2026-05-11",
+        watchlist=["NVDA"],
+        heartbeat_at="2026-05-11T00:00:00Z",
+    )
+    r._real_run_ticker("NVDA")
+
+    assert captured["ticker"] == "NVDA"
+    # Hooks must be wired (not None).
+    assert callable(captured["on_node_started"]), "on_node_started must be forwarded"
+    assert callable(captured["on_node_finished"]), "on_node_finished must be forwarded"
+    # Only TokenCostCallback should be in the callbacks list — NOT EngineEventCallback.
+    cb_class_names = [type(cb).__name__ for cb in captured["callbacks"]]
+    assert "TokenCostCallback" in cb_class_names, "TokenCostCallback still required for cost meter"
+    assert "EngineEventCallback" not in cb_class_names, (
+        "FR-005 G-8 closure: EngineEventCallback must NOT be wired by the runner; "
+        "per-node events come from the stream() loop instead"
+    )
 
 
 # ---------------------------------------------------------------------------

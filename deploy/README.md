@@ -23,6 +23,18 @@
 
 ## Setup
 
+### 0. Verify systemd version ≥ 240 (G-12 / FR-033)
+
+Older systemd silently treats `OnCalendar=Mon..Fri 17:00 America/New_York` as UTC, which would fire the daily timer at the wrong wall-clock time (13:00 ET in summer, 12:00 ET in winter). One-line gate that exits non-zero on older systemd:
+
+```bash
+ssh rawcell "systemctl --version | head -1 | awk '{exit (\$2 < 240)}'" \
+    || { echo 'FAIL: systemd >= 240 required for timezone-aware OnCalendar'; exit 1; }
+echo 'OK: systemd version satisfies FR-033'
+```
+
+If this fails, do not proceed with steps 4 (systemd units) or onward — the timer will fire at the wrong time and corrupt SC-007 cost-meter validation.
+
 ### 1. Place the source on the VPS
 
 ```bash
