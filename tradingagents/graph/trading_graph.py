@@ -393,10 +393,17 @@ class TradingAgentsGraph:
         # the final state directly. Stream mode "updates" runs in parallel to
         # tag which node fired (its key in the chunk dict). LangGraph supports
         # multiple modes via stream_mode=list — we get tagged chunks.
+        #
+        # propagator.get_graph_args() ships stream_mode="values" by default
+        # (used by the legacy debug branch); pop it before our explicit
+        # stream_mode=[...] so we don't pass the kwarg twice. Without this pop
+        # the LangGraph call raises "got multiple values for keyword argument
+        # 'stream_mode'" and every propagate fails.
         if on_node_started or on_node_finished or self.debug:
+            stream_args = {k: v for k, v in args.items() if k != "stream_mode"}
             final_state = init_agent_state
             for chunk_type, chunk_data in self.graph.stream(
-                init_agent_state, stream_mode=["updates", "values"], **args
+                init_agent_state, stream_mode=["updates", "values"], **stream_args
             ):
                 if chunk_type == "updates":
                     # chunk_data is {node_name: state_delta}. Emit start+finish
