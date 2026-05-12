@@ -220,14 +220,26 @@ def portfolio(request: Request, portfolio_id: str = "live") -> HTMLResponse:
 # ----------------------------------------------- TRIGGER (POST /trigger/{ticker})
 
 
+_TRIGGER_ALLOWED_HOSTS = ("127.0.0.1", "::1", "testclient")
+
+
 @app.post("/trigger/{ticker}")
-def trigger_ticker(ticker: str) -> JSONResponse:
+def trigger_ticker(ticker: str, request: Request) -> JSONResponse:
     """FR-011 + FR-012 + FR-013: validate ticker + spawn engine via systemd-run.
 
     FR-010: this endpoint is only reachable from 127.0.0.1 (Caddy doesn't proxy
     /trigger/*). The dashboard itself binds 0.0.0.0 inside the container; the
     Quadlet PublishPort=127.0.0.1:8000 ensures only-localhost from the host side.
+
+    G-9 / T013: app-level source-IP guard layered on top of the deployment
+    firewalling. Allowlist includes "testclient" so the FastAPI TestClient
+    suite (which sets request.client.host = "testclient") still exercises
+    the rest of the validation chain.
     """
+    client_host = request.client.host if request.client else ""
+    if client_host not in _TRIGGER_ALLOWED_HOSTS:
+        raise HTTPException(403, f"trigger forbidden from {client_host!r}")
+
     ok, reason = sr.validate_ticker_for_trigger(ticker)
     if not ok:
         raise HTTPException(400, reason)
