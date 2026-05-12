@@ -345,13 +345,15 @@ def test_trigger_rejects_ticker_not_in_watchlist(client, tmp_path, monkeypatch):
 
 
 @pytest.mark.unit
-def test_trigger_returns_409_when_engine_locked(client, tmp_path, monkeypatch):
-    """FR-013: 409 when engine lock held."""
+def test_trigger_returns_409_when_engine_locked(client, isolated_dashboard, tmp_path, monkeypatch):
+    """409 when engine lock held. The lock is a file at ENGINE_DIR/lock,
+    checked inline by the trigger endpoint (no engine module import)."""
     wl = tmp_path / "wl.txt"
     wl.write_text("NVDA\n", encoding="utf-8")
     monkeypatch.setenv("TA_WATCHLIST", str(wl))
-    monkeypatch.setattr("tradingagents.engine.lock.is_locked", lambda: True)
-    monkeypatch.setattr("tradingagents.engine.lock.lock_holder_pid", lambda: "12345")
+    lock = isolated_dashboard["engine"] / "lock"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    lock.write_text("12345", encoding="utf-8")
     r = client.post("/trigger/NVDA")
     assert r.status_code == 409
     assert "12345" in r.json()["detail"]
@@ -362,7 +364,6 @@ def test_trigger_spawns_systemd_unit(client, tmp_path, monkeypatch):
     wl = tmp_path / "wl.txt"
     wl.write_text("NVDA\n", encoding="utf-8")
     monkeypatch.setenv("TA_WATCHLIST", str(wl))
-    monkeypatch.setattr("tradingagents.engine.lock.is_locked", lambda: False)
     monkeypatch.setattr(
         "tradingagents.dashboard.app.shutil.which", lambda x: "/usr/bin/systemd-run"
     )
@@ -410,7 +411,6 @@ def test_trigger_no_app_level_ip_check(tmp_path, monkeypatch):
     wl = tmp_path / "wl.txt"
     wl.write_text("NVDA\n", encoding="utf-8")
     monkeypatch.setenv("TA_WATCHLIST", str(wl))
-    monkeypatch.setattr("tradingagents.engine.lock.is_locked", lambda: False)
     monkeypatch.setattr(
         "tradingagents.dashboard.app.shutil.which", lambda x: "/usr/bin/systemd-run"
     )
