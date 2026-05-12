@@ -134,7 +134,7 @@ The operator wants to see the paper portfolio's cumulative performance — open 
 - **FR-015**: Frontend MUST be mobile-first: phone-portrait layout is the primary design; tablet/desktop are responsive enhancements.
 - **FR-016**: Live debate viewer MUST update via polling (NOT Server-Sent Events). Polling interval: 2-3 seconds when run is active; 30-60 seconds when idle. Validated through the same Caddy reverse proxy as agent-harness-v2's existing dashboard.
 - **FR-017**: All pages MUST render Hold ratings as first-class output, NOT as empty cells or missing recommendations.
-- **FR-018**: All pages MUST display the "Simulation only — not financial advice" banner per Constitution Principle IV.
+- **FR-018** *(amended 2026-05-11 per `amendments/fr-018-sc-006-banner-and-mobile.md`)*: No banner mandate. The dashboard is a single-operator surface gated by Caddy basic-auth; the "Simulation only — not financial advice" banner serves no protective function for the actual user. Constitution Principle IV remains satisfied by the paper-only architecture (no real-money trading integration; FR-007 paper_trade.py is the only signal consumer).
 - **FR-019**: Cost meter MUST display cumulative LLM spend for today's run, visible in the page header on every route.
 
 #### Schemas (pinned in spec)
@@ -203,7 +203,7 @@ The operator wants to see the paper portfolio's cumulative performance — open 
 - **SC-003**: Trigger endpoint safety — invalid tickers (regex fail OR not in watchlist) return 400 without spawning subprocess; valid tickers spawn via `systemd-run`; concurrent triggers return 409 if engine lock held.
 - **SC-004**: Empty state — `GET /` on day 0 (no runs ever happened) returns "No runs yet" page with trigger instructions; does not error or render blank.
 - **SC-005**: Engine crash recovery — if `heartbeat_at` is older than 90 sec AND no terminal event, dashboard renders STALE banner; ad-hoc trigger remains usable to start a new run.
-- **SC-006**: Mobile responsive — real iOS Safari (not Chrome devtools emulator) renders all pages correctly; polling works over cellular; layout is usable in phone-portrait orientation.
+- **SC-006** *(amended 2026-05-11 per `amendments/fr-018-sc-006-banner-and-mobile.md`)*: Mobile responsive — the dashboard renders correctly on the operator's actual mobile browser (any modern phone browser; the operator does not use iOS). Polling works over cellular; layout is usable in phone-portrait orientation. Validation is performed by the operator on their own device once per spec change that touches the mobile layout.
 - **SC-007**: End-to-end smoke — dry-run mode (engine emits fake events without LLM calls per FR-008) validates dashboard renders correctly before live $10 run; live run produces ratings + portfolio updates + cost meter accuracy within ±5% of actual Anthropic billing.
 - **SC-008**: Operator can pull up phone, view today's ratings + portfolio + cost in under 10 seconds from cold-tap-on-URL to fully-rendered page (target: under 5 seconds; ceiling: under 10).
 - **SC-009**: When a run is in flight, the live debate viewer updates with new agent-stage events within 5 seconds of the engine writing them.
@@ -237,7 +237,7 @@ The operator wants to see the paper portfolio's cumulative performance — open 
 
 ## Constitution Adherence
 
-- **Principle IV (No Production Claims)**: dashboard banner "Simulation only — not financial advice." Paper-only. (FR-018)
+- **Principle IV (No Production Claims)**: paper-only — no real-money trading integration anywhere in the system. The previous banner mandate (original FR-018) was dropped 2026-05-11 because a single-operator basic-auth-gated dashboard does not need an audience-facing disclaimer. The protective invariant (paper-only, no real broker integration) is preserved by the architecture itself.
 - **Principle VI (Spec Before Structural Change)**: this spec IS the structural-change discipline; new module + new deploy surface + new operator interface.
 - **Principle VII (Calibrated Abstention is a Valid Output)**: dashboard MUST display Hold gracefully — Hold IS the calibrated output, not absent recommendation. (FR-017)
 
