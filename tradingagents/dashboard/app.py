@@ -216,13 +216,19 @@ def trigger_ticker(ticker: str) -> JSONResponse:
     if not ok:
         raise HTTPException(400, reason)
 
-    # FR-013: refuse if engine already running.
-    from tradingagents.engine.lock import is_locked, lock_holder_pid
+    # Refuse if engine already running. The lock is a file at ENGINE_DIR/lock
+    # written by the engine subprocess. We check it inline (filesystem only)
+    # rather than importing from tradingagents.engine because the dashboard
+    # container deliberately does not include the engine module — engine and
+    # dashboard are subprocess-isolated; dashboard is read-only on engine state.
+    lock_file = sr.ENGINE_DIR / "lock"
+    if lock_file.exists():
+        try:
+            holder = lock_file.read_text(encoding="utf-8").strip() or "unknown"
+        except OSError:
+            holder = "unknown"
+        raise HTTPException(409, f"engine busy (lock held by PID {holder})")
 
-    if is_locked():
-        raise HTTPException(409, f"engine busy (lock held by PID {lock_holder_pid() or 'unknown'})")
-
-    # FR-012: systemd-run --user --unit=...
     if not shutil.which("systemd-run"):
         raise HTTPException(500, "systemd-run not available on this host")
 
