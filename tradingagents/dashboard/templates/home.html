@@ -8,7 +8,7 @@
 
 {# Spec 250 User Story 1 (PR-A): today's ratings + paper portfolio + cost
    spent today, all first-class on the homepage (not gated on a live run).
-   The ad-hoc trigger input from User Story 4 ships in PR-B. #}
+   Spec 250 User Story 4 (PR-B): ad-hoc trigger input below. #}
 
 {# ---- TODAY'S RUN HEADER (always rendered; shows "no run yet" when empty) ---- #}
 <div class="bg-white rounded-lg shadow p-4 mb-4">
@@ -42,6 +42,51 @@
     </div>
   {% endif %}
 </div>
+
+{# ---- AD-HOC TRIGGER (Spec 250 User Story 4 / PR-B / G-3) ---- #}
+<div class="bg-white rounded-lg shadow p-4 mb-4">
+  <h2 class="font-bold text-sm uppercase tracking-wide text-gray-500 mb-2">Trigger an ad-hoc run</h2>
+  <form id="trigger-form" class="flex gap-2 flex-wrap">
+    <input type="text" name="ticker" required
+           placeholder="NVDA"
+           pattern="^[A-Z]{1,5}(\.[A-Z]{1,2})?$"
+           autocapitalize="characters"
+           autocomplete="off"
+           class="flex-1 min-w-0 border border-gray-300 rounded px-3 py-2 font-mono uppercase">
+    <button type="submit"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-semibold">
+      Run
+    </button>
+  </form>
+  <p id="trigger-msg" class="text-xs mt-2 hidden"></p>
+  <p class="text-xs text-gray-500 mt-2">
+    Spawns a single-ticker run via systemd. ~$0.40, ~10 min. Ticker must be in the watchlist.
+  </p>
+</div>
+<script>
+  document.getElementById('trigger-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('trigger-msg');
+    const ticker = e.target.ticker.value.trim().toUpperCase();
+    msg.className = 'text-xs mt-2 text-gray-600';
+    msg.textContent = 'Starting ' + ticker + '…';
+    try {
+      const resp = await fetch('/trading/trigger/' + encodeURIComponent(ticker), {method: 'POST'});
+      if (resp.ok) {
+        msg.className = 'text-xs mt-2 text-green-700';
+        msg.textContent = 'Started — redirecting to live view…';
+        setTimeout(() => { window.location.href = '/trading/live'; }, 600);
+      } else {
+        const body = await resp.json().catch(() => ({detail: 'unknown error'}));
+        msg.className = 'text-xs mt-2 text-red-700';
+        msg.textContent = 'Error ' + resp.status + ': ' + (body.detail || resp.statusText);
+      }
+    } catch (err) {
+      msg.className = 'text-xs mt-2 text-red-700';
+      msg.textContent = 'Network error: ' + err.message;
+    }
+  });
+</script>
 
 {# ---- COMPLETED RATINGS TABLE (when a run produced any) ---- #}
 {% if summary.completed or summary.failed %}

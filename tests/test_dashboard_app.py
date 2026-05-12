@@ -409,3 +409,62 @@ def test_trigger_spawns_systemd_unit(client, tmp_path, monkeypatch):
     assert r.json()["ticker"] == "NVDA"
     assert "systemctl" in captured[0][0]
     assert "tradingagents-engine-adhoc@NVDA.service" in captured[0]
+
+
+@pytest.mark.unit
+def test_home_includes_trigger_form(client):
+    """T010 / G-3: ad-hoc single-ticker trigger UI present on the homepage.
+    Per User Story 4: text input + Run button + JS handler that POSTs
+    to /trading/trigger/{ticker} and redirects to /live on success."""
+    r = client.get("/")
+    assert r.status_code == 200
+    assert 'id="trigger-form"' in r.text
+    assert 'name="ticker"' in r.text
+    # Validates against the FR-011 regex pattern client-side.
+    assert "[A-Z]{1,5}" in r.text
+    # JS handler POSTs to the trigger endpoint and redirects to /live.
+    assert "/trading/trigger/" in r.text
+    assert "/trading/live" in r.text
+
+
+@pytest.mark.unit
+def test_trigger_rejects_non_localhost_origin(tmp_path, monkeypatch):
+    """T011 / G-9: app-level source-IP guard rejects non-localhost origins
+    (defense-in-depth on top of Quadlet PublishPort + Caddy not proxying).
+    Verifies both real-localhost AND TestClient default ("testclient") still
+    pass the guard so existing trigger tests + smoke gate keep working."""
+    wl = tmp_path / "wl.txt"
+    wl.write_text("NVDA\n", encoding="utf-8")
+    monkeypatch.setenv("TA_WATCHLIST", str(wl))
+    monkeypatch.setattr("tradingagents.engine.lock.is_locked", lambda: False)
+    monkeypatch.setattr(
+        "tradingagents.dashboard.app.shutil.which", lambda x: "/usr/bin/systemd-run"
+    )
+
+    def fake_run(cmd, **kw):
+        return type("R", (), {"returncode": 0, "stderr": "", "stdout": ""})()
+
+    monkeypatch.setattr("tradingagents.dashboard.app.subprocess.run", fake_run)
+
+    # Remote origin → 403, no spawn.
+    spawned = []
+    monkeypatch.setattr(
+        "tradingagents.dashboard.app.subprocess.run",
+        lambda *a, **kw: (
+            spawned.append(a) or type("R", (), {"returncode": 0, "stderr": "", "stdout": ""})()
+        ),
+    )
+    remote_client = TestClient(app_module.app, client=("203.0.113.1", 12345))
+    r = remote_client.post("/trigger/NVDA")
+    assert r.status_code == 403, f"expected 403 from remote IP, got {r.status_code}"
+    assert spawned == [], "spawn must NOT happen when source IP rejected"
+
+    # Real-localhost origin → passes guard (and reaches the spawn path).
+    local_client = TestClient(app_module.app, client=("127.0.0.1", 51234))
+    r = local_client.post("/trigger/NVDA")
+    assert r.status_code == 200, f"127.0.0.1 must pass guard, got {r.status_code}"
+
+    # Default TestClient (host="testclient") → also passes guard.
+    default_client = TestClient(app_module.app)
+    r = default_client.post("/trigger/NVDA")
+    assert r.status_code == 200, f"testclient must pass guard, got {r.status_code}"
