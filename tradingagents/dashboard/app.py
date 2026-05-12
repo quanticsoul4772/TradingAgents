@@ -64,14 +64,30 @@ def api_poll(since: str | None = None) -> JSONResponse:
 # ------------------------------------------------------------------- TODAY (GET /)
 
 
+def _cost_today(summary: dict) -> float:
+    """G-5 / FR-019: cost meter feed for the persistent header on every route.
+    Returns the cost from the most-recent run's progress.json, or 0.0 when no
+    run exists. Independent of run-in-flight state so the badge is always present."""
+    return float(summary.get("cost_so_far_usd") or 0.0)
+
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request) -> HTMLResponse:
+    """US1: today's ratings + paper portfolio + cost meter (PR-A scope).
+
+    Per spec User Story 1 acceptance scenario 1: the homepage shows the rating
+    table, paper portfolio open positions, and total cost spent today. The
+    ad-hoc trigger input from User Story 4 ships in PR-B.
+    """
     summary = sr.summarize_progress(sr.read_progress())
+    portfolio = sr.read_portfolio("live")
     return templates.TemplateResponse(
         request=request,
         name="home.html",
         context={
             "summary": summary,
+            "portfolio": portfolio,
+            "cost_today": _cost_today(summary),
             "title": f"Trade date {summary['trade_date'] or '(none)'}",
         },
     )
@@ -91,6 +107,7 @@ def live(request: Request) -> HTMLResponse:
             "summary": summary,
             "events": events,
             "now": _now_hms(),
+            "cost_today": _cost_today(summary),
             "title": "Live run",
         },
     )
@@ -99,7 +116,8 @@ def live(request: Request) -> HTMLResponse:
 @app.get("/live/partial", response_class=HTMLResponse)
 def live_partial(request: Request) -> HTMLResponse:
     """Phase 3: HTMX-polled partial fragment. Same content as /live's inner
-    block, no base layout — for hx-swap=innerHTML."""
+    block, no base layout — for hx-swap=innerHTML. No cost_today: the partial
+    swaps inside the live-content div, NOT the persistent header."""
     summary = sr.summarize_progress(sr.read_progress())
     events = sr.tail_events(limit=50)
     return templates.TemplateResponse(
@@ -142,6 +160,7 @@ def tickers_for_date(request: Request, date: str) -> HTMLResponse:
         context={
             "trade_date": date,
             "rows": rows,
+            "cost_today": _cost_today(sr.summarize_progress(sr.read_progress())),
             "title": f"Tickers — {date}",
         },
     )
@@ -173,6 +192,7 @@ def ticker_detail(request: Request, ticker: str, date: str) -> HTMLResponse:
             "trade_date": date,
             "log": log,
             "rating": _extract_rating(log.get("final_trade_decision", "")),
+            "cost_today": _cost_today(sr.summarize_progress(sr.read_progress())),
             "title": f"{ticker} — {date}",
         },
     )
@@ -191,6 +211,7 @@ def portfolio(request: Request, portfolio_id: str = "live") -> HTMLResponse:
             "portfolio_id": portfolio_id,
             "portfolio": p,
             "all_ids": sr.list_portfolio_ids(),
+            "cost_today": _cost_today(sr.summarize_progress(sr.read_progress())),
             "title": f"Portfolio: {portfolio_id}",
         },
     )

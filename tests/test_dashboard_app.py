@@ -84,11 +84,25 @@ def test_api_poll_with_progress(client, isolated_dashboard):
 
 @pytest.mark.unit
 def test_home_empty_state_when_no_runs(client):
-    """SC-004: GET / on day 0 returns 'No runs yet' page."""
+    """T004 / SC-004: GET / on day 0 renders the empty-state header alongside
+    the always-present paper portfolio panel + cost block (US1 PR-A scope).
+    Trigger form (US4) is asserted by a separate test in PR-B."""
     r = client.get("/")
     assert r.status_code == 200
-    assert "No runs yet" in r.text
-    # FR-018 paper banner removed per user request (PR #257); spec amendment pending.
+    assert "No active run" in r.text
+    # US1: paper portfolio panel always rendered (with empty-state copy).
+    assert "Paper portfolio" in r.text
+
+
+@pytest.mark.unit
+def test_home_shows_cost_today_when_no_run(client):
+    """T002 / G-2: with no progress.json, the no-run header must still surface
+    the cost-spent-today value ($0.00) so the operator sees the cost meter
+    regardless of run state."""
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "$0.00" in r.text
+    assert "today" in r.text.lower()
 
 
 @pytest.mark.unit
@@ -106,6 +120,51 @@ def test_home_with_completed_run(client, isolated_dashboard):
     assert "AAPL" in r.text
     assert "Hold" in r.text  # FR-017: Hold renders as first-class
     assert "Trade date 2026-05-08" in r.text
+
+
+@pytest.mark.unit
+def test_home_renders_paper_portfolio_inline(client, isolated_dashboard):
+    """US1 acceptance scenario 1: homepage shows paper portfolio open positions."""
+    paper_dir = isolated_dashboard["paper"]
+    paper_dir.mkdir(parents=True, exist_ok=True)
+    (paper_dir / "live.json").write_text(
+        json.dumps(
+            {
+                "cash_usd": 12345.67,
+                "open_positions": [
+                    {"ticker": "NVDA", "entry_date": "2026-05-01", "shares": 10},
+                    {"ticker": "MSFT", "entry_date": "2026-05-02", "shares": 5},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "Paper portfolio" in r.text
+    assert "12345.67" in r.text
+    assert "NVDA" in r.text
+    assert "MSFT" in r.text
+    # Has link to the full /portfolio view.
+    assert "/trading/portfolio" in r.text
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("route", ["/", "/live", "/portfolio", "/tickers/2026-05-08"])
+def test_cost_meter_in_persistent_header(client, route):
+    """T003 / G-5 / FR-019: cost meter must be in the persistent header on
+    EVERY route, not only inside the run-summary block on the homepage.
+    The badge has CSS class `cost-badge` and lives in the <header> from base.html."""
+    import re
+
+    r = client.get(route)
+    assert r.status_code in (200, 400), f"{route} unexpectedly returned {r.status_code}"
+    # Match the class regardless of additional Tailwind utility classes after it.
+    badge_match = re.search(
+        r'<span\s+class="[^"]*\bcost-badge\b[^"]*"[^>]*>\s*\$([\d.]+)\s*</span>',
+        r.text,
+    )
+    assert badge_match, f"{route} missing persistent cost badge in <header>"
 
 
 # ---------------------------------------------------------------- GET /live
