@@ -5,24 +5,19 @@
 {% endmacro %}
 
 {% block content %}
-{% if not summary.exists %}
-  <!-- FR-004 SC-004: empty state for day 0 -->
-  <div class="bg-white rounded-lg shadow p-6 mt-4">
-    <h1 class="text-xl font-bold mb-2">No runs yet</h1>
-    <p class="text-gray-600 mb-4">The engine hasn't been invoked yet. The daily timer fires Mon-Fri at 17:00 ET.</p>
-    <p class="text-sm text-gray-500">Manual fire on the VPS:</p>
-    <pre class="bg-gray-100 p-3 rounded text-xs overflow-x-auto mt-2"><code>sudo systemctl start tradingagents-engine-daily.service
-# or single ticker:
-sudo systemctl start 'tradingagents-engine-adhoc@NVDA.service'</code></pre>
-  </div>
-{% else %}
-  {% if summary.stale %}
-    <div class="bg-red-100 border border-red-300 text-red-900 p-3 rounded mb-4">
-      ⚠ <strong>STALE</strong> — heartbeat &gt; 90s; engine may have crashed.
-    </div>
-  {% endif %}
 
-  <div class="bg-white rounded-lg shadow p-4 mb-4">
+{# Spec 250 User Story 1 (PR-A): today's ratings + paper portfolio + cost
+   spent today, all first-class on the homepage (not gated on a live run).
+   The ad-hoc trigger input from User Story 4 ships in PR-B. #}
+
+{# ---- TODAY'S RUN HEADER (always rendered; shows "no run yet" when empty) ---- #}
+<div class="bg-white rounded-lg shadow p-4 mb-4">
+  {% if summary.exists %}
+    {% if summary.stale %}
+      <div class="bg-red-100 border border-red-300 text-red-900 p-2 rounded mb-2 text-sm">
+        ⚠ <strong>STALE</strong> — heartbeat &gt; 90s; engine may have crashed.
+      </div>
+    {% endif %}
     <div class="flex items-baseline justify-between flex-wrap gap-2">
       <h1 class="text-xl font-bold">Trade date {{ summary.trade_date }}</h1>
       <div class="text-sm text-gray-600">
@@ -32,16 +27,26 @@ sudo systemctl start 'tradingagents-engine-adhoc@NVDA.service'</code></pre>
       </div>
     </div>
     <div class="text-xs text-gray-500 font-mono mt-1">{{ summary.run_id }}</div>
-  </div>
-
-  {% if summary.current_ticker %}
-    <div class="bg-blue-50 border border-blue-200 text-blue-900 p-3 rounded mb-4">
-      ▶ in flight: <strong>{{ summary.current_ticker }}</strong> · {{ summary.current_agent_stage or 'starting…' }}
-      <a href="/trading/live" class="text-blue-700 hover:underline ml-2">→ live view</a>
+    {% if summary.current_ticker %}
+      <div class="bg-blue-50 border border-blue-200 text-blue-900 p-2 rounded mt-3 text-sm">
+        ▶ in flight: <strong>{{ summary.current_ticker }}</strong> · {{ summary.current_agent_stage or 'starting…' }}
+        <a href="/trading/live" class="text-blue-700 hover:underline ml-2">→ live view</a>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="flex items-baseline justify-between flex-wrap gap-2">
+      <h1 class="text-xl font-bold">No active run</h1>
+      <div class="text-sm text-gray-600">
+        Daily timer: <span class="font-mono">Mon–Fri 17:00 ET</span> · <span class="font-mono">$0.00</span> LLM today
+      </div>
     </div>
   {% endif %}
+</div>
 
-  <div class="bg-white rounded-lg shadow overflow-hidden">
+{# ---- COMPLETED RATINGS TABLE (when a run produced any) ---- #}
+{% if summary.completed or summary.failed %}
+  <div class="bg-white rounded-lg shadow overflow-hidden mb-4">
+    <h2 class="font-bold text-sm uppercase tracking-wide text-gray-500 px-3 py-2 bg-gray-50">Today's ratings</h2>
     <table class="w-full text-sm">
       <thead class="bg-gray-100">
         <tr>
@@ -76,4 +81,54 @@ sudo systemctl start 'tradingagents-engine-adhoc@NVDA.service'</code></pre>
     </table>
   </div>
 {% endif %}
+
+{# ---- PAPER PORTFOLIO PANEL (Spec 250 User Story 1) ---- #}
+<div class="bg-white rounded-lg shadow overflow-hidden mb-4">
+  <div class="flex items-baseline justify-between px-3 py-2 bg-gray-50">
+    <h2 class="font-bold text-sm uppercase tracking-wide text-gray-500">Paper portfolio</h2>
+    <a href="/trading/portfolio" class="text-xs text-blue-700 hover:underline">full view →</a>
+  </div>
+  {% if not portfolio %}
+    <div class="p-4 text-sm text-gray-500">
+      No portfolio yet. Once a run completes and signals are committed, positions appear here.
+    </div>
+  {% else %}
+    {% set cash = portfolio.cash_usd | default(0) | float %}
+    {% set positions = portfolio.open_positions or [] %}
+    <div class="grid grid-cols-2 gap-3 p-3">
+      <div>
+        <div class="text-xs uppercase text-gray-500">Cash</div>
+        <div class="text-lg font-bold font-mono">${{ '%.2f' | format(cash) }}</div>
+      </div>
+      <div>
+        <div class="text-xs uppercase text-gray-500">Open positions</div>
+        <div class="text-lg font-bold">{{ positions|length }}</div>
+      </div>
+    </div>
+    {% if positions %}
+      <table class="w-full text-sm border-t border-gray-100">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="text-left px-3 py-1">Ticker</th>
+            <th class="text-left px-3 py-1 hidden sm:table-cell">Entry</th>
+            <th class="text-right px-3 py-1">Shares</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {%- for pos in positions[:8] %}
+          <tr>
+            <td class="px-3 py-1 font-mono">{{ pos.ticker }}</td>
+            <td class="px-3 py-1 text-xs text-gray-500 font-mono hidden sm:table-cell">{{ pos.entry_date or '' }}</td>
+            <td class="px-3 py-1 text-right font-mono">{{ pos.shares or 0 }}</td>
+          </tr>
+          {%- endfor %}
+          {% if positions|length > 8 %}
+          <tr><td colspan="3" class="px-3 py-1 text-xs text-gray-500 italic">…and {{ positions|length - 8 }} more (see full view)</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    {% endif %}
+  {% endif %}
+</div>
+
 {% endblock %}
