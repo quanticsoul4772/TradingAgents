@@ -287,7 +287,15 @@ class TradingAgentsGraph:
         if updates:
             self.memory_log.batch_update_with_outcomes(updates)
 
-    def propagate(self, company_name, trade_date, *, callbacks: list | None = None):
+    def propagate(
+        self,
+        company_name,
+        trade_date,
+        *,
+        callbacks: list | None = None,
+        on_node_started=None,
+        on_node_finished=None,
+    ):
         """Run the trading agents graph for a company on a specific date.
 
         When ``checkpoint_enabled`` is set in config, the graph is recompiled
@@ -300,11 +308,13 @@ class TradingAgentsGraph:
         (ticker, date). The cache hook lives in ``route_to_vendor`` and is
         a no-op when the context is unset (tools called outside a propagate).
 
-        Spec 250 (dashboard) Phase 1b: optional ``callbacks`` arg is forwarded
-        to the LangGraph invoke as ``config['callbacks']``. The engine
-        (tradingagents/engine/) passes a BaseCallbackHandler that emits
-        per-agent-stage events (FR-001 + FR-005) for the dashboard live viewer.
-        Default ``None`` preserves existing behavior — no test impact.
+        Spec 250 (dashboard) FR-005: when ``on_node_started`` and
+        ``on_node_finished`` are provided, ``_run_graph`` iterates the
+        LangGraph via ``graph.stream()`` (sync analog of ``astream()``)
+        instead of ``graph.invoke()`` and emits per-node lifecycle events
+        from the iteration loop. ``callbacks`` is still forwarded for
+        token-level hooks (TokenCostCallback's ``on_llm_end``). Defaults of
+        ``None`` preserve existing invoke-based behavior — no test impact.
         """
         from tradingagents.signals.bootstrap import bootstrap_initial_signals
         from tradingagents.signals.context import propagate_context
@@ -336,14 +346,28 @@ class TradingAgentsGraph:
 
         try:
             with propagate_context(company_name, str(trade_date)):
-                return self._run_graph(company_name, trade_date, callbacks=callbacks)
+                return self._run_graph(
+                    company_name,
+                    trade_date,
+                    callbacks=callbacks,
+                    on_node_started=on_node_started,
+                    on_node_finished=on_node_finished,
+                )
         finally:
             if self._checkpointer_ctx is not None:
                 self._checkpointer_ctx.__exit__(None, None, None)
                 self._checkpointer_ctx = None
                 self.graph = self.workflow.compile()
 
-    def _run_graph(self, company_name, trade_date, *, callbacks: list | None = None):
+    def _run_graph(
+        self,
+        company_name,
+        trade_date,
+        *,
+        callbacks: list | None = None,
+        on_node_started=None,
+        on_node_finished=None,
+    ):
         """Execute the graph and write the resulting state to disk and memory log."""
         # Initialize state — inject memory log context for PM.
         past_context = self.memory_log.get_past_context(company_name)
@@ -357,22 +381,48 @@ class TradingAgentsGraph:
             tid = thread_id(company_name, str(trade_date))
             args.setdefault("config", {}).setdefault("configurable", {})["thread_id"] = tid
 
-        # Spec 250 dashboard: forward optional callbacks to LangGraph invoke
-        # so the engine can emit per-agent-stage events. No-op when callbacks
-        # is None (existing behavior preserved).
+        # Spec 250 dashboard: forward optional callbacks (e.g., TokenCostCallback)
+        # for token-level on_llm_end hooks. Per-node lifecycle events are emitted
+        # from the stream() loop below (FR-005), not from a callback handler.
         if callbacks:
             args.setdefault("config", {}).setdefault("callbacks", []).extend(callbacks)
 
-        if self.debug:
-            trace = []
-            for chunk in self.graph.stream(init_agent_state, **args):
-                if len(chunk["messages"]) == 0:
-                    pass
-                else:
-                    chunk["messages"][-1].pretty_print()
-                    trace.append(chunk)
-            final_state = trace[-1]
+        # Spec 250 FR-005: iterate via graph.stream() (sync analog of astream())
+        # whenever per-node lifecycle hooks are supplied OR debug is on. Stream
+        # mode "values" yields the merged state after each node so we can return
+        # the final state directly. Stream mode "updates" runs in parallel to
+        # tag which node fired (its key in the chunk dict). LangGraph supports
+        # multiple modes via stream_mode=list — we get tagged chunks.
+        if on_node_started or on_node_finished or self.debug:
+            final_state = init_agent_state
+            for chunk_type, chunk_data in self.graph.stream(
+                init_agent_state, stream_mode=["updates", "values"], **args
+            ):
+                if chunk_type == "updates":
+                    # chunk_data is {node_name: state_delta}. Emit start+finish
+                    # back-to-back at the moment the chunk arrives. stream
+                    # yields AT NODE FINISH, so the start timestamp is an
+                    # approximation; consumers requiring genuine per-node
+                    # duration should use astream_events() (out of FR-005 scope).
+                    for node_name in chunk_data:
+                        if on_node_started is not None:
+                            try:
+                                on_node_started(node_name)
+                            except Exception:  # noqa: BLE001
+                                pass  # event-emit failures must never block propagate
+                        if on_node_finished is not None:
+                            try:
+                                on_node_finished(node_name)
+                            except Exception:  # noqa: BLE001
+                                pass
+                elif chunk_type == "values":
+                    # Full merged state after the node update.
+                    final_state = chunk_data
+                    if self.debug and chunk_data.get("messages"):
+                        chunk_data["messages"][-1].pretty_print()
         else:
+            # No event hooks + not debug → keep the original invoke() path
+            # (no behavioral change for existing callers).
             final_state = self.graph.invoke(init_agent_state, **args)
 
         # Spec 001 Phase 1 (shadow) + Phase 2 (override): always derive
