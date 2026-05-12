@@ -59,7 +59,7 @@ def test_agent_stage_enum_values_match_spec():
 
 @pytest.mark.unit
 def test_event_type_enum_values_match_spec():
-    """FR-023: event_type enum is FIXED."""
+    """event_type enum values."""
     expected = {
         "run_started",
         "ticker_started",
@@ -67,7 +67,6 @@ def test_event_type_enum_values_match_spec():
         "agent_finished",
         "ticker_finished",
         "ticker_failed",
-        "cost_delta",
         "error",
         "run_finished",
     }
@@ -91,7 +90,6 @@ def test_progress_file_minimal_construction():
     assert p.run_id == "2026-05-10T120000Z"
     assert p.completed_tickers == []
     assert p.failed_tickers == []
-    assert p.cost_so_far_usd == 0.0
     assert p.current_ticker is None
     assert p.current_agent_stage is None
 
@@ -118,7 +116,6 @@ def test_progress_file_full_construction():
                 failed_at="2026-05-10T12:10:00Z",
             )
         ],
-        cost_so_far_usd=4.20,
         heartbeat_at="2026-05-10T12:00:30Z",
     )
     assert p.current_agent_stage == AgentStage.BULL_RESEARCHER
@@ -135,7 +132,6 @@ def test_progress_file_round_trip_via_json():
         trade_date="2026-05-08",
         watchlist=["NVDA", "AAPL"],
         current_agent_stage=AgentStage.PORTFOLIO_MANAGER,
-        cost_so_far_usd=9.99,
         heartbeat_at="2026-05-10T12:30:00Z",
     )
     raw = original.model_dump_json()

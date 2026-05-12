@@ -17,15 +17,12 @@
 <body class="bg-gray-50 text-gray-900 font-sans antialiased min-h-screen">
 
   <header class="bg-gray-900 text-white px-4 py-3 sticky top-0 z-10">
-    <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
+    <div class="max-w-3xl mx-auto flex items-center justify-between">
       <a href="/trading/" class="font-bold text-lg">TradingAgents</a>
-      <nav class="text-sm space-x-3 flex items-center">
+      <nav class="text-sm space-x-3">
         <a href="/trading/" class="hover:text-blue-300">Today</a>
         <a href="/trading/live" class="hover:text-blue-300">Live</a>
         <a href="/trading/portfolio" class="hover:text-blue-300">Portfolio</a>
-        {# Spec 250 FR-019 + G-5: persistent cost meter on every route. #}
-        <span class="cost-badge font-mono text-xs bg-gray-800 text-green-300 rounded px-2 py-0.5"
-              title="LLM cost spent today">${{ '%.2f' | format(cost_today | default(0.0) | float) }}</span>
       </nav>
     </div>
   </header>

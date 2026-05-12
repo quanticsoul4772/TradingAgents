@@ -191,7 +191,6 @@ def test_summarize_progress_handles_none():
     s = sr.summarize_progress(None)
     assert s["exists"] is False
     assert s["completed_count"] == 0
-    assert s["cost_so_far_usd"] == 0.0
 
 
 @pytest.mark.unit
@@ -202,7 +201,6 @@ def test_summarize_progress_full_dict():
         "watchlist": ["NVDA", "AAPL"],
         "completed_tickers": [{"ticker": "NVDA", "rating": "Buy", "completed_at": "x"}],
         "failed_tickers": [],
-        "cost_so_far_usd": 4.20,
         "current_ticker": "AAPL",
         "current_agent_stage": "bull_researcher",
         "heartbeat_at": _now_iso(0),
@@ -211,6 +209,5 @@ def test_summarize_progress_full_dict():
     assert s["exists"] is True
     assert s["completed_count"] == 1
     assert s["watchlist_size"] == 2
-    assert s["cost_so_far_usd"] == 4.20
     assert s["current_ticker"] == "AAPL"
     assert s["stale"] is False

@@ -23,7 +23,6 @@
       <div class="text-sm text-gray-600">
         {{ summary.completed_count }}/{{ summary.watchlist_size }} done
         {% if summary.failed_count %}· <span class="text-red-700">{{ summary.failed_count }} failed</span>{% endif %}
-        · <span class="font-mono">${{ '%.2f' | format(summary.cost_so_far_usd) }}</span> LLM
       </div>
     </div>
     <div class="text-xs text-gray-500 font-mono mt-1">{{ summary.run_id }}</div>
@@ -37,7 +36,7 @@
     <div class="flex items-baseline justify-between flex-wrap gap-2">
       <h1 class="text-xl font-bold">No active run</h1>
       <div class="text-sm text-gray-600">
-        Daily timer: <span class="font-mono">Mon–Fri 17:00 ET</span> · <span class="font-mono">$0.00</span> LLM today
+        Daily timer: <span class="font-mono">Mon–Fri 17:00 ET</span>
       </div>
     </div>
   {% endif %}
