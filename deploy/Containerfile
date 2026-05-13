@@ -22,11 +22,15 @@ COPY tradingagents/dashboard /app/tradingagents/dashboard
 ENV TA_ENGINE_DIR=/var/lib/tradingagents/engine
 ENV TA_LOGS_DIR=/var/lib/tradingagents/logs
 ENV TA_PAPER_DIR=/var/lib/tradingagents/paper
+ENV TA_TRIGGER_DIR=/var/lib/tradingagents/triggers
 ENV TA_WATCHLIST=/app/data/watchlists/tech_weighted.txt
 ENV PYTHONUNBUFFERED=1
 
-# Watchlist baked into the image so the trigger endpoint can validate against it.
-COPY data/watchlists /app/data/watchlists
+# Watchlist is bind-mounted at runtime by the Quadlet (Volume= directive),
+# so operator updates to the host watchlist file take effect without an
+# image rebuild. The directory still needs to exist in the image for the
+# bind target.
+RUN mkdir -p /app/data/watchlists
 
 EXPOSE 8000
 

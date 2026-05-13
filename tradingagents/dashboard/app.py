@@ -16,9 +16,8 @@ Per FR-017 Hold renders as a first-class rating, not as empty.
 
 from __future__ import annotations
 
+import os
 import re
-import shutil
-import subprocess
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -69,12 +68,14 @@ def home(request: Request) -> HTMLResponse:
     """Today's ratings + paper portfolio panel."""
     summary = sr.summarize_progress(sr.read_progress())
     portfolio = sr.read_portfolio("live")
+    engine_lock = sr.read_engine_lock()
     return templates.TemplateResponse(
         request=request,
         name="home.html",
         context={
             "summary": summary,
             "portfolio": portfolio,
+            "engine_lock": engine_lock,
             "title": f"Trade date {summary['trade_date'] or '(none)'}",
         },
     )
@@ -203,46 +204,40 @@ def portfolio(request: Request, portfolio_id: str = "live") -> HTMLResponse:
 
 @app.post("/trigger/{ticker}")
 def trigger_ticker(ticker: str) -> JSONResponse:
-    """Validate ticker + spawn engine via systemctl.
+    """Queue an ad-hoc run by writing a request file to TRIGGER_DIR.
+    A host USER systemd service (tradingagents-trigger-poller.service,
+    runs as agent user) polls the dir and spawns the engine subprocess.
 
-    Security: dashboard container is bound to 127.0.0.1:8000 on the host
-    (Quadlet PublishPort), and Caddy basic-auth gates the request before it
-    reaches the dashboard. No app-level source-IP check — when running behind
-    Caddy + Podman the source IP seen here is the bridge gateway, which a
-    naive allowlist would either reject (breaking the trigger UI) or include
-    in a way that confers no real defense-in-depth.
+    Returns 409 immediately if the engine lock is held — operator gets
+    real feedback instead of silent queueing across a 4-hour daily run.
+
+    Security: Caddy basic-auth gates the request; Quadlet PublishPort=
+    127.0.0.1:8000 binds the dashboard to host loopback.
     """
     ok, reason = sr.validate_ticker_for_trigger(ticker)
     if not ok:
         raise HTTPException(400, reason)
 
-    # Refuse if engine already running. The lock is a file at ENGINE_DIR/lock
-    # written by the engine subprocess. We check it inline (filesystem only)
-    # rather than importing from tradingagents.engine because the dashboard
-    # container deliberately does not include the engine module — engine and
-    # dashboard are subprocess-isolated; dashboard is read-only on engine state.
-    lock_file = sr.ENGINE_DIR / "lock"
-    if lock_file.exists():
-        try:
-            holder = lock_file.read_text(encoding="utf-8").strip() or "unknown"
-        except OSError:
-            holder = "unknown"
-        raise HTTPException(409, f"engine busy (lock held by PID {holder})")
-
-    if not shutil.which("systemd-run"):
-        raise HTTPException(500, "systemd-run not available on this host")
-
-    unit_name = f"tradingagents-engine-adhoc@{ticker}"
-    cmd = [
-        "systemctl",
-        "start",
-        f"{unit_name}.service",
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-    if result.returncode != 0:
+    lock = sr.read_engine_lock()
+    if lock is not None:
         raise HTTPException(
-            500,
-            f"systemctl start failed (rc={result.returncode}): {result.stderr.strip()[:300]}",
+            409,
+            f"engine busy (lock held by PID {lock['pid']} since {lock['mtime_iso']})",
         )
 
-    return JSONResponse({"status": "started", "ticker": ticker, "unit": unit_name})
+    try:
+        sr.TRIGGER_DIR.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise HTTPException(500, f"trigger queue dir not writable: {exc}") from exc
+
+    req_file = sr.TRIGGER_DIR / f"{ticker}.req"
+    try:
+        # Write atomically via temp + rename. Temp lives INSIDE the queue
+        # dir so the rename never crosses a filesystem boundary.
+        tmp = sr.TRIGGER_DIR / f".{ticker}.req.tmp"
+        tmp.write_text(_now_hms() + "\n", encoding="utf-8")
+        os.replace(tmp, req_file)
+    except OSError as exc:
+        raise HTTPException(500, f"could not enqueue trigger: {exc}") from exc
+
+    return JSONResponse({"status": "queued", "ticker": ticker, "queue_file": str(req_file)})

@@ -1,0 +1,53 @@
+# Trigger poller — drains ~/.tradingagents/triggers/*.req and spawns engine
+# subprocesses for each request the dashboard queues.
+#
+# This is a USER systemd unit (runs as the `agent` user, not root).
+# Install path: /home/agent/.config/systemd/user/tradingagents-trigger-poller.service
+#
+# One-time host setup BEFORE first start:
+#   sudo loginctl enable-linger agent          # user services persist across SSH disconnect
+#   sudo install -d -o agent -g agent /home/agent/.tradingagents/triggers
+#   sudo restorecon -Rv /home/agent/.tradingagents/triggers
+#   sudo install -o agent -g agent -m 0644 \
+#       deploy/systemd/tradingagents-trigger-poller.service \
+#       /home/agent/.config/systemd/user/
+#   sudo -u agent XDG_RUNTIME_DIR=/run/user/$(id -u agent) systemctl --user daemon-reload
+#   sudo -u agent XDG_RUNTIME_DIR=/run/user/$(id -u agent) \
+#       systemctl --user enable --now tradingagents-trigger-poller.service
+#
+# Tail logs:
+#   sudo -u agent XDG_RUNTIME_DIR=/run/user/$(id -u agent) \
+#       journalctl --user -u tradingagents-trigger-poller -f
+
+[Unit]
+Description=TradingAgents trigger queue poller
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/agent/tradingagents/.venv/bin/python /home/agent/tradingagents/scripts/trigger_poller.py
+WorkingDirectory=/home/agent/tradingagents
+
+# Explicit env so the engine subprocess doesn't get a sparse User-systemd
+# default (which can drop HOME/PATH and cause module-not-found surprises).
+Environment=HOME=/home/agent
+Environment=PATH=/home/agent/tradingagents/.venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONUNBUFFERED=1
+
+# Optional env file for API keys. Hyphen prefix means missing file is OK
+# (engine will use systemd-creds-decrypted secrets via the daily.service
+# pattern when that's the spawn route).
+EnvironmentFile=-/etc/tradingagents/engine.env
+
+# All output to journal — easier than wrangling separate log files. Engine
+# subprocesses emit their own logs to ~/.tradingagents/logs/<TICKER>/...
+StandardOutput=journal
+StandardError=journal
+
+# Restart on failure; bounded backoff so a broken poller doesn't busy-loop.
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target

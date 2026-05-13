@@ -20,6 +20,9 @@ from typing import Any
 ENGINE_DIR = Path(os.environ.get("TA_ENGINE_DIR", str(Path.home() / ".tradingagents" / "engine")))
 LOGS_DIR = Path(os.environ.get("TA_LOGS_DIR", str(Path.home() / ".tradingagents" / "logs")))
 PAPER_DIR = Path(os.environ.get("TA_PAPER_DIR", str(Path.home() / ".tradingagents" / "paper")))
+TRIGGER_DIR = Path(
+    os.environ.get("TA_TRIGGER_DIR", str(Path.home() / ".tradingagents" / "triggers"))
+)
 
 CURRENT_DIR = ENGINE_DIR / "current"
 
@@ -42,6 +45,33 @@ def read_progress() -> dict | None:
         return json.loads(p.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return None
+
+
+def read_engine_lock() -> dict[str, Any] | None:
+    """Return {pid, mtime_iso} if engine lock is held, else None.
+
+    Used by the homepage to surface "engine busy" state and by the trigger
+    endpoint to short-circuit with 409 instead of silently queueing across
+    a long-running daily run.
+
+    Computed against the current ENGINE_DIR each call (no module-level
+    cache) so test fixtures that monkeypatch ENGINE_DIR work without also
+    needing to patch a cached LOCK_FILE.
+    """
+    lock = ENGINE_DIR / "lock"
+    if not lock.exists():
+        return None
+    try:
+        pid = lock.read_text(encoding="utf-8").strip() or "unknown"
+    except OSError:
+        pid = "unknown"
+    try:
+        mtime = datetime.fromtimestamp(lock.stat().st_mtime, tz=timezone.utc).isoformat(
+            timespec="seconds"
+        )
+    except OSError:
+        mtime = ""
+    return {"pid": pid, "mtime_iso": mtime}
 
 
 def is_run_stale(progress: dict | None) -> bool:
