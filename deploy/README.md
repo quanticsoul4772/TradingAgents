@@ -4,12 +4,12 @@
 
 ## What gets installed
 
-| Component | Purpose | Phase |
-|---|---|---|
-| `tradingagents-engine-daily.service` + `.timer` | Cron-equivalent: fires the engine at 17:00 ET Mon-Fri | 1 (works today) |
-| `tradingagents-engine-adhoc@.service` | Templated unit invoked by the dashboard's `POST /trigger/{ticker}` | 1 (works today) |
-| `tradingagents-dashboard.container` | Podman Quadlet for the dashboard backend | 2 (templated; needs the dashboard image to exist) |
-| Caddyfile snippet | Adds `handle_path /trading/*` to the existing site block | 4 (this PR) |
+| Component | Purpose |
+|---|---|
+| `tradingagents-engine-daily.service` + `.timer` | Cron-equivalent: fires the engine at 17:00 ET Mon-Fri |
+| `tradingagents-trigger-poller.service` | USER unit (runs as `agent`): polls `~/.tradingagents/triggers/` for ad-hoc requests written by the dashboard, spawns engine subprocesses |
+| `tradingagents-dashboard.container` | Podman Quadlet for the dashboard backend |
+| Caddyfile snippet | Adds `handle_path /trading/*` to the existing site block |
 
 ## Prerequisites (already on the VPS per agent-harness-v2)
 
@@ -67,12 +67,11 @@ sudo systemd-creds encrypt - /etc/credstore/exa-key.encrypted
 # Ctrl-D
 ```
 
-### 4. Install the systemd units
+### 4a. Install the daily-timer system units
 
 ```bash
 sudo cp deploy/systemd/tradingagents-engine-daily.service /etc/systemd/system/
 sudo cp deploy/systemd/tradingagents-engine-daily.timer /etc/systemd/system/
-sudo cp deploy/systemd/tradingagents-engine-adhoc@.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now tradingagents-engine-daily.timer
 ```
@@ -82,6 +81,54 @@ Verify:
 ```bash
 systemctl list-timers tradingagents-engine-daily.timer
 # Expect a "Next" time at the next Mon-Fri 17:00 ET
+```
+
+### 4b. Install the trigger-poller user unit
+
+The dashboard's ad-hoc trigger UI writes request files to
+`~/.tradingagents/triggers/`; a USER systemd service running as `agent`
+polls that directory and spawns engine subprocesses. No root needed at
+runtime — the poller spawns the engine directly via `python -m
+tradingagents.engine`.
+
+```bash
+# Create + label the trigger queue dir (one-time)
+sudo install -d -o agent -g agent /home/agent/.tradingagents/triggers
+sudo restorecon -Rv /home/agent/.tradingagents/triggers
+
+# Allow user services to run when no SSH session is open (one-time)
+sudo loginctl enable-linger agent
+
+# Install the unit into the agent user's systemd dir
+sudo install -o agent -g agent -m 0644 \
+    deploy/systemd/tradingagents-trigger-poller.service \
+    /home/agent/.config/systemd/user/
+
+# Reload + enable as the agent user (USER systemd, not system)
+sudo -u agent XDG_RUNTIME_DIR=/run/user/$(id -u agent) \
+    systemctl --user daemon-reload
+sudo -u agent XDG_RUNTIME_DIR=/run/user/$(id -u agent) \
+    systemctl --user enable --now tradingagents-trigger-poller.service
+```
+
+Verify:
+
+```bash
+sudo -u agent XDG_RUNTIME_DIR=/run/user/$(id -u agent) \
+    systemctl --user status tradingagents-trigger-poller.service
+# Expect: active (running)
+
+# Tail logs:
+sudo -u agent XDG_RUNTIME_DIR=/run/user/$(id -u agent) \
+    journalctl --user -u tradingagents-trigger-poller -f
+```
+
+### 4c. Remove the obsolete adhoc unit (if previously installed)
+
+```bash
+sudo systemctl stop 'tradingagents-engine-adhoc@*.service' 2>/dev/null || true
+sudo rm -f /etc/systemd/system/tradingagents-engine-adhoc@.service
+sudo systemctl daemon-reload
 ```
 
 ### 5. Merge the Caddyfile snippet
@@ -124,17 +171,27 @@ Now `https://rawcell.duckdns.org/trading/` serves the dashboard.
 
 ## Manual ad-hoc fire (testing or off-schedule)
 
+Three ways:
+
 ```bash
-ssh rawcell
+# 1. Full daily run via the system unit (~$10-40, 3-4h)
 sudo systemctl start tradingagents-engine-daily.service
-# OR for one ticker:
-sudo systemctl start tradingagents-engine-adhoc@NVDA.service
+
+# 2. Single ticker via the dashboard's trigger UI (recommended; ~$0.40, ~10min)
+#    — type ticker on https://rawcell.duckdns.org/trading/, hit Run.
+#    The dashboard writes ~/.tradingagents/triggers/<TICKER>.req; the
+#    trigger-poller picks it up within 2 sec and spawns the engine.
+
+# 3. Single ticker by writing the .req file directly (bypasses dashboard auth)
+echo "$(date -u +%FT%TZ)" > ~/.tradingagents/triggers/NVDA.req
 ```
 
 Tail logs:
 
 ```bash
-journalctl -u tradingagents-engine-daily.service -f
+journalctl -u tradingagents-engine-daily.service -f                    # daily
+sudo -u agent XDG_RUNTIME_DIR=/run/user/$(id -u agent) \
+    journalctl --user -u tradingagents-trigger-poller -f               # poller
 ```
 
 ## Troubleshooting

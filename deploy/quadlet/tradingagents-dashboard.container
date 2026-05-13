@@ -31,26 +31,37 @@ ContainerName=tradingagents-dashboard
 
 # Read-only mounts to engine output + state logs + paper portfolio.
 # Per FR-003 the dashboard is a read-only consumer; never writes to engine state.
-# Source paths are absolute (matches v2 sidecar pattern; %h doesn't resolve in
-# rootful Quadlet context — verified against /home/agent layout on the VPS).
 Volume=/home/agent/.tradingagents/engine:/var/lib/tradingagents/engine:ro,Z
 Volume=/home/agent/.tradingagents/logs:/var/lib/tradingagents/logs:ro,Z
 Volume=/home/agent/.tradingagents/paper:/var/lib/tradingagents/paper:ro,Z
 
+# Read-WRITE bind for the trigger queue. Dashboard's POST /trigger/{ticker}
+# writes <TICKER>.req here; the host poller (tradingagents-trigger-poller.service,
+# USER unit running as agent) drains the queue. This dir is OUTSIDE engine/
+# so there's no parent-mount overlap or :Z relabel conflict. Lowercase :z
+# (shared label) avoids per-restart relabel that would corrupt host poller's
+# files.
+Volume=/home/agent/.tradingagents/triggers:/var/lib/tradingagents/triggers:rw,z
+
+# Read-only bind for the watchlist file so operator updates take effect
+# without rebuilding the container.
+Volume=/home/agent/tradingagents/data/watchlists:/app/data/watchlists:ro,z
+
 # Bind to 127.0.0.1 only — Caddy reverse-proxies the public surface.
-# Per FR-010: trigger endpoint MUST NOT be reachable through the proxy;
-# binding to localhost is half of that contract; Caddyfile.snippet handles
-# the other half by not proxying /trigger/*.
 PublishPort=127.0.0.1:8000:8000
 
 Environment=TA_ENGINE_DIR=/var/lib/tradingagents/engine
 Environment=TA_LOGS_DIR=/var/lib/tradingagents/logs
 Environment=TA_PAPER_DIR=/var/lib/tradingagents/paper
+Environment=TA_TRIGGER_DIR=/var/lib/tradingagents/triggers
 Environment=TA_DASHBOARD_PORT=8000
 
 # Run as the same UID as the engine writes (1000 = operator user `agent` on
-# the VPS, SSH-verified) so reads work cleanly under SELinux Z labels.
+# the VPS). UserNS=keep-id makes container UID 1000 map to host UID 1000
+# (rootful default would map to host UID 0; .req files written by container
+# would land root-owned and the host poller could not unlink them).
 User=1000:1000
+UserNS=keep-id:uid=1000,gid=1000
 
 # Exec is provided by the container image's CMD (deploy/Containerfile, Phase 2).
 # Quadlet doesn't need an Exec= line when the image has a default CMD.

@@ -312,36 +312,26 @@ def test_portfolio_renders_state(client, isolated_dashboard):
 
 
 @pytest.mark.unit
-def test_trigger_rejects_invalid_ticker(client, monkeypatch):
-    """FR-011: regex validation rejects without spawning anything."""
-    spawned = []
-    monkeypatch.setattr(
-        "tradingagents.dashboard.app.subprocess.run",
-        lambda *a, **kw: (
-            spawned.append(a) or type("R", (), {"returncode": 0, "stderr": "", "stdout": ""})()
-        ),
-    )
+def test_trigger_rejects_invalid_ticker(client, isolated_dashboard, monkeypatch):
+    """FR-011: regex validation rejects without enqueueing anything."""
+    triggers = isolated_dashboard["engine"].parent / "triggers"
+    monkeypatch.setattr(sr, "TRIGGER_DIR", triggers)
     r = client.post("/trigger/badticker")
     assert r.status_code == 400
-    assert spawned == []
+    assert not triggers.exists() or list(triggers.glob("*.req")) == []
 
 
 @pytest.mark.unit
-def test_trigger_rejects_ticker_not_in_watchlist(client, tmp_path, monkeypatch):
-    """FR-011: watchlist membership rejection."""
+def test_trigger_rejects_ticker_not_in_watchlist(client, isolated_dashboard, tmp_path, monkeypatch):
+    """FR-011: watchlist membership rejection without enqueueing."""
     wl = tmp_path / "wl.txt"
     wl.write_text("NVDA\n", encoding="utf-8")
     monkeypatch.setenv("TA_WATCHLIST", str(wl))
-    spawned = []
-    monkeypatch.setattr(
-        "tradingagents.dashboard.app.subprocess.run",
-        lambda *a, **kw: (
-            spawned.append(a) or type("R", (), {"returncode": 0, "stderr": "", "stdout": ""})()
-        ),
-    )
+    triggers = isolated_dashboard["engine"].parent / "triggers"
+    monkeypatch.setattr(sr, "TRIGGER_DIR", triggers)
     r = client.post("/trigger/AAPL")
     assert r.status_code == 400
-    assert spawned == []
+    assert not triggers.exists() or list(triggers.glob("*.req")) == []
 
 
 @pytest.mark.unit
@@ -360,26 +350,41 @@ def test_trigger_returns_409_when_engine_locked(client, isolated_dashboard, tmp_
 
 
 @pytest.mark.unit
-def test_trigger_spawns_systemd_unit(client, tmp_path, monkeypatch):
+def test_trigger_writes_req_file(client, isolated_dashboard, tmp_path, monkeypatch):
+    """v4 file-queue contract: trigger writes <TICKER>.req atomically into
+    TRIGGER_DIR and returns 200 with status="queued". The host poller
+    (scripts/trigger_poller.py) handles the spawn out-of-band."""
     wl = tmp_path / "wl.txt"
     wl.write_text("NVDA\n", encoding="utf-8")
     monkeypatch.setenv("TA_WATCHLIST", str(wl))
-    monkeypatch.setattr(
-        "tradingagents.dashboard.app.shutil.which", lambda x: "/usr/bin/systemd-run"
-    )
-    captured = []
+    triggers = isolated_dashboard["engine"].parent / "triggers"
+    monkeypatch.setattr(sr, "TRIGGER_DIR", triggers)
 
-    def fake_run(cmd, **kw):
-        captured.append(cmd)
-        return type("R", (), {"returncode": 0, "stderr": "", "stdout": ""})()
-
-    monkeypatch.setattr("tradingagents.dashboard.app.subprocess.run", fake_run)
     r = client.post("/trigger/NVDA")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["status"] == "queued"
+    assert body["ticker"] == "NVDA"
+
+    req_file = triggers / "NVDA.req"
+    assert req_file.exists(), "trigger must write the .req file"
+    # Temp file must NOT linger after atomic rename.
+    tmp_leftovers = list(triggers.glob(".NVDA.req.tmp"))
+    assert tmp_leftovers == [], f"temp file leaked: {tmp_leftovers}"
+
+
+@pytest.mark.unit
+def test_home_shows_engine_lock_banner(client, isolated_dashboard):
+    """M3: when the engine lock file exists, the homepage renders a banner
+    naming the PID and lock mtime so operator sees ad-hoc triggers will be
+    rejected with 409."""
+    lock = isolated_dashboard["engine"] / "lock"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    lock.write_text("99999", encoding="utf-8")
+    r = client.get("/")
     assert r.status_code == 200
-    assert r.json()["status"] == "started"
-    assert r.json()["ticker"] == "NVDA"
-    assert "systemctl" in captured[0][0]
-    assert "tradingagents-engine-adhoc@NVDA.service" in captured[0]
+    assert "Engine running" in r.text
+    assert "99999" in r.text
 
 
 @pytest.mark.unit
@@ -399,34 +404,27 @@ def test_home_includes_trigger_form(client):
 
 
 @pytest.mark.unit
-def test_trigger_no_app_level_ip_check(tmp_path, monkeypatch):
-    """The app-level source-IP guard was removed in the 2026-05-12 hotfix because
-    when running behind Caddy + Podman the source IP seen by the app is the
-    Podman bridge gateway (e.g. 10.88.0.1), not 127.0.0.1. The previous guard
-    rejected that legitimate-via-Caddy traffic. Security is provided by Caddy
-    basic-auth + the Quadlet PublishPort=127.0.0.1:8000 binding instead.
+def test_trigger_no_app_level_ip_check(isolated_dashboard, tmp_path, monkeypatch):
+    """No app-level source-IP guard. Behind Caddy + Podman the source IP seen
+    by the app is the Podman bridge gateway (e.g. 10.88.0.1), not 127.0.0.1.
+    Security is provided by Caddy basic-auth + Quadlet PublishPort=127.0.0.1:8000.
 
-    This test pins that ANY origin reaching the endpoint is processed (and
-    falls through to the FR-011 ticker validation), not 403'd outright."""
+    This test pins that ANY origin reaching the endpoint enqueues the request
+    instead of being rejected by an IP allowlist."""
     wl = tmp_path / "wl.txt"
     wl.write_text("NVDA\n", encoding="utf-8")
     monkeypatch.setenv("TA_WATCHLIST", str(wl))
-    monkeypatch.setattr(
-        "tradingagents.dashboard.app.shutil.which", lambda x: "/usr/bin/systemd-run"
-    )
+    triggers = isolated_dashboard["engine"].parent / "triggers"
+    monkeypatch.setattr(sr, "TRIGGER_DIR", triggers)
 
-    def fake_run(cmd, **kw):
-        return type("R", (), {"returncode": 0, "stderr": "", "stdout": ""})()
-
-    monkeypatch.setattr("tradingagents.dashboard.app.subprocess.run", fake_run)
-
-    # Podman bridge gateway origin (the actual production source IP) should
-    # NOT be 403'd — it should fall through to the spawn path.
     bridge_client = TestClient(app_module.app, client=("10.88.0.1", 51234))
     r = bridge_client.post("/trigger/NVDA")
     assert r.status_code == 200, f"bridge IP must NOT be rejected, got {r.status_code}"
+    assert r.json()["status"] == "queued"
 
     # Default TestClient origin still works.
+    triggers2 = tmp_path / "triggers2"
+    monkeypatch.setattr(sr, "TRIGGER_DIR", triggers2)
     default_client = TestClient(app_module.app)
     r = default_client.post("/trigger/NVDA")
     assert r.status_code == 200, f"testclient must work, got {r.status_code}"

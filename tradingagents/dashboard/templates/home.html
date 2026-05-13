@@ -6,9 +6,13 @@
 
 {% block content %}
 
-{# Spec 250 User Story 1 (PR-A): today's ratings + paper portfolio + cost
-   spent today, all first-class on the homepage (not gated on a live run).
-   Spec 250 User Story 4 (PR-B): ad-hoc trigger input below. #}
+{% if engine_lock %}
+  <div class="bg-amber-50 border border-amber-200 text-amber-900 p-2 rounded mb-4 text-sm">
+    ⚙️ Engine running — PID <span class="font-mono">{{ engine_lock.pid }}</span>
+    since <span class="font-mono">{{ engine_lock.mtime_iso }}</span>.
+    Ad-hoc triggers are queued or rejected until this completes.
+  </div>
+{% endif %}
 
 {# ---- TODAY'S RUN HEADER (always rendered; shows "no run yet" when empty) ---- #}
 <div class="bg-white rounded-lg shadow p-4 mb-4">
